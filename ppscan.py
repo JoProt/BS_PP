@@ -22,11 +22,11 @@ import cv2 as cv
 
 
 def preprocess(img):
-	"""
-	Wende Weichzeichner an und wandle in Binärbild um.
-	:param img: Eingangsbild
-	:returns: Binärbild
-	"""
+    """
+    Wende Weichzeichner an und wandle in Binärbild um.
+    :param img: Eingangsbild
+    :returns: Binärbild
+    """
     hsv = cv.cvtColor(img, cv.COLOR_BGR2HSV)
     lower = np.array([0, 48, 80], dtype="uint8")
     upper = np.array([20, 255, 255], dtype="uint8")
@@ -52,12 +52,12 @@ def get_defects(contours):
 
 
 def find_fingers(img):
-	"""
-	Finde die "Täler" zwischen Zeige- und Mittelfinger bzw
-	Ring- und kleinem Finger.
-	:param img: vorverarbeitetes Bild
-	:returns: 2 Koordinaten-Tupel
-	"""
+    """
+    Finde die "Täler" zwischen Zeige- und Mittelfinger bzw
+    Ring- und kleinem Finger.
+    :param img: vorverarbeitetes Bild
+    :returns: 2 Koordinaten-Tupel
+    """
     mask_img = make_binary(img)
     contours, hull = get_contours(mask_img)
     finger_points = []
@@ -75,8 +75,8 @@ def find_fingers(img):
 
             if angle <= np.pi / 2:
                 finger_points.append(far)
-    
-    # nur interessante Punkte zurückgeben 
+
+    # nur interessante Punkte zurückgeben
     return finger_points[1], finger_points[3]
 
 
