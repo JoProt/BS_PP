@@ -59,8 +59,8 @@ def find_fingers(img):
             if angle <= np.pi / 2:
                 finger_points.append(far)
 
-    finger_points .pop(0)
-    finger_points .pop(1)
+    finger_points.pop(0)
+    finger_points.pop(1)
 
     return finger_points #return list of two tuple
 
