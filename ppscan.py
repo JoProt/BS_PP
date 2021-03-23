@@ -20,25 +20,31 @@ import cv2 as cv
 # Preprocessing #
 # # # # # # # # #
 
+
 def make_binary(img):
     hsv = cv.cvtColor(img, cv.COLOR_BGR2HSV)
-    lower = np.array([0, 48, 80], dtype = "uint8")
-    upper = np.array([20, 255, 255], dtype = "uint8")
+    lower = np.array([0, 48, 80], dtype="uint8")
+    upper = np.array([20, 255, 255], dtype="uint8")
     skinRegionHSV = cv.inRange(hsv, lower, upper)
-    blurred = cv.GaussianBlur(skinRegionHSV,(5,5),0)
-    ret, thresh = cv.threshold(blurred,0,255,cv.THRESH_BINARY)
+    blurred = cv.GaussianBlur(skinRegionHSV, (5, 5), 0)
+    ret, thresh = cv.threshold(blurred, 0, 255, cv.THRESH_BINARY)
     return thresh
 
+
 def get_contours(mask_img):
-    contours, hierarchy = cv.findContours(mask_img, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+    contours, hierarchy = cv.findContours(
+        mask_img, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE
+    )
     contours = max(contours, key=lambda x: cv.contourArea(x))
     hull = cv.convexHull(contours)
     return contours, hull
+
 
 def get_defects(contours):
     hull = cv.convexHull(contours, returnPoints=False)
     defects = cv.convexityDefects(contours, hull)
     return defects
+
 
 def find_fingers(img):
     mask_img = make_binary(img)
@@ -62,7 +68,8 @@ def find_fingers(img):
     finger_points.pop(0)
     finger_points.pop(1)
 
-    return finger_points #return list of two tuple
+    return finger_points  # return list of two tuple
+
 
 def fit():
     return
