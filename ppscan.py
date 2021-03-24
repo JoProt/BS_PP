@@ -58,7 +58,7 @@ def find_fingers(img):
     :param img: vorverarbeitetes Bild
     :returns: 2 Koordinaten-Tupel
     """
-    mask_img = make_binary(img)
+    mask_img = preprocess(img)
     contours, hull = get_contours(mask_img)
     finger_points = []
     defects = get_defects(contours)
