@@ -12,8 +12,22 @@
 
 import os
 import sys
+
+from typing import Union
+
 import numpy as np
 import cv2 as cv
+
+
+def dbg_show(img):
+    """
+    Wrapper für Fkt. zum Anzeigen des Bildes;
+    zum Debuggen gut.
+    :param img: anzuzeigendes Bild
+    """
+    cv.imshow("DBG", img)
+    cv.waitKey(0)
+    cv.destroyAllWindows()
 
 
 # # # # # # # # #
@@ -24,7 +38,7 @@ import cv2 as cv
 def preprocess(img):
     """
     Wende Weichzeichner an und wandle in Binärbild um.
-    :param img: Eingangsbild
+    :param img: Eingangsbild (RGB!)
     :returns: Binärbild
     """
     hsv = cv.cvtColor(img, cv.COLOR_BGR2HSV)
@@ -51,7 +65,8 @@ def get_defects(contours):
     return defects
 
 
-def find_fingers(img):
+# XXX Punkte liegen nicht genau auf der Tangente!
+def find_fingers(img) -> Union[tuple, tuple]:
     """
     Finde die "Täler" zwischen Zeige- und Mittelfinger bzw
     Ring- und kleinem Finger.
@@ -80,15 +95,33 @@ def find_fingers(img):
     return finger_points[1], finger_points[3]
 
 
-def fit():
-    return
+def fit(img, p_min, p_max):
+    """
+    Transformiere Bild so, dass Punkte p_min und p_max
+    die y-Achse an der linken Bildkante bilden.
+    :param img: Eingangsbild
+    :param p_min: Minimum des Koordinatensystems
+    :param p_max: Maximum des Koordinatensystems
+    :returns: gedrehtes und auf "y-Achse" beschnittenes Bild
+    """
+    # berechne notwendige Parameter
+    a = p_max[0] - p_min[0]
+    b = p_min[1] - p_max[1]
+    d = round(np.linalg.norm(np.array(p_max) - np.array(p_min)))
+    angle = np.rad2deg(np.arctan(a / b))
+
+    # rotiere Bild um p_min
+    rot_mat = cv.getRotationMatrix2D(p_min, angle, 1.0)
+    rotated = cv.warpAffine(img, rot_mat, img.shape[1::-1])
+
+    # gib (beschnittenes) Bild zurück
+    return rotated[p_min[1] - d : p_min[1], p_min[0] : -1]
 
 
 # ...
 
 
 def main():
-    print("it werks")
     return
 
 
