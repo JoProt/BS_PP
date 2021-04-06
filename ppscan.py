@@ -51,6 +51,11 @@ def preprocess(img):
 
 
 def get_contours(mask_img):
+    """
+    Findet die Contour der Hand
+    :param mask_img: Binärbild
+    :returns: contouren und convexe Hülle des Bildes
+    """
     contours, hierarchy = cv.findContours(
         mask_img, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE
     )
@@ -60,6 +65,11 @@ def get_contours(mask_img):
 
 
 def get_defects(contours):
+    """
+    Findet über Convenxe Hülle die Defects der Finger
+    :param contours: contourdaten des vorverarbeiteten Bilds
+    :returns: defects der Finger
+    """
     hull = cv.convexHull(contours, returnPoints=False)
     defects = cv.convexityDefects(contours, hull)
     return defects
@@ -91,7 +101,7 @@ def find_fingers(img) -> Union[tuple, tuple]:
             if angle <= np.pi / 2:
                 finger_points.append(far)
 
-    # nur interessante Punkte zurückgeben
+    # nur interessante Punkte zurückgeben, rechte Hand 1,3 Linke Hand 0,4
     return finger_points[1], finger_points[3]
 
 
@@ -122,8 +132,7 @@ def fit(img, p_min, p_max):
 
 
 def main():
-    return
-
+    return 
 
 if __name__ == "__main__":
     sys.exit(main())
