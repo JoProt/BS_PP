@@ -47,7 +47,7 @@ def preprocess(img):
     upper = np.array([20, 255, 255], dtype="uint8")
     skinRegionHSV = cv.inRange(hsv, lower, upper)
     blurred = cv.GaussianBlur(skinRegionHSV, (5, 5), 0)
-    ret, thresh = cv.threshold(blurred, 100, 255, cv.THRESH_BINARY)
+    ret, thresh = cv.threshold(blurred, 0, 255, cv.THRESH_BINARY)
     return thresh
 
 def preprocess_bw(img):
@@ -97,8 +97,6 @@ def find_fingers(img) -> Union[tuple, tuple]:
     """
     mask_img = preprocess_bw(img)
     contours, hull = get_contours(mask_img)
-    cv.drawContours(img, [hull], -1, (0, 255, 255), 2)
-    cv.drawContours(img, [contours], -1, (255, 255, 0), 2)
     finger_points = []
     defects = get_defects(contours)
     if defects is not None:
@@ -114,9 +112,6 @@ def find_fingers(img) -> Union[tuple, tuple]:
 
             if angle <= np.pi / 2:
                 finger_points.append(far)
-
-    cv.circle(img, finger_points[1], 4, [0, 0, 255], -1)
-    cv.circle(img, finger_points[2], 4, [0, 0, 255], -1)
 
     # nur interessante Punkte zurückgeben, rechte Hand 1,3 Linke Hand 0,4
     return finger_points[2], finger_points[1]
