@@ -41,12 +41,24 @@ def preprocess(img):
     :param img: Eingangsbild (RGB!)
     :returns: Binärbild
     """
+
     hsv = cv.cvtColor(img, cv.COLOR_BGR2HSV)
     lower = np.array([0, 48, 80], dtype="uint8")
     upper = np.array([20, 255, 255], dtype="uint8")
     skinRegionHSV = cv.inRange(hsv, lower, upper)
     blurred = cv.GaussianBlur(skinRegionHSV, (5, 5), 0)
-    ret, thresh = cv.threshold(blurred, 0, 255, cv.THRESH_BINARY)
+    ret, thresh = cv.threshold(blurred, 100, 255, cv.THRESH_BINARY)
+    return thresh
+
+def preprocess_bw(img):
+    """
+    Wende Weichzeichner an und wandle in Binärbild um Bild einlesen mit v.IMREAD_GRAYSCALE
+    :param img: Eingangsbild (GREY!)
+    :returns: Binärbild
+    """
+
+    blurred = cv.GaussianBlur(img, (5, 5), 0)
+    ret, thresh = cv.threshold(blurred, 100, 255, cv.THRESH_BINARY)
     return thresh
 
 
@@ -83,8 +95,10 @@ def find_fingers(img) -> Union[tuple, tuple]:
     :param img: vorverarbeitetes Bild
     :returns: 2 Koordinaten-Tupel
     """
-    mask_img = preprocess(img)
+    mask_img = preprocess_bw(img)
     contours, hull = get_contours(mask_img)
+    cv.drawContours(img, [hull], -1, (0, 255, 255), 2)
+    cv.drawContours(img, [contours], -1, (255, 255, 0), 2)
     finger_points = []
     defects = get_defects(contours)
     if defects is not None:
@@ -101,8 +115,11 @@ def find_fingers(img) -> Union[tuple, tuple]:
             if angle <= np.pi / 2:
                 finger_points.append(far)
 
+    cv.circle(img, finger_points[1], 4, [0, 0, 255], -1)
+    cv.circle(img, finger_points[2], 4, [0, 0, 255], -1)
+
     # nur interessante Punkte zurückgeben, rechte Hand 1,3 Linke Hand 0,4
-    return finger_points[1], finger_points[3]
+    return finger_points[2], finger_points[1]
 
 
 def fit(img, p_min, p_max):
@@ -125,14 +142,15 @@ def fit(img, p_min, p_max):
     rotated = cv.warpAffine(img, rot_mat, img.shape[1::-1])
 
     # gib (beschnittenes) Bild zurück
-    return rotated[p_min[1] - d : p_min[1], p_min[0] : -1]
+    return rotated[p_min[1] - d: p_min[1], p_min[0]: -1]
 
 
 # ...
 
 
 def main():
-    return 
+    return
+
 
 if __name__ == "__main__":
     sys.exit(main())
