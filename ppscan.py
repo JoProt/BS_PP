@@ -12,6 +12,7 @@
 
 import os
 import sys
+import more_itertools as mit
 
 from typing import Union
 
@@ -37,91 +38,93 @@ def dbg_show(img):
 
 THRESH_FACTOR = 0.5
 
+ALPHA = 5
+BETA = ALPHA + ALPHA
+GAMMA = ALPHA + BETA
+
 
 # # # # # # # # #
 # Preprocessing #
 # # # # # # # # #
 
 
-def preprocess(img):
+def check_neighbours(
+    pixel: tuple, img: np.ndarray, n: int, r: int, inside: int = 255, outside: int = 0
+) -> bool:
     """
-    Wende Weichzeichner an und wandle in Binärbild um.
-    :param img: Eingangsbild (RGB!)
-    :returns: Binärbild
+    Überprüfe n Nachbarn im Abstand von r, ob sie innerhalb oder außerhalb
+    der Fläche im Bild img liegen, ausgehend von Punkt p.
+    Anhand dessen kann festgestellt werden, ob es sich um eine Kurve handelt.
+    :param p: Koordinatenpunkt
+    :param img: Binärbild
+    :param n: Anzahl der Nachbarn
+    :param r: Abstand der Nachbarn
+    :param inside: Farbe, die als "innen" qualifiziert
+    :param outside: Farbe, die als "außerhalb der Fläche" gilt
+    :returns: Boolean
     """
-    hsv = cv.cvtColor(img, cv.COLOR_BGR2HSV)
-    lower = np.array([0, 48, 80], dtype="uint8")
-    upper = np.array([20, 255, 255], dtype="uint8")
-    skinRegionHSV = cv.inRange(hsv, lower, upper)
-    blurred = cv.GaussianBlur(skinRegionHSV, (5, 5), 0)
-    ret, thresh = cv.threshold(blurred, 0, 255, cv.THRESH_BINARY)
-    return thresh
+    stepsize = int(360 / n)
+    neighvals = []
+    retval = False
+
+    for a in range(0, 360, stepsize):
+        d_y = np.round(np.cos(np.deg2rad(a)), 2)
+        d_x = np.round(np.sin(np.deg2rad(a)), 2)
+        y = int(pixel[0] - (r * d_y))
+        x = int(pixel[1] + (r * d_x))
+
+        try:
+            nv = img[y, x]
+        except IndexError:
+            nv = 0
+
+        neighvals.append(nv)
+
+    if 0.5 <= ((sum(neighvals) / 255) / n) <= 0.85:
+        retval = True
+
+    return retval
 
 
-def preprocess_bw(img):
+def find_keypoints(img: np.ndarray) -> Union[tuple, tuple]:
     """
-    Wende Weichzeichner an und wandle in Binärbild um Bild einlesen mit v.IMREAD_GRAYSCALE
     :param img: Eingangsbild (GREY!)
-    :returns: Binärbild
+    :returns: ROI / Template zum Matchen
     """
+    # weichzeichnen und binarisieren
     blurred = cv.GaussianBlur(img, (13, 13), 0)
     _, thresh = cv.threshold(blurred, (THRESH_FACTOR * img.mean()), 255, cv.THRESH_BINARY)
-    return thresh
+
+    # finde die Kontur der Hand
+    contours, _ = cv.findContours(thresh, cv.RETR_TREE, cv.CHAIN_APPROX_NONE)
+
+    # mach eine Liste aus Tupeln zur besseren Weiterverarbeitung draus
+    contours = [tuple(c[0]) for c in contours[0]]
+
+    # CHVD-Algorithmus, Ong et al.
+    valleys = {}
+
+    for i, c in enumerate(contours):
+        if (
+            check_neighbours(c, img, 4, ALPHA)
+            and check_neighbours(c, img, 8, BETA)
+            and check_neighbours(c, img, 16, GAMMA)
+        ):
+            valleys[i] = c
+        else:
+            pass
+
+    # Sammlung vom Kurven in separate Listen aufteilen; Verbesserungsbedarf!
+    keys = [list(group) for group in mit.consecutive_groups(valleys.keys())]
+    coords = list(valleys.values())
+    valleys = []
+    for i in range(len(keys)):
+        valleys.append([coords.pop(0) for _ in range(len(keys[i]))])
+
+    return valleys
 
 
-def get_contours(mask_img):
-    """
-    Findet die Contour der Hand
-    :param mask_img: Binärbild
-    :returns: contouren und convexe Hülle des Bildes
-    """
-    contours, hierarchy = cv.findContours(mask_img, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
-    contours = max(contours, key=lambda x: cv.contourArea(x))
-    hull = cv.convexHull(contours)
-    return contours, hull
-
-
-def get_defects(contours):
-    """
-    Findet über Convenxe Hülle die Defects der Finger
-    :param contours: contourdaten des vorverarbeiteten Bilds
-    :returns: defects der Finger
-    """
-    hull = cv.convexHull(contours, returnPoints=False)
-    defects = cv.convexityDefects(contours, hull)
-    return defects
-
-
-def find_fingers(img) -> Union[tuple, tuple]:
-    """
-    Finde die "Täler" zwischen Zeige- und Mittelfinger bzw
-    Ring- und kleinem Finger.
-    :param img: vorverarbeitetes Bild
-    :returns: 2 Koordinaten-Tupel
-    """
-    mask_img = preprocess_bw(img)
-    contours, hull = get_contours(mask_img)
-    finger_points = []
-    defects = get_defects(contours)
-    if defects is not None:
-        for i in range(defects.shape[0]):
-            s, e, f, d = defects[i][0]
-            start = tuple(contours[s][0])
-            end = tuple(contours[e][0])
-            far = tuple(contours[f][0])
-            a = np.sqrt((end[0] - start[0]) ** 2 + (end[1] - start[1]) ** 2)
-            b = np.sqrt((far[0] - start[0]) ** 2 + (far[1] - start[1]) ** 2)
-            c = np.sqrt((end[0] - far[0]) ** 2 + (end[1] - far[1]) ** 2)
-            angle = np.arccos((b ** 2 + c ** 2 - a ** 2) / (2 * b * c))
-
-            if angle <= np.pi / 2:
-                finger_points.append(far)
-
-    # nur interessante Punkte zurückgeben, rechte Hand 1,3 Linke Hand 0,4
-    return finger_points[2], finger_points[1]
-
-
-def fit(img, p_min, p_max):
+def crop_to_roi(img: np.ndarray, p_min: tuple, p_max: tuple) -> np.ndarray:
     """
     Transformiere Bild so, dass Punkte p_min und p_max
     die y-Achse an der linken Bildkante bilden.
@@ -130,7 +133,7 @@ def fit(img, p_min, p_max):
     :param p_max: Maximum des Koordinatensystems
     :returns: gedrehtes und auf "y-Achse" beschnittenes Bild
     """
-    # berechne notwendige Parameter
+    # berechne notwendige Abstände
     a = p_max[0] - p_min[0]
     b = p_min[1] - p_max[1]
     d = round(np.linalg.norm(np.array(p_max) - np.array(p_min)))
