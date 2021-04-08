@@ -41,7 +41,6 @@ def preprocess(img):
     :param img: Eingangsbild (RGB!)
     :returns: Binärbild
     """
-
     hsv = cv.cvtColor(img, cv.COLOR_BGR2HSV)
     lower = np.array([0, 48, 80], dtype="uint8")
     upper = np.array([20, 255, 255], dtype="uint8")
@@ -50,15 +49,15 @@ def preprocess(img):
     ret, thresh = cv.threshold(blurred, 0, 255, cv.THRESH_BINARY)
     return thresh
 
+
 def preprocess_bw(img):
     """
     Wende Weichzeichner an und wandle in Binärbild um Bild einlesen mit v.IMREAD_GRAYSCALE
     :param img: Eingangsbild (GREY!)
     :returns: Binärbild
     """
-
-    blurred = cv.GaussianBlur(img, (5, 5), 0)
-    ret, thresh = cv.threshold(blurred, 100, 255, cv.THRESH_BINARY)
+    blurred = cv.GaussianBlur(img, (13, 13), 0)
+    _, thresh = cv.threshold(blurred, (THRESH_FACTOR * img.mean()), 255, cv.THRESH_BINARY)
     return thresh
 
 
@@ -68,9 +67,7 @@ def get_contours(mask_img):
     :param mask_img: Binärbild
     :returns: contouren und convexe Hülle des Bildes
     """
-    contours, hierarchy = cv.findContours(
-        mask_img, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE
-    )
+    contours, hierarchy = cv.findContours(mask_img, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
     contours = max(contours, key=lambda x: cv.contourArea(x))
     hull = cv.convexHull(contours)
     return contours, hull
@@ -87,7 +84,6 @@ def get_defects(contours):
     return defects
 
 
-# XXX Punkte liegen nicht genau auf der Tangente!
 def find_fingers(img) -> Union[tuple, tuple]:
     """
     Finde die "Täler" zwischen Zeige- und Mittelfinger bzw
@@ -137,7 +133,7 @@ def fit(img, p_min, p_max):
     rotated = cv.warpAffine(img, rot_mat, img.shape[1::-1])
 
     # gib (beschnittenes) Bild zurück
-    return rotated[p_min[1] - d: p_min[1], p_min[0]: -1]
+    return rotated[p_min[1] - d : p_min[1], p_min[0] : -1]
 
 
 # ...
