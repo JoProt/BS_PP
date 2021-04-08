@@ -30,6 +30,14 @@ def dbg_show(img):
     cv.destroyAllWindows()
 
 
+# # # # # # #
+# Constants #
+# # # # # # #
+
+
+THRESH_FACTOR = 0.5
+
+
 # # # # # # # # #
 # Preprocessing #
 # # # # # # # # #
