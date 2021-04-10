@@ -38,7 +38,7 @@ def dbg_show(img):
 
 THRESH_FACTOR = 0.5
 
-ALPHA = 5
+ALPHA = 10
 BETA = ALPHA + ALPHA
 GAMMA = ALPHA + BETA
 
@@ -48,9 +48,9 @@ GAMMA = ALPHA + BETA
 # # # # # # # # #
 
 
-def check_neighbours(
-    pixel: tuple, img: np.ndarray, n: int, r: int, inside: int = 255, outside: int = 0
-) -> bool:
+def neighbourhood_curvature(
+    p: tuple, img: np.ndarray, n: int, r: int, inside: int = 255, outside: int = 0
+) -> float:
     """
     Überprüfe n Nachbarn im Abstand von r, ob sie innerhalb oder außerhalb
     der Fläche im Bild img liegen, ausgehend von Punkt p.
@@ -61,66 +61,80 @@ def check_neighbours(
     :param r: Abstand der Nachbarn
     :param inside: Farbe, die als "innen" qualifiziert
     :param outside: Farbe, die als "außerhalb der Fläche" gilt
-    :returns: Boolean
+    :returns: "Kurvigkeit"
     """
-    stepsize = int(360 / n)
-    neighvals = []
-    retval = False
+    retval = None
+    # Randbehandlung; Kurven in Bildrandgebieten sind nicht relevant!
+    if (
+        p[0] == 0
+        or p[1] == 0
+        or p[0] + r >= img.shape[1]
+        or p[0] - r < 0
+        or p[1] + r >= img.shape[0]
+        or p[1] - r < 0
+    ):
+        retval = 0.0
+    else:
+        stepsize = int(360 / n)
+        neighvals = []
 
-    for a in range(0, 360, stepsize):
-        d_y = np.round(np.cos(np.deg2rad(a)), 2)
-        d_x = np.round(np.sin(np.deg2rad(a)), 2)
-        y = int(pixel[0] - (r * d_y))
-        x = int(pixel[1] + (r * d_x))
+        for a in range(0, 90, stepsize):
+            d_y = np.round(np.cos(np.deg2rad(a)), 2)
+            d_x = np.round(np.sin(np.deg2rad(a)), 2)
+            y_p = int(np.round(p[1] - (r * d_y)))
+            y_n = int(np.round(p[1] + (r * d_y)))
+            x_p = int(np.round(p[0] + (r * d_x)))
+            x_n = int(np.round(p[0] - (r * d_x)))
 
-        try:
-            nv = img[y, x]
-        except IndexError:
-            nv = 0
+            neighvals.extend((img[y_p, x_p], img[y_n, x_p], img[y_n, x_n], img[y_p, x_n]))
 
-        neighvals.append(nv)
-
-    if 0.5 <= ((sum(neighvals) / 255) / n) <= 0.85:
-        retval = True
+        retval = (sum(neighvals) / inside) / n
+        # print(f"{str(p)} n:{n} r:{r} retval:{retval}")
 
     return retval
 
 
 def find_keypoints(img: np.ndarray) -> Union[tuple, tuple]:
     """
-    :param img: Eingangsbild (GREY!)
-    :returns: ROI / Template zum Matchen
+    Finde die Keypoints des Bildes, in unserem Fall die beiden Lücken
+    zwischen Zeige und Mittelfinger bzw. Ring- und kleinem Finger.
+    :param img: Eingangsbild
+    :returns: Koordinaten der Keypoints
     """
     # weichzeichnen und binarisieren
     blurred = cv.GaussianBlur(img, (13, 13), 0)
     _, thresh = cv.threshold(blurred, (THRESH_FACTOR * img.mean()), 255, cv.THRESH_BINARY)
 
     # finde die Kontur der Hand
+    # TODO je nach Orientierung beschneiden, da Lücken in bestimmtem Bildausschnitt
+    # erwartet werden können.
     contours, _ = cv.findContours(thresh, cv.RETR_TREE, cv.CHAIN_APPROX_NONE)
 
     # mach eine Liste aus Tupeln zur besseren Weiterverarbeitung draus
     contours = [tuple(c[0]) for c in contours[0]]
 
     # CHVD-Algorithmus, Ong et al.
-    valleys = {}
+    valleys = []
+    last = 0
+    idx = -1
 
     for i, c in enumerate(contours):
         if (
-            check_neighbours(c, img, 4, ALPHA)
-            and check_neighbours(c, img, 8, BETA)
-            and check_neighbours(c, img, 16, GAMMA)
+            neighbourhood_curvature(c, thresh, 4, ALPHA) == 1.0
+            and 0.86 <= neighbourhood_curvature(c, thresh, 8, BETA) <= 1.0
+            # and 0.85 <= neighbourhood_curvature(c, thresh, 16, GAMMA) <= 1.0
         ):
-            valleys[i] = c
+            if last / i < 0.97:
+                idx += 1
+                valleys.append([c])
+            else:
+                valleys[idx].append(c)
+            last = i
         else:
             pass
 
-    # Sammlung vom Kurven in separate Listen aufteilen; Verbesserungsbedarf!
-    keys = [list(group) for group in mit.consecutive_groups(valleys.keys())]
-    coords = list(valleys.values())
-    valleys = []
-    for i in range(len(keys)):
-        valleys.append([coords.pop(0) for _ in range(len(keys[i]))])
-
+    # TODO Tangente zwischen 0 und 2 finden; 0 und 2 sind scheinbar immer die relevanten Finger,
+    # also sowohl bei linker als auch rechter Hand
     return valleys
 
 
