@@ -43,6 +43,25 @@ BETA = ALPHA + ALPHA
 GAMMA = ALPHA + BETA
 
 
+# # # # # #
+# Utility #
+# # # # # #
+
+
+def interpol2d(points: list, steps: int) -> list:
+    """
+    Interpoliere steps Punkte auf Basis von points.
+    :param points: Liste aus Punkten (Tupel)
+    :param steps: Anzahl der Schritte
+    :returns: interpolierte Punkte in einer Liste
+    """
+    x = np.array([p[0] for p in points])
+    y = np.array([p[1] for p in points])
+    i = np.arange(len(points))
+    s = np.linspace(i[0], i[-1], steps)
+    return list(zip(np.interp(s, i, x), np.interp(s, i, y)))
+
+
 # # # # # # # # #
 # Preprocessing #
 # # # # # # # # #
@@ -89,7 +108,6 @@ def neighbourhood_curvature(
             neighvals.extend((img[y_p, x_p], img[y_n, x_p], img[y_n, x_n], img[y_p, x_n]))
 
         retval = (sum(neighvals) / inside) / n
-        # print(f"{str(p)} n:{n} r:{r} retval:{retval}")
 
     return retval
 
@@ -105,10 +123,11 @@ def find_keypoints(img: np.ndarray) -> Union[tuple, tuple]:
     blurred = cv.GaussianBlur(img, (13, 13), 0)
     _, thresh = cv.threshold(blurred, (THRESH_FACTOR * img.mean()), 255, cv.THRESH_BINARY)
 
-    # finde die Kontur der Hand
-    # TODO je nach Orientierung beschneiden, da Lücken in bestimmtem Bildausschnitt
-    # erwartet werden können.
-    contours, _ = cv.findContours(thresh, cv.RETR_TREE, cv.CHAIN_APPROX_NONE)
+    # finde die Kontur der Hand; betrachte nur linke Hälfte des Bildes,
+    # weil wir dort die wichtigen Kurven erwarten können
+    contours, _ = cv.findContours(
+        thresh[:, : int(img.shape[1] / 2)], cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE
+    )
 
     # mach eine Liste aus Tupeln zur besseren Weiterverarbeitung draus
     contours = [tuple(c[0]) for c in contours[0]]
@@ -133,9 +152,11 @@ def find_keypoints(img: np.ndarray) -> Union[tuple, tuple]:
         else:
             pass
 
+    valleys_interp = [interpol2d(v, 20) for v in valleys]
     # TODO Tangente zwischen 0 und 2 finden; 0 und 2 sind scheinbar immer die relevanten Finger,
     # also sowohl bei linker als auch rechter Hand
-    return valleys
+
+    return valleys_interp
 
 
 def crop_to_roi(img: np.ndarray, p_min: tuple, p_max: tuple) -> np.ndarray:

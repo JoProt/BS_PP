@@ -4,7 +4,7 @@ import more_itertools as mit
 import itertools
 
 img = ppscan.cv.imread(
-    "/home/lmg/HSW/BiomSys/Praktikum/CASIA-PalmprintV1.zi__FILES/0001/0001_m_l_07.jpg", 0
+    "/home/lmg/HSW/BiomSys/Praktikum/CASIA-PalmprintV1.zi__FILES/0001/0001_m_r_07.jpg", 0
 )
 
 v = ppscan.find_keypoints(img)
@@ -12,11 +12,11 @@ v = ppscan.find_keypoints(img)
 
 print(v)
 
-for a in v:
-    for p in a:
-        ppscan.cv.circle(img, p, 1, (255, 255, 255), -1)
+# for a in v:
+#     for p in a:
+#         ppscan.cv.circle(img, p, 1, (255, 255, 255), -1)
 
-ppscan.dbg_show(img)
+# ppscan.dbg_show(img)
 
 # drawing = np.zeros((img.shape[0], img.shape[1], 3), dtype=np.uint8)
 
