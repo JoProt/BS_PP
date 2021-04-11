@@ -112,11 +112,41 @@ def neighbourhood_curvature(
     return retval
 
 
-def find_keypoints(img: np.ndarray) -> Union[tuple, tuple]:
+def find_valleys(img: np.ndarray, contour: list) -> list:
+    """
+    CHVD-Algorithmus, Ong et al. Findet "Täler" in einer Kontur.
+    :param img: Bild, in dem die Täler gesucht werden
+    :param contour: Kontur des Bildes als Punkteliste
+    :returns: Täler als Liste aus Listen von Punkten (nach Zusammenhängen gruppiert)
+    """
+    valleys = []
+    last = 0
+    idx = -1
+
+    for i, c in enumerate(contour):
+        if (
+            neighbourhood_curvature(c, img, 4, ALPHA) == 1.0
+            and 0.86 <= neighbourhood_curvature(c, img, 8, BETA) <= 1.0
+            # and 0.85 <= neighbourhood_curvature(c, img, 16, GAMMA) <= 1.0
+        ):
+            if last / i < 0.97:
+                idx += 1
+                valleys.append([c])
+            else:
+                valleys[idx].append(c)
+            last = i
+        else:
+            pass
+
+    return valleys
+
+
+def find_keypoints(img: np.ndarray, hand: int = 0) -> Union[tuple, tuple]:
     """
     Finde die Keypoints des Bildes, in unserem Fall die beiden Lücken
     zwischen Zeige und Mittelfinger bzw. Ring- und kleinem Finger.
     :param img: Eingangsbild
+    :param hand: Code der Hand; 0=rechts, 1=links
     :returns: Koordinaten der Keypoints
     """
     # weichzeichnen und binarisieren
@@ -132,34 +162,24 @@ def find_keypoints(img: np.ndarray) -> Union[tuple, tuple]:
     # mach eine Liste aus Tupeln zur besseren Weiterverarbeitung draus
     contours = [tuple(c[0]) for c in contours[0]]
 
-    # CHVD-Algorithmus, Ong et al.
-    valleys = []
-    last = 0
-    idx = -1
+    # "Täler" in der Handkontur finden; dort werden sich Keypoints befinden
+    valleys = find_valleys(thresh, contours)
 
-    for i, c in enumerate(contours):
-        if (
-            neighbourhood_curvature(c, thresh, 4, ALPHA) == 1.0
-            and 0.86 <= neighbourhood_curvature(c, thresh, 8, BETA) <= 1.0
-            # and 0.85 <= neighbourhood_curvature(c, thresh, 16, GAMMA) <= 1.0
-        ):
-            if last / i < 0.97:
-                idx += 1
-                valleys.append([c])
-            else:
-                valleys[idx].append(c)
-            last = i
-        else:
-            pass
+    # Werte interpolieren, um eine etwas sauberere Kurve zu bekommen
+    valleys_interp = [interpol2d(v, 10) for v in valleys]
 
-    valleys_interp = [interpol2d(v, 20) for v in valleys]
-    # TODO Tangente zwischen 0 und 2 finden; 0 und 2 sind scheinbar immer die relevanten Finger,
-    # also sowohl bei linker als auch rechter Hand
+    # Anscheinend sind immer der erste und letzte Punkt interessant; stimmt das?
+    v_1 = np.array(valleys_interp[0 - hand]).T
+    v_2 = np.array(valleys_interp[hand - 1]).T
 
-    return valleys_interp
+    # QnD: Mittelpunkt; TODO tatsächlich die Tangente berechnen
+    kp_1 = (int(np.round(v_1[0].mean())), int(np.round(v_1[1].mean())))
+    kp_2 = (int(np.round(v_2[0].mean())), int(np.round(v_2[1].mean())))
+
+    return kp_1, kp_2
 
 
-def crop_to_roi(img: np.ndarray, p_min: tuple, p_max: tuple) -> np.ndarray:
+def transform_to_roi(img: np.ndarray, p_min: tuple, p_max: tuple) -> np.ndarray:
     """
     Transformiere Bild so, dass Punkte p_min und p_max
     die y-Achse an der linken Bildkante bilden.
@@ -179,7 +199,14 @@ def crop_to_roi(img: np.ndarray, p_min: tuple, p_max: tuple) -> np.ndarray:
     rotated = cv.warpAffine(img, rot_mat, img.shape[1::-1])
 
     # gib (beschnittenes) Bild zurück
-    return rotated[p_min[1] - d : p_min[1], p_min[0] : -1]
+    # TODO auf Größe des Zuschnitts einigen!
+    y_start = p_min[1] - d
+    y_end = p_min[1]
+    x_start = p_min[0] + 15
+    x_end = x_start + 250
+    cropped = rotated[y_start:y_end, x_start:x_end]
+
+    return cropped
 
 
 # ...
