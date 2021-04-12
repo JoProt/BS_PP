@@ -12,7 +12,6 @@
 
 import os
 import sys
-import more_itertools as mit
 
 from typing import Union
 
