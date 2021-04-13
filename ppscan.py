@@ -86,6 +86,7 @@ def neighbourhood_curvature(
     if (
         p[0] == 0
         or p[1] == 0
+        # p[]+r nicht innerhalb von img-Dimensionen
         or p[0] + r >= img.shape[1]
         or p[0] - r < 0
         or p[1] + r >= img.shape[0]
