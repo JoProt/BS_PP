@@ -14,28 +14,28 @@ jobs:
     # Load all steps #
     ##################
     steps:
-	  # Checkout Code
-	  - name: Checkout Code
-      	uses: actions/checkout@v2
+      # Checkout Code
+      - name: Checkout Code
+        uses: actions/checkout@v2
 	  # Python 3.8 Setup
-	  - name: Setup Python
+      - name: Setup Python
       	uses: actions/setup-python@v2
-		with:
-		  python-version: '3.8'
-		run: pip install -r requirements.txt
+        with:
+          python-version: '3.8'
+        run: pip install -r requirements.txt
 	  # black linter
       - uses: psf/black@stable
         with:
           args: ". -l 100"
 	  # python-lint Linter
-	  - name: Run python-lint Linter
-	  - uses: ricardochaves/python-lint@v1.3.0
-		with:
-		  python-root-list: "."
-		  use-pylint: false
-		  use-pycodestyle: false
-		  use-flake8: false
-		  use-black: true
-		  use-mypy: false
-		  use-isort: false
-		  extra-black-options: ". -l 100"
+      - name: Run python-lint Linter
+      - uses: ricardochaves/python-lint@v1.3.0
+        with:
+          python-root-list: "."
+          use-pylint: false
+          use-pycodestyle: false
+          use-flake8: false
+          use-black: true
+          use-mypy: false
+          use-isort: false
+          extra-black-options: ". -l 100"
