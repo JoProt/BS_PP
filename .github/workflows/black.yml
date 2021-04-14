@@ -2,17 +2,15 @@ name: Lint Code Base
 
 on: [push, pull_request]
 
-###############
-# Set the Job #
-###############
+# Set the Job
 jobs:
   lint:
-    name: Lint Code Base	# Name the Job
+    # Name the Job
+    name: Lint Code Base
+    # Set environment	
     runs-on: ubuntu-latest
 
-    ##################
-    # Load all steps #
-    ##################
+    # Load all steps
     steps:
       # Checkout Code
       - name: Checkout Code
@@ -23,11 +21,11 @@ jobs:
         with:
           python-version: '3.8'
         run: pip install -r requirements.txt
-      # black linter
+      # Use black Linter
       - uses: psf/black@stable
         with:
           args: ". -l 100"
-      # python-lint Linter
+      # Use python-lint Linter
       - name: Run python-lint Linter
       - uses: ricardochaves/python-lint@v1.3.0
         with:
