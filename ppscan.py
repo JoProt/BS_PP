@@ -61,6 +61,41 @@ def interpol2d(points: list, steps: int) -> list:
     return list(zip(np.interp(s, i, x), np.interp(s, i, y)))
 
 
+def find_tangent_points(v_1: np.array, v_2: np.array) -> Union[tuple, tuple]:
+    """
+    Prüfe für jeden Punkt P in einem Tal (Kurve K), ob eine Gerade zwischen P
+    und einem Punkt auf der anderen Kurve eine Tangente beider Kurven ist.
+    Wenn ja, gib jeweils die Punkte beider Kurven zurück, die auf der Tangente liegen.
+    :param v_1, v_2: zu betrachtende Kurven (Listen aus Koordinatentupeln)
+    :returns: Punkte der Tangente bei Existenz, None andernfalls
+    """
+    vs = np.concatenate((v_1, v_2))
+
+    # wenn die Gerade zwischen p_1 und p_2 keine weiteren Punkte in v_1 und v_2 schneidet,
+    # dann ist die Gerade als Tangente beider Kurven anzusehen
+    for p_1 in v_1:
+        for p_2 in v_2:
+            # Wahrheitskriterium soll auf alle p aus v_1 und v_2 zutreffen
+            if all(
+                [
+                    # ist f(p.y) größer als p.x, d.h. existiert kein Schnittpunkt?
+                    # f sei die Geradengleichung der Geraden zw. p_1 und p_2
+                    (
+                        p_1[0] * ((p[1] - p_2[1]) / (p_1[1] - p_2[1]))
+                        + p_2[0] * ((p[1] - p_1[1]) / (p_2[1] - p_1[1]))
+                    )
+                    >= p[0]
+                    for p in vs
+                ]
+            ):
+                # runde Koordinaten zu nächsten ganzzahligen Pixelwerten
+                p_1 = (int(np.round(p_1[0])), int(np.round(p_1[1])))
+                p_2 = (int(np.round(p_2[0])), int(np.round(p_2[1])))
+                return p_1, p_2
+
+    return None, None
+
+
 # # # # # # # # #
 # Preprocessing #
 # # # # # # # # #
@@ -166,13 +201,12 @@ def find_keypoints(img: np.ndarray, hand: int = 0) -> Union[tuple, tuple]:
     # Werte interpolieren, um eine etwas sauberere Kurve zu bekommen
     valleys_interp = [interpol2d(v, 10) for v in valleys]
 
-    # Anscheinend sind immer der erste und letzte Punkt interessant; stimmt das?
-    v_1 = np.array(valleys_interp[0 - hand]).T
-    v_2 = np.array(valleys_interp[hand - 1]).T
+    # Anscheinend sind immer der erste und letzte Punkt interessant; stimmt das? Nö
+    v_1 = np.array(valleys_interp[0 - hand])
+    v_2 = np.array(valleys_interp[hand - 1])
 
-    # QnD: Mittelpunkt; TODO tatsächlich die Tangente berechnen
-    kp_1 = (int(np.round(v_1[0].mean())), int(np.round(v_1[1].mean())))
-    kp_2 = (int(np.round(v_2[0].mean())), int(np.round(v_2[1].mean())))
+    # Punkte auf Tangente beider Täler finden; das sind die Keypoints
+    kp_1, kp_2 = find_tangent_points(v_1, v_2)
 
     return kp_1, kp_2
 
