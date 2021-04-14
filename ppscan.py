@@ -61,7 +61,7 @@ def interpol2d(points: list, steps: int) -> list:
     return list(zip(np.interp(s, i, x), np.interp(s, i, y)))
 
 
-def find_tangent_points(v_1: np.array, v_2: np.array) -> Union[tuple, tuple]:
+def find_tangent_points(v_1: list, v_2: list) -> Union[tuple, tuple]:
     """
     Prüfe für jeden Punkt P in einem Tal (Kurve K), ob eine Gerade zwischen P
     und einem Punkt auf der anderen Kurve eine Tangente beider Kurven ist.
@@ -69,7 +69,7 @@ def find_tangent_points(v_1: np.array, v_2: np.array) -> Union[tuple, tuple]:
     :param v_1, v_2: zu betrachtende Kurven (Listen aus Koordinatentupeln)
     :returns: Punkte der Tangente bei Existenz, None andernfalls
     """
-    vs = np.concatenate((v_1, v_2))
+    vs = v_1 + v_2
 
     # wenn die Gerade zwischen p_1 und p_2 keine weiteren Punkte in v_1 und v_2 schneidet,
     # dann ist die Gerade als Tangente beider Kurven anzusehen
@@ -147,6 +147,7 @@ def neighbourhood_curvature(
     return retval
 
 
+# TODO manchmal wird hier noch der Daumen gefunden
 def find_valleys(img: np.ndarray, contour: list) -> list:
     """
     CHVD-Algorithmus, Ong et al. Findet "Täler" in einer Kontur.
@@ -202,8 +203,8 @@ def find_keypoints(img: np.ndarray, hand: int = 0) -> Union[tuple, tuple]:
     valleys_interp = [interpol2d(v, 10) for v in valleys]
 
     # Anscheinend sind immer der erste und letzte Punkt interessant; stimmt das? Nö
-    v_1 = np.array(valleys_interp[0 - hand])
-    v_2 = np.array(valleys_interp[hand - 1])
+    v_1 = valleys_interp[0 - hand]
+    v_2 = valleys_interp[hand - 1]
 
     # Punkte auf Tangente beider Täler finden; das sind die Keypoints
     kp_1, kp_2 = find_tangent_points(v_1, v_2)
