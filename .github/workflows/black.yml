@@ -20,6 +20,7 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: '3.8'
+      # Install dependencies
       - run: pip install -r requirements.txt
       # Use black Linter
       - name: Run black Linter
