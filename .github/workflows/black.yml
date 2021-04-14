@@ -16,13 +16,14 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v2
       # Python 3.8 Setup
-      - name: Setup Python
-      	uses: actions/setup-python@v2
+      - name: Setup python
+        uses: actions/setup-python@v2
         with:
           python-version: '3.8'
         run: pip install -r requirements.txt
       # Use black Linter
-      - uses: psf/black@stable
+      - name: Run black Linter
+        uses: psf/black@stable
         with:
           args: ". -l 100"
       # Use python-lint Linter
