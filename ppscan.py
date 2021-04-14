@@ -135,9 +135,6 @@ def find_valleys(img: np.ndarray, contour: list) -> list:
             else:
                 valleys[idx].append(c)
             last = i
-        # ein leerer else Zweig wird nicht benötigt, oder täusche ich mich da?
-        #else:
-        #    pass
 
     return valleys
 
@@ -213,9 +210,9 @@ def transform_to_roi(img: np.ndarray, p_min: tuple, p_max: tuple) -> np.ndarray:
 # ...
 
 
-#def main():
+# def main():
 #    return
 
 
-#if __name__ == "__main__":
+# if __name__ == "__main__":
 #    sys.exit(main())
