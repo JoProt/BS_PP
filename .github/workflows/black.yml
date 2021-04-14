@@ -7,7 +7,7 @@ jobs:
   lint:
     # Name the Job
     name: Lint Code Base
-    # Set environment	
+    # Set environment
     runs-on: ubuntu-latest
 
     # Load all steps

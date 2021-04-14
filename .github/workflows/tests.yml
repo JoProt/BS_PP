@@ -7,7 +7,7 @@ jobs:
   tests:
     # Name the Job
     name: Automated Unit Test
-    # Set environment	
+    # Set environment
     runs-on: ubuntu-latest
 
     # Load all steps
