@@ -1,2 +1,5 @@
 opencv-python
 numpy
+pytest
+pytest-cov
+parameterized
