@@ -17,6 +17,15 @@ from typing import Union
 
 import numpy as np
 import cv2 as cv
+import sqlalchemy as db
+from sqlalchemy.orm import declarative_base
+from sqlalchemy.orm import relationship
+from sqlalchemy.orm import sessionmaker
+
+engine = db.create_engine("sqlite:///palmprint.db")
+Base = declarative_base()
+Session = sessionmaker(bind=engine)
+session = Session()
 
 
 def dbg_show(img):
@@ -40,6 +49,26 @@ THRESH_FACTOR = 0.5
 ALPHA = 10
 BETA = ALPHA + ALPHA
 GAMMA = ALPHA + BETA
+
+# # # # # #
+# Models  #
+# # # # # #
+
+
+class User(Base):
+    __tablename__ = "users"
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String)
+    palmprints = relationship("Palmprint")
+
+
+class Palmprint(Base):
+    __tablename__ = "palmprints"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
+    data = db.Column(db.String)
 
 
 # # # # # #
