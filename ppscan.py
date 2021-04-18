@@ -264,7 +264,7 @@ def transform_to_roi(img: np.ndarray, p_min: tuple, p_max: tuple) -> np.ndarray:
     rot_mat = cv.getRotationMatrix2D(p_min, angle, 1.0)
     rotated = cv.warpAffine(img, rot_mat, img.shape[1::-1])
 
-    # gib (beschnittenes) Bild zurück
+    # gibt (beschnittenes) Bild zurück
     # TODO auf Größe des Zuschnitts einigen!
     y_start = p_min[1] - d
     y_end = p_min[1]

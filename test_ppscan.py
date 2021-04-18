@@ -61,82 +61,58 @@ class TestPPscan(unittest.TestCase):
         )
         assert 0.0 < val < 1.0
 
-    # @parameterized.expand(
-    #     [
-    #         ("devel/l_01.jpg",),
-    #         ("devel/l_04.jpg",),
-    #         ("devel/r_03.jpg",),
-    #         ("devel/r_08.jpg",),
-    #     ]
-    # )
-    # def test_find_valleys_count(self, file):
-    #     """
-    #     Überprüfung der Listenlänge von valleys (3) und deren Punkte (>=2)
-    #
-    #     :return: True, wenn 3 valleys mit je mindestens 2 Punkten gefunden wurden
-    #     """
-    #     # aus find_keypoints() benötigter Code (l.52-59)
-    #     img = ppscan.cv.imread(file, 0)
-    #     blurred = ppscan.cv.GaussianBlur(img, (13, 13), 0)
-    #     _, thresh = ppscan.cv.threshold(
-    #         blurred, (ppscan.THRESH_FACTOR * img.mean()), 255, ppscan.cv.THRESH_BINARY
-    #     )
-    #     contours, _ = ppscan.cv.findContours(
-    #         thresh[:, : int(img.shape[1] / 2)],
-    #         ppscan.cv.RETR_TREE,
-    #         ppscan.cv.CHAIN_APPROX_SIMPLE,
-    #     )
-    #     contours = [tuple(c[0]) for c in contours[0]]
-    #     valleys = ppscan.find_valleys(thresh, contours)
-    #
-    #     assert len(valleys) == 3
-    #     for valley in valleys:
-    #         # >= 2, weil interpolation zwischen mindestens zwei Punkten statt finden muss
-    #         assert len(valley) >= 2
-    #
-    # def test_find_keypoints_l_01(self):
-    #     """
-    #     Test auf Bestimmung der Keypoints (zwischen Zeige- und Mittelfinger und zwischen Ringfinger und kleinem Finger)
-    #
-    #     :return: True bei richtiger Berechnung für Bild l_01.jpg
-    #     """
-    #     img = ppscan.cv.imread("devel/dummy.jpg", 0)
-    #     k1, k2 = ppscan.find_keypoints(img)
-    #     assert k1 == (221, 155)
-    #     assert k2 == (142, 309)
-    #
-    # def test_find_keypoints_l_04(self):
-    #     """
-    #     Test auf Bestimmung der Keypoints (zwischen Zeige- und Mittelfinger und zwischen Ringfinger und kleinem Finger)
-    #
-    #     :return: True bei richtiger Berechnung für Bild l_04.jpg
-    #     """
-    #     img = ppscan.cv.imread("devel/l_04.jpg", 0)
-    #     k1, k2 = ppscan.find_keypoints(img)
-    #     assert k1 == (175, 119)
-    #     assert k2 == (95, 276)
-    #
-    # def test_find_keypoints_r_03(self):
-    #     """
-    #     Test auf Bestimmung der Keypoints (zwischen Zeige- und Mittelfinger und zwischen Ringfinger und kleinem Finger)
-    #
-    #     :return: True bei richtiger Berechnung für Bild r_03.jpg
-    #     """
-    #     img = ppscan.cv.imread("devel/r_03.jpg", 0)
-    #     k1, k2 = ppscan.find_keypoints(img)
-    #     assert k1 == (117, 179)
-    #     assert k2 == (171, 356)
-    #
-    # def test_find_keypoints_r_08(self):
-    #     """
-    #     Test auf Bestimmung der Keypoints (zwischen Zeige- und Mittelfinger und zwischen Ringfinger und kleinem Finger)
-    #
-    #     :return: True bei richtiger Berechnung für Bild r_08.jpg
-    #     """
-    #     img = ppscan.cv.imread("devel/r_08.jpg", 0)
-    #     k1, k2 = ppscan.find_keypoints(img)
-    #     assert k1 == (164, 201)
-    #     assert k2 == (198, 379)
+    @parameterized.expand(
+        [
+            ("devel/l_01.jpg",),
+            ("devel/l_04.jpg",),
+            ("devel/r_03.jpg",),
+            ("devel/r_08.jpg",),
+        ]
+    )
+    def test_find_valleys_count(self, file):
+        """
+        Überprüfung der Listenlänge von valleys (3) und deren Punkte (>=2)
+        :return: True, wenn 3 valleys mit je mindestens 2 Punkten gefunden wurden
+        """
+        # aus find_keypoints() benötigter Code (l.52-59)
+        img = ppscan.cv.imread(file, 0)
+        blurred = ppscan.cv.GaussianBlur(img, (13, 13), 0)
+        _, thresh = ppscan.cv.threshold(
+            blurred, (ppscan.THRESH_FACTOR * img.mean()), 255, ppscan.cv.THRESH_BINARY
+        )
+        contours, _ = ppscan.cv.findContours(
+            thresh[:, : int(img.shape[1] / 2)],
+            ppscan.cv.RETR_TREE,
+            ppscan.cv.CHAIN_APPROX_SIMPLE,
+        )
+        contours = [tuple(c[0]) for c in contours[0]]
+        valleys = ppscan.find_valleys(thresh, contours)
+        assert len(valleys) == 3
+        for valley in valleys:
+            # >= 2, weil interpolation zwischen mindestens zwei Punkten statt finden muss
+            assert len(valley) >= 2
+
+    def test_find_keypoints_l_dummy(self):
+        """
+        Test auf Bestimmung der Keypoints (zwischen Zeige- und Mittelfinger und zwischen Ringfinger und kleinem Finger)
+        :return: True bei richtiger Berechnung für Bild l_01.jpg
+        """
+        img = ppscan.cv.imread("devel/l_dummy.jpg", 1)
+        img = ppscan.cv.cvtColor(img, ppscan.cv.COLOR_BGR2GRAY)
+        k1, k2 = ppscan.find_keypoints(img, 0)
+        assert k1 == (168, 82)
+        assert k2 == (168, 190)
+
+    def test_find_keypoints_r_dummy(self):
+        """
+        Test auf Bestimmung der Keypoints (zwischen Zeige- und Mittelfinger und zwischen Ringfinger und kleinem Finger)
+        :return: True bei richtiger Berechnung für Bild l_01.jpg
+        """
+        img = ppscan.cv.imread("devel/r_dummy.jpg", 1)
+        img = ppscan.cv.cvtColor(img, ppscan.cv.COLOR_BGR2GRAY)
+        k1, k2 = ppscan.find_keypoints(img, 0)
+        assert k1 == (168, 210)
+        assert k2 == (168, 318)
 
     # def test_transform_to_roi(self):
-    #    TODO: wenn einheitliche Größe des Zuschnitts bestimmt
+    #   TODO: wenn einheitliche Größe des Zuschnitts bestimmt
