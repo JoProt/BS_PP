@@ -114,16 +114,16 @@ def find_tangent_points(v_1: list, v_2: list) -> Union[tuple, tuple]:
         for p_2 in v_2:
             # Wahrheitskriterium soll auf alle p aus v_1 und v_2 zutreffen
             if all(
-                    [
-                        # ist f(p.y) größer als p.x, d.h. existiert kein Schnittpunkt?
-                        # f sei die Geradengleichung der Geraden zw. p_1 und p_2
-                        (
-                                p_1[0] * ((p[1] - p_2[1]) / (p_1[1] - p_2[1]))
-                                + p_2[0] * ((p[1] - p_1[1]) / (p_2[1] - p_1[1]))
-                        )
-                        >= p[0]
-                        for p in vs
-                    ]
+                [
+                    # ist f(p.y) größer als p.x, d.h. existiert kein Schnittpunkt?
+                    # f sei die Geradengleichung der Geraden zw. p_1 und p_2
+                    (
+                        p_1[0] * ((p[1] - p_2[1]) / (p_1[1] - p_2[1]))
+                        + p_2[0] * ((p[1] - p_1[1]) / (p_2[1] - p_1[1]))
+                    )
+                    >= p[0]
+                    for p in vs
+                ]
             ):
                 # runde Koordinaten zu nächsten ganzzahligen Pixelwerten
                 p_1 = (int(np.round(p_1[0])), int(np.round(p_1[1])))
@@ -139,7 +139,7 @@ def find_tangent_points(v_1: list, v_2: list) -> Union[tuple, tuple]:
 
 
 def neighbourhood_curvature(
-        p: tuple, img: np.ndarray, n: int, r: int, inside: int = 255, outside: int = 0
+    p: tuple, img: np.ndarray, n: int, r: int, inside: int = 255, outside: int = 0
 ) -> float:
     """
     Überprüfe n Nachbarn im Abstand von r, ob sie innerhalb oder außerhalb
@@ -156,13 +156,13 @@ def neighbourhood_curvature(
     retval = None
     # Randbehandlung; Kurven in Bildrandgebieten sind nicht relevant!
     if (
-            p[0] == 0
-            or p[1] == 0
-            # p[]+r nicht innerhalb von img-Dimensionen
-            or p[0] + r >= img.shape[1]
-            or p[0] - r < 0
-            or p[1] + r >= img.shape[0]
-            or p[1] - r < 0
+        p[0] == 0
+        or p[1] == 0
+        # p[]+r nicht innerhalb von img-Dimensionen
+        or p[0] + r >= img.shape[1]
+        or p[0] - r < 0
+        or p[1] + r >= img.shape[0]
+        or p[1] - r < 0
     ):
         retval = 0.0
     else:
@@ -200,9 +200,9 @@ def find_valleys(img: np.ndarray, contour: list) -> list:
 
     for i, c in enumerate(contour):
         if (
-                neighbourhood_curvature(c, img, 4, ALPHA) == 1.0
-                and 0.86 <= neighbourhood_curvature(c, img, 8, BETA) <= 1.0
-                # and 0.85 <= neighbourhood_curvature(c, img, 16, GAMMA) <= 1.0
+            neighbourhood_curvature(c, img, 4, ALPHA) == 1.0
+            and 0.86 <= neighbourhood_curvature(c, img, 8, BETA) <= 1.0
+            # and 0.85 <= neighbourhood_curvature(c, img, 16, GAMMA) <= 1.0
         ):
             if last / i < 0.97:
                 idx += 1
@@ -293,10 +293,17 @@ def build_gabor_filters() -> list:
     filters = []
 
     for theta in GABOR_THETAS:
-        params = {'ksize': GABOR_KSIZE, 'sigma': GABOR_SIGMA, 'theta': theta, 'lambd': GABOR_LAMBDA,
-                  'gamma': GABOR_GAMMA, 'psi': GABOR_PSI, 'ktype': cv.CV_32F}
+        params = {
+            "ksize": GABOR_KSIZE,
+            "sigma": GABOR_SIGMA,
+            "theta": theta,
+            "lambd": GABOR_LAMBDA,
+            "gamma": GABOR_GAMMA,
+            "psi": GABOR_PSI,
+            "ktype": cv.CV_32F,
+        }
         kern = cv.getGaborKernel(**params)
-        filters.append((kern,params))
+        filters.append((kern, params))
     return filters
 
 
@@ -318,16 +325,17 @@ def process(img: np.ndarray, filters: list) -> np.ndarray:
 
 
 def apply_gabor():
-    img = cv.imread('devel/l_01_cropped_test.jpg')
+    img = cv.imread("devel/l_01_cropped_test.jpg")
     img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
-    cv.imshow('image', img)
+    cv.imshow("image", img)
 
     filters = build_gabor_filters()
     minuti = process(img, filters)
-    cv.imshow('Minuti', minuti)
+    cv.imshow("Minuti", minuti)
 
     cv.waitKey(0)
     cv.destroyAllWindows()
+
 
 # ...
 
