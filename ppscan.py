@@ -169,9 +169,7 @@ def neighbourhood_curvature(
             x_p = int(np.round(p[0] + (r * d_x)))
             x_n = int(np.round(p[0] - (r * d_x)))
 
-            neighvals.extend(
-                (img[y_p, x_p], img[y_n, x_p], img[y_n, x_n], img[y_p, x_n])
-            )
+            neighvals.extend((img[y_p, x_p], img[y_n, x_p], img[y_n, x_n], img[y_p, x_n]))
 
         retval = (sum(neighvals) / inside) / n
 
@@ -216,9 +214,7 @@ def find_keypoints(img: np.ndarray, hand: int = 0) -> Union[tuple, tuple]:
     """
     # weichzeichnen und binarisieren
     blurred = cv.GaussianBlur(img, (13, 13), 0)
-    _, thresh = cv.threshold(
-        blurred, (THRESH_FACTOR * img.mean()), 255, cv.THRESH_BINARY
-    )
+    _, thresh = cv.threshold(blurred, (THRESH_FACTOR * img.mean()), 255, cv.THRESH_BINARY)
 
     # finde die Kontur der Hand; betrachte nur linke Hälfte des Bildes,
     # weil wir dort die wichtigen Kurven erwarten können
@@ -268,7 +264,7 @@ def transform_to_roi(img: np.ndarray, p_min: tuple, p_max: tuple) -> np.ndarray:
     # TODO auf Größe des Zuschnitts einigen!
     y_start = p_min[1] - d
     y_end = p_min[1] + 70
-    x_start = p_min[0] + 0
+    x_start = p_min[0] + 10
     x_end = x_start + 350
     cropped = rotated[y_start:y_end, x_start:x_end]
 
