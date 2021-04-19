@@ -267,9 +267,9 @@ def transform_to_roi(img: np.ndarray, p_min: tuple, p_max: tuple) -> np.ndarray:
     # gib (beschnittenes) Bild zurück
     # TODO auf Größe des Zuschnitts einigen!
     y_start = p_min[1] - d
-    y_end = p_min[1]
-    x_start = p_min[0] + 15
-    x_end = x_start + 250
+    y_end = p_min[1] + 70
+    x_start = p_min[0] + 0
+    x_end = x_start + 350
     cropped = rotated[y_start:y_end, x_start:x_end]
 
     return cropped
