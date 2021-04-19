@@ -21,6 +21,7 @@ import sqlalchemy as db
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm import sessionmaker
+from PIL import Image
 
 engine = db.create_engine("sqlite:///palmprint.db")
 Base = declarative_base()
@@ -49,6 +50,13 @@ THRESH_FACTOR = 0.5
 ALPHA = 10
 BETA = ALPHA + ALPHA
 GAMMA = ALPHA + BETA
+
+GABOR_KSIZE = (35, 35)
+GABOR_SIGMA = 5.6179
+GABOR_THETAS = np.arange(0, np.pi, np.pi / 32)
+GABOR_LAMBDA = 1 / 0.0916
+GABOR_GAMMA = 0.7  # 0.23 < v_gamma < 0.92
+GABOR_PSI = 0
 
 # # # # # #
 # Models  #
@@ -106,16 +114,16 @@ def find_tangent_points(v_1: list, v_2: list) -> Union[tuple, tuple]:
         for p_2 in v_2:
             # Wahrheitskriterium soll auf alle p aus v_1 und v_2 zutreffen
             if all(
-                [
-                    # ist f(p.y) größer als p.x, d.h. existiert kein Schnittpunkt?
-                    # f sei die Geradengleichung der Geraden zw. p_1 und p_2
-                    (
-                        p_1[0] * ((p[1] - p_2[1]) / (p_1[1] - p_2[1]))
-                        + p_2[0] * ((p[1] - p_1[1]) / (p_2[1] - p_1[1]))
-                    )
-                    >= p[0]
-                    for p in vs
-                ]
+                    [
+                        # ist f(p.y) größer als p.x, d.h. existiert kein Schnittpunkt?
+                        # f sei die Geradengleichung der Geraden zw. p_1 und p_2
+                        (
+                                p_1[0] * ((p[1] - p_2[1]) / (p_1[1] - p_2[1]))
+                                + p_2[0] * ((p[1] - p_1[1]) / (p_2[1] - p_1[1]))
+                        )
+                        >= p[0]
+                        for p in vs
+                    ]
             ):
                 # runde Koordinaten zu nächsten ganzzahligen Pixelwerten
                 p_1 = (int(np.round(p_1[0])), int(np.round(p_1[1])))
@@ -131,7 +139,7 @@ def find_tangent_points(v_1: list, v_2: list) -> Union[tuple, tuple]:
 
 
 def neighbourhood_curvature(
-    p: tuple, img: np.ndarray, n: int, r: int, inside: int = 255, outside: int = 0
+        p: tuple, img: np.ndarray, n: int, r: int, inside: int = 255, outside: int = 0
 ) -> float:
     """
     Überprüfe n Nachbarn im Abstand von r, ob sie innerhalb oder außerhalb
@@ -148,13 +156,13 @@ def neighbourhood_curvature(
     retval = None
     # Randbehandlung; Kurven in Bildrandgebieten sind nicht relevant!
     if (
-        p[0] == 0
-        or p[1] == 0
-        # p[]+r nicht innerhalb von img-Dimensionen
-        or p[0] + r >= img.shape[1]
-        or p[0] - r < 0
-        or p[1] + r >= img.shape[0]
-        or p[1] - r < 0
+            p[0] == 0
+            or p[1] == 0
+            # p[]+r nicht innerhalb von img-Dimensionen
+            or p[0] + r >= img.shape[1]
+            or p[0] - r < 0
+            or p[1] + r >= img.shape[0]
+            or p[1] - r < 0
     ):
         retval = 0.0
     else:
@@ -192,9 +200,9 @@ def find_valleys(img: np.ndarray, contour: list) -> list:
 
     for i, c in enumerate(contour):
         if (
-            neighbourhood_curvature(c, img, 4, ALPHA) == 1.0
-            and 0.86 <= neighbourhood_curvature(c, img, 8, BETA) <= 1.0
-            # and 0.85 <= neighbourhood_curvature(c, img, 16, GAMMA) <= 1.0
+                neighbourhood_curvature(c, img, 4, ALPHA) == 1.0
+                and 0.86 <= neighbourhood_curvature(c, img, 8, BETA) <= 1.0
+                # and 0.85 <= neighbourhood_curvature(c, img, 16, GAMMA) <= 1.0
         ):
             if last / i < 0.97:
                 idx += 1
@@ -275,12 +283,58 @@ def transform_to_roi(img: np.ndarray, p_min: tuple, p_max: tuple) -> np.ndarray:
     return cropped
 
 
+def build_gabor_filters() -> list:
+    # ksize - size of gabor filter (n, n)
+    # sigma - standard deviation of the gaussian function
+    # theta - orientation of the normal to the parallel stripes
+    # lambda - wavelength of the sunusoidal factor
+    # gamma - spatial aspect ratio
+    # psi - phase offset
+    filters = []
+
+    for theta in GABOR_THETAS:
+        params = {'ksize': GABOR_KSIZE, 'sigma': GABOR_SIGMA, 'theta': theta, 'lambd': GABOR_LAMBDA,
+                  'gamma': GABOR_GAMMA, 'psi': GABOR_PSI, 'ktype': cv.CV_32F}
+        kern = cv.getGaborKernel(**params)
+        filters.append((kern,params))
+    return filters
+
+
+def process(img: np.ndarray, filters: list) -> np.ndarray:
+    threshold = 60
+    # generate np array and fill it with 'white' (255)
+    accum = np.empty_like(img)
+    accum.fill(255)
+
+    # for all filters: filter image and merge with already filtered images
+    for kern, params in filters:
+        fimg = cv.filter2D(img, cv.CV_8UC3, kern)
+        np.minimum(accum, fimg, accum)
+
+    # use threshold to remove minuti
+    accum[accum > threshold] = 255
+
+    return accum
+
+
+def apply_gabor():
+    img = cv.imread('devel/l_01_cropped_test.jpg')
+    img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+    cv.imshow('image', img)
+
+    filters = build_gabor_filters()
+    minuti = process(img, filters)
+    cv.imshow('Minuti', minuti)
+
+    cv.waitKey(0)
+    cv.destroyAllWindows()
+
 # ...
 
 
-# def main():
-#    return
+def main():
+    apply_gabor()
 
 
-# if __name__ == "__main__":
-#    sys.exit(main())
+if __name__ == "__main__":
+    sys.exit(main())
