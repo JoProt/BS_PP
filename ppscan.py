@@ -21,7 +21,6 @@ import sqlalchemy as db
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm import sessionmaker
-from PIL import Image
 
 engine = db.create_engine("sqlite:///palmprint.db")
 Base = declarative_base()
