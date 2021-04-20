@@ -1,6 +1,7 @@
-opencv-python
-numpy
-pytest
-pytest-cov
-parameterized
-sqlalchemy
+# '~=': use compatible version to given version number
+opencv-python~=4.5.1.48
+numpy~=1.20.2
+pytest~=6.2.3
+pytest-cov~=2.11.1
+parameterized~=0.8.1
+sqlalchemy~=1.4.9
