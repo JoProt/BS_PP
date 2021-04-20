@@ -288,6 +288,22 @@ def transform_to_roi(img: np.ndarray, p_min: tuple, p_max: tuple) -> np.ndarray:
     return cropped
 
 
+def build_mask(img: np.ndarray) -> np.ndarray:
+    # generate empty np array and fill it with 'white' (255)
+    mask = np.empty_like(img)
+    mask.fill(255)
+    threshold = 80
+
+    # use threshold to remove lines
+    mask[img < threshold] = 0
+
+    return mask
+
+
+def apply_mask(img: np.ndarray, mask: np.ndarray) -> np.ndarray:
+    return cv.bitwise_and(img, img, mask=mask)
+
+
 def build_gabor_filters() -> list:
     """
     Generiert eine Liste von Gabor Filtern aus gegebenen Konstanten.
@@ -344,14 +360,24 @@ def apply_gabor_filters(img: np.ndarray, filters: list) -> np.ndarray:
 
 
 def main():
-    img = cv.imread("devel/r_03.jpg", cv.IMREAD_GRAYSCALE)
-    k1, k2 = find_keypoints(img)
-    roi = transform_to_roi(img, k2, k1)
-    cv.imshow("roi", roi)
+    #img = cv.imread("devel/r_03.jpg", cv.IMREAD_GRAYSCALE)
+    #k1, k2 = find_keypoints(img)
+    #roi = transform_to_roi(img, k2, k1)
+    #cv.imshow("roi", roi)
+
+    img = cv.imread("devel/l_01_wrongCrop.jpg", cv.IMREAD_GRAYSCALE)
+    cv.imshow("img", img)
+
+    mask = build_mask(img)
+    cv.imshow("mask", mask)
 
     filters = build_gabor_filters()
-    filtered_img = apply_gabor_filters(roi, filters)
-    cv.imshow("filteres", filtered_img)
+    filtered_img = apply_gabor_filters(img, filters)
+    cv.imshow("filtered", filtered_img)
+
+    masked = apply_mask(filtered_img, mask)
+    cv.imshow("masked", masked)
+
 
     cv.waitKey(0)
     cv.destroyAllWindows()
