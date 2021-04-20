@@ -324,7 +324,7 @@ def apply_mask(img: np.ndarray, mask: np.ndarray) -> np.ndarray:
     img2 = cv.bitwise_and(white_background, white_background, mask=inv_mask)
     # cv.imshow("img2", img2)
     masked_img = cv.add(img1, img2)
-    #masked_img = cv.bitwise_and(img, img, mask=mask)
+    # masked_img = cv.bitwise_and(img, img, mask=mask)
     return masked_img
 
 
