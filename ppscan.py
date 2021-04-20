@@ -335,28 +335,27 @@ def process(img: np.ndarray, filters: list) -> np.ndarray:
         filtered_img = cv.filter2D(img, cv.CV_8UC3, kern)
         np.minimum(accum_img, filtered_img, accum_img)
 
-    # use threshold to remove minuti
+    # use threshold to remove lines
     accum_img[accum_img > GABOR_THRESHOLD] = 255
 
     return accum_img
+
 
 # ...
 
 
 def main():
-    img = cv.imread("devel/l_01.jpg")
-    img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
-    cv.imshow("image", img)
-
-
+    img = cv.imread("devel/r_03.jpg", 0)
+    k1, k2 = find_keypoints(img)
+    roi = transform_to_roi(img, k2, k1)
+    cv.imshow("roi", roi)
 
     filters = build_gabor_filters()
-    minuti = process(img, filters)
-    cv.imshow("Minuti", minuti)
+    filtered_img = process(roi, filters)
+    cv.imshow("filteres", filtered_img)
 
     cv.waitKey(0)
     cv.destroyAllWindows()
-
 
 if __name__ == "__main__":
     sys.exit(main())
