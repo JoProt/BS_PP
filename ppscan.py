@@ -10,7 +10,6 @@
     :format: black, reST docstrings
 """
 
-import os
 import sys
 
 from typing import Union
@@ -28,15 +27,15 @@ Session = sessionmaker(bind=engine)
 session = Session()
 
 
-def dbg_show(img):
-    """
-    Wrapper für Fkt. zum Anzeigen des Bildes;
-    zum Debuggen gut.
-    :param img: anzuzeigendes Bild
-    """
-    cv.imshow("DBG", img)
-    cv.waitKey(0)
-    cv.destroyAllWindows()
+# def dbg_show(img):
+#    """
+#    Wrapper für Fkt. zum Anzeigen des Bildes;
+#    zum Debuggen gut.
+#    :param img: anzuzeigendes Bild
+#    """
+#    cv.imshow("DBG", img)
+#    cv.waitKey(0)
+#    cv.destroyAllWindows()
 
 
 # # # # # # #
@@ -318,7 +317,7 @@ def build_gabor_filters() -> list:
     return filters
 
 
-def process(img: np.ndarray, filters: list) -> np.ndarray:
+def apply_gabor_filters(img: np.ndarray, filters: list) -> np.ndarray:
     """
     Wendet Filter-Liste auf Bildkopien an, fügt gefilterte Bilder zu einem zusammen und entfernt alle Elemente unter einem festgelegten Schwellwert.
 
@@ -327,31 +326,31 @@ def process(img: np.ndarray, filters: list) -> np.ndarray:
     :return: gefiltertes Bild
     """
     # generate empty np array and fill it with 'white' (255)
-    accum_img = np.empty_like(img)
-    accum_img.fill(255)
+    merged_img = np.empty_like(img)
+    merged_img.fill(255)
 
     # for all filters: filter image and merge with already filtered images
     for kern, params in filters:
         filtered_img = cv.filter2D(img, cv.CV_8UC3, kern)
-        np.minimum(accum_img, filtered_img, accum_img)
+        np.minimum(merged_img, filtered_img, merged_img)
 
     # use threshold to remove lines
-    accum_img[accum_img > GABOR_THRESHOLD] = 255
+    merged_img[merged_img > GABOR_THRESHOLD] = 255
 
-    return accum_img
+    return merged_img
 
 
 # ...
 
 
 def main():
-    img = cv.imread("devel/r_03.jpg", 0)
+    img = cv.imread("devel/r_03.jpg", cv.IMREAD_GRAYSCALE)
     k1, k2 = find_keypoints(img)
     roi = transform_to_roi(img, k2, k1)
     cv.imshow("roi", roi)
 
     filters = build_gabor_filters()
-    filtered_img = process(roi, filters)
+    filtered_img = apply_gabor_filters(roi, filters)
     cv.imshow("filteres", filtered_img)
 
     cv.waitKey(0)
