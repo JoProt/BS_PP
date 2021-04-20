@@ -50,6 +50,14 @@ ALPHA = 10
 BETA = ALPHA + ALPHA
 GAMMA = ALPHA + BETA
 
+GABOR_KSIZE = (35, 35)
+GABOR_SIGMA = 5.6179
+GABOR_THETAS = np.arange(0, np.pi, np.pi / 32)
+GABOR_LAMBDA = 1 / 0.0916
+GABOR_GAMMA = 0.7  # 0.23 < gamma < 0.92
+GABOR_PSI = 0
+GABOR_THRESHOLD = 255  # 0 to 255
+
 # # # # # #
 # Models  #
 # # # # # #
@@ -79,6 +87,7 @@ class Palmprint(Base):
 def interpol2d(points: list, steps: int) -> list:
     """
     Interpoliere steps Punkte auf Basis von points.
+
     :param points: Liste aus Punkten (Tupel)
     :param steps: Anzahl der Schritte
     :returns: interpolierte Punkte in einer Liste
@@ -95,6 +104,7 @@ def find_tangent_points(v_1: list, v_2: list) -> Union[tuple, tuple]:
     Prüfe für jeden Punkt P in einem Tal (Kurve K), ob eine Gerade zwischen P
     und einem Punkt auf der anderen Kurve eine Tangente beider Kurven ist.
     Wenn ja, gib jeweils die Punkte beider Kurven zurück, die auf der Tangente liegen.
+
     :param v_1, v_2: zu betrachtende Kurven (Listen aus Koordinatentupeln)
     :returns: Punkte der Tangente bei Existenz, None andernfalls
     """
@@ -137,6 +147,7 @@ def neighbourhood_curvature(
     Überprüfe n Nachbarn im Abstand von r, ob sie innerhalb oder außerhalb
     der Fläche im Bild img liegen, ausgehend von Punkt p.
     Anhand dessen kann festgestellt werden, ob es sich um eine Kurve handelt.
+
     :param p: Koordinatenpunkt
     :param img: Binärbild
     :param n: Anzahl der Nachbarn
@@ -182,6 +193,7 @@ def neighbourhood_curvature(
 def find_valleys(img: np.ndarray, contour: list) -> list:
     """
     CHVD-Algorithmus, Ong et al. Findet "Täler" in einer Kontur.
+
     :param img: Bild, in dem die Täler gesucht werden
     :param contour: Kontur des Bildes als Punkteliste
     :returns: Täler als Liste aus Listen von Punkten (nach Zusammenhängen gruppiert)
@@ -210,6 +222,7 @@ def find_keypoints(img: np.ndarray, hand: int = 0) -> Union[tuple, tuple]:
     """
     Finde die Keypoints des Bildes, in unserem Fall die beiden Lücken
     zwischen Zeige und Mittelfinger bzw. Ring- und kleinem Finger.
+
     :param img: Eingangsbild
     :param hand: Code der Hand; 0=rechts, 1=links
     :returns: Koordinaten der Keypoints
@@ -249,6 +262,7 @@ def transform_to_roi(img: np.ndarray, p_min: tuple, p_max: tuple) -> np.ndarray:
     """
     Transformiere Bild so, dass Punkte p_min und p_max
     die y-Achse an der linken Bildkante bilden.
+
     :param img: Eingangsbild
     :param p_min: Minimum des Koordinatensystems
     :param p_max: Maximum des Koordinatensystems
@@ -267,20 +281,82 @@ def transform_to_roi(img: np.ndarray, p_min: tuple, p_max: tuple) -> np.ndarray:
     # gibt (beschnittenes) Bild zurück
     # TODO auf Größe des Zuschnitts einigen!
     y_start = p_min[1] - d
-    y_end = p_min[1]
-    x_start = p_min[0] + 15
-    x_end = x_start + 250
+    y_end = p_min[1] + 70
+    x_start = p_min[0] + 10
+    x_end = x_start + 350
     cropped = rotated[y_start:y_end, x_start:x_end]
 
     return cropped
 
 
+def build_gabor_filters() -> list:
+    """
+    Generiert eine Liste von Gabor Filtern aus gegebenen Konstanten.
+
+    :return: Liste von Gabor Filtern
+    """
+    # ksize - size of gabor filter (n, n)
+    # sigma - standard deviation of the gaussian function
+    # theta - orientation of the normal to the parallel stripes
+    # lambda - wavelength of the sunusoidal factor
+    # gamma - spatial aspect ratio
+    # psi - phase offset
+    filters = []
+
+    for theta in GABOR_THETAS:
+        params = {
+            "ksize": GABOR_KSIZE,
+            "sigma": GABOR_SIGMA,
+            "theta": theta,
+            "lambd": GABOR_LAMBDA,
+            "gamma": GABOR_GAMMA,
+            "psi": GABOR_PSI,
+            "ktype": cv.CV_32F,
+        }
+        kern = cv.getGaborKernel(**params)
+        filters.append((kern, params))
+    return filters
+
+
+def process(img: np.ndarray, filters: list) -> np.ndarray:
+    """
+    Wendet Filter-Liste auf Bildkopien an, fügt gefilterte Bilder zu einem zusammen und entfernt alle Elemente unter einem festgelegten Schwellwert.
+
+    :param img: zu filterndes Bild
+    :param filters: Liste von Gabor Filtern
+    :return: gefiltertes Bild
+    """
+    # generate empty np array and fill it with 'white' (255)
+    accum_img = np.empty_like(img)
+    accum_img.fill(255)
+
+    # for all filters: filter image and merge with already filtered images
+    for kern, params in filters:
+        filtered_img = cv.filter2D(img, cv.CV_8UC3, kern)
+        np.minimum(accum_img, filtered_img, accum_img)
+
+    # use threshold to remove lines
+    accum_img[accum_img > GABOR_THRESHOLD] = 255
+
+    return accum_img
+
+
 # ...
 
 
-# def main():
-#    return
+def main():
+    img = cv.imread("devel/r_03.jpg", 0)
+    k1, k2 = find_keypoints(img)
+    roi = transform_to_roi(img, k2, k1)
+    cv.imshow("roi", roi)
+
+    filters = build_gabor_filters()
+    filtered_img = process(roi, filters)
+    cv.imshow("filteres", filtered_img)
+
+    cv.waitKey(0)
+    cv.destroyAllWindows()
 
 
-# if __name__ == "__main__":
-#    sys.exit(main())
+if __name__ == "__main__":
+    sys.exit(main())
