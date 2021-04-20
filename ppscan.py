@@ -55,7 +55,9 @@ GABOR_THETAS = np.arange(0, np.pi, np.pi / 32)
 GABOR_LAMBDA = 1 / 0.0916
 GABOR_GAMMA = 0.7  # 0.23 < gamma < 0.92
 GABOR_PSI = 0
-GABOR_THRESHOLD = 255  # 0 to 255
+GABOR_THRESHOLD = 120  # 0 to 255
+
+MASK_THRESHOLD = 110
 
 # # # # # #
 # Models  #
@@ -292,16 +294,27 @@ def build_mask(img: np.ndarray) -> np.ndarray:
     # generate empty np array and fill it with 'white' (255)
     mask = np.empty_like(img)
     mask.fill(255)
-    threshold = 80
 
     # use threshold to remove lines
-    mask[img < threshold] = 0
+    mask[img < MASK_THRESHOLD] = 0
 
     return mask
 
 
 def apply_mask(img: np.ndarray, mask: np.ndarray) -> np.ndarray:
-    return cv.bitwise_and(img, img, mask=mask)
+
+    white_background = np.empty_like(img)
+    white_background.fill(255)
+
+    inv_mask = cv.bitwise_not(mask)
+    # cv.imshow("inv_mask", inv_mask)
+    img1 = cv.bitwise_and(img, img, mask=mask)
+    # cv.imshow("img1", img1)
+    img2 = cv.bitwise_and(white_background, white_background, mask=inv_mask)
+    # cv.imshow("img2", img2)
+    masked_img = cv.add(img1, img2)
+    # masked_img = cv.bitwise_and(img, img, mask=mask)
+    return masked_img
 
 
 def build_gabor_filters() -> list:
@@ -360,24 +373,20 @@ def apply_gabor_filters(img: np.ndarray, filters: list) -> np.ndarray:
 
 
 def main():
-    #img = cv.imread("devel/r_03.jpg", cv.IMREAD_GRAYSCALE)
-    #k1, k2 = find_keypoints(img)
-    #roi = transform_to_roi(img, k2, k1)
-    #cv.imshow("roi", roi)
+    # img = cv.imread("devel/r_03.jpg", cv.IMREAD_GRAYSCALE)
+    # k1, k2 = find_keypoints(img)
+    # roi = transform_to_roi(img, k2, k1)
+    # cv.imshow("roi", roi)
 
     img = cv.imread("devel/l_01_wrongCrop.jpg", cv.IMREAD_GRAYSCALE)
     cv.imshow("img", img)
-
     mask = build_mask(img)
     cv.imshow("mask", mask)
-
     filters = build_gabor_filters()
     filtered_img = apply_gabor_filters(img, filters)
     cv.imshow("filtered", filtered_img)
-
     masked = apply_mask(filtered_img, mask)
     cv.imshow("masked", masked)
-
 
     cv.waitKey(0)
     cv.destroyAllWindows()
