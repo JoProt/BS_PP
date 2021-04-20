@@ -300,7 +300,7 @@ def build_mask(img: np.ndarray) -> np.ndarray:
     # generiere leeres np array, füllen mit 'weiß' (255)
     mask = np.empty_like(img)
     mask.fill(255)
-    # setze jedes Maskenpixel auf 0 wenn im gegebenen Bildpixel der Wert kleienr als der Schwellwert ist
+    # setze jedes Maskenpixel auf 0 wenn im gegebenen Bildpixel der Wert kleiner als der Schwellwert ist
     mask[img < MASK_THRESHOLD] = 0
 
     return mask
@@ -324,7 +324,7 @@ def apply_mask(img: np.ndarray, mask: np.ndarray) -> np.ndarray:
     img2 = cv.bitwise_and(white_background, white_background, mask=inv_mask)
     # cv.imshow("img2", img2)
     masked_img = cv.add(img1, img2)
-    # masked_img = cv.bitwise_and(img, img, mask=mask)
+    #masked_img = cv.bitwise_and(img, img, mask=mask)
     return masked_img
 
 
@@ -384,20 +384,18 @@ def apply_gabor_filters(img: np.ndarray, filters: list) -> np.ndarray:
 
 
 def main():
-    # img = cv.imread("devel/r_03.jpg", cv.IMREAD_GRAYSCALE)
-    # k1, k2 = find_keypoints(img)
-    # roi = transform_to_roi(img, k2, k1)
-    # cv.imshow("roi", roi)
+    img = cv.imread("devel/r_03.jpg", cv.IMREAD_GRAYSCALE)
+    k1, k2 = find_keypoints(img)
+    roi = transform_to_roi(img, k2, k1)
+    cv.imshow("roi", roi)
 
-    img = cv.imread("devel/l_01_wrongCrop.jpg", cv.IMREAD_GRAYSCALE)
-    cv.imshow("img", img)
-    mask = build_mask(img)
+    mask = build_mask(roi)
     cv.imshow("mask", mask)
     filters = build_gabor_filters()
-    filtered_img = apply_gabor_filters(img, filters)
-    cv.imshow("filtered", filtered_img)
-    masked = apply_mask(filtered_img, mask)
-    cv.imshow("masked", masked)
+    filtered_roi = apply_gabor_filters(roi, filters)
+    cv.imshow("filtered_roi", filtered_roi)
+    masked_roi = apply_mask(filtered_roi, mask)
+    cv.imshow("masked_roi", masked_roi)
 
     cv.waitKey(0)
     cv.destroyAllWindows()
