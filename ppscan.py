@@ -55,7 +55,7 @@ GABOR_THETAS = np.arange(0, np.pi, np.pi / 32)
 GABOR_LAMBDA = 1 / 0.0916
 GABOR_GAMMA = 0.7  # 0.23 < gamma < 0.92
 GABOR_PSI = 0
-GABOR_THRESHOLD = 120  # 0 to 255
+GABOR_THRESHOLD = 255  # 0 to 255
 
 MASK_THRESHOLD = 110
 
@@ -291,18 +291,29 @@ def transform_to_roi(img: np.ndarray, p_min: tuple, p_max: tuple) -> np.ndarray:
 
 
 def build_mask(img: np.ndarray) -> np.ndarray:
-    # generate empty np array and fill it with 'white' (255)
+    """
+    Generiert eine Maske aus dem gegebenen Bild.
+
+    :param img: Bild welches als Grundlage der Maske dienen soll
+    :return: Maske (schwarz/weiß)
+    """
+    # generiere leeres np array, füllen mit 'weiß' (255)
     mask = np.empty_like(img)
     mask.fill(255)
-
-    # use threshold to remove lines
+    # setze jedes Maskenpixel auf 0 wenn im gegebenen Bildpixel der Wert kleienr als der Schwellwert ist
     mask[img < MASK_THRESHOLD] = 0
 
     return mask
 
 
 def apply_mask(img: np.ndarray, mask: np.ndarray) -> np.ndarray:
+    """
+    Gegebene Maske auf gegebenes Bild anwenden.
 
+    :param img: zu maskierendes Bild
+    :param mask: Maske des Bildes
+    :return: maskiertes Bild
+    """
     white_background = np.empty_like(img)
     white_background.fill(255)
 
