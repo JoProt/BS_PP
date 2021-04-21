@@ -16,13 +16,21 @@ from typing import Union
 
 import numpy as np
 import cv2 as cv
-import sqlalchemy as db
+
+from sqlalchemy import create_engine
+from sqlalchemy import Column, Integer, String, ForeignKey
+
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm import sessionmaker
 
-engine = db.create_engine("sqlite:///palmprint.db")
+# Verbindung zur Datenbank
+engine = create_engine("sqlite:///palmprint.db")
+
+# Datenmodell laden
 Base = declarative_base()
+
+# Session für Datenbankzugriff erzeugen
 Session = sessionmaker(bind=engine)
 session = Session()
 
@@ -48,7 +56,9 @@ GABOR_GAMMA = 0.7  # 0.23 < gamma < 0.92
 GABOR_PSI = 0
 GABOR_THRESHOLD = 255  # 0 to 255
 
+# XXX das ist etwas hoch ... r_08 z.B. wird maskiert, was nicht sein muss
 MASK_THRESHOLD = 110
+
 
 # # # # # #
 # Models  #
@@ -58,17 +68,27 @@ MASK_THRESHOLD = 110
 class User(Base):
     __tablename__ = "users"
 
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String)
+    id = Column(Integer, primary_key=True)
+    name = Column(String)
     palmprints = relationship("Palmprint")
+
+    def __repr__(self):
+        return "<{} {} '{}', {} prints registered>".format(
+            self.__class__.__name__, self.id, self.name, len(self.palmprints)
+        )
 
 
 class Palmprint(Base):
     __tablename__ = "palmprints"
 
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
-    data = db.Column(db.String)
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    data = Column(String)
+
+    def __repr__(self):
+        return "<{} {} (user {})>".format(
+            self.__class__.__name__, self.id, self.user_id
+        )
 
 
 # # # # # #
@@ -245,6 +265,9 @@ def find_keypoints(img: np.ndarray, hand: int = 0) -> Union[tuple, tuple]:
     # "Täler" in der Handkontur finden; dort werden sich Keypoints befinden
     valleys = find_valleys(thresh, contour)
 
+    if len(valleys) < 2:
+        raise Exception("Expected at least 2 valleys!")
+
     # schmeiße 1er-Längen raus, sind meistens Fehler
     valleys = [v for v in valleys if len(v) > 1]
 
@@ -254,12 +277,15 @@ def find_keypoints(img: np.ndarray, hand: int = 0) -> Union[tuple, tuple]:
     # Werte interpolieren, um eine etwas sauberere Kurve zu bekommen
     valleys_interp = [interpol2d(v, 10) for v in valleys]
 
-    # Anscheinend sind immer der erste und letzte Punkt interessant; stimmt das? Nö
+    # im Optimalfall sollten erster und letzter Punkt die Keypoints sein
     v_1 = valleys_interp[0 - hand]
     v_2 = valleys_interp[hand - 1]
 
     # Punkte auf Tangente beider Täler finden; das sind die Keypoints
     kp_1, kp_2 = find_tangent_points(v_1, v_2)
+
+    if kp_1 is None or kp_2 is None:
+        raise Exception("Couldn't find a tangent for {} and {}!".format(kp_1, kp_2))
 
     return kp_1, kp_2
 
@@ -366,7 +392,8 @@ def build_gabor_filters() -> list:
 
 def apply_gabor_filters(img: np.ndarray, filters: list) -> np.ndarray:
     """
-    Wendet Filter-Liste auf Bildkopien an, fügt gefilterte Bilder zu einem zusammen und entfernt alle Elemente unter einem festgelegten Schwellwert.
+    Wendet Filter-Liste auf Bildkopien an, fügt gefilterte Bilder zu einem zusammen
+    und entfernt alle Elemente unter einem festgelegten Schwellwert.
 
     :param img: zu filterndes Bild
     :param filters: Liste von Gabor Filtern
@@ -398,9 +425,11 @@ def main():
 
     mask = build_mask(roi)
     cv.imshow("mask", mask)
+
     filters = build_gabor_filters()
     filtered_roi = apply_gabor_filters(roi, filters)
     cv.imshow("filtered_roi", filtered_roi)
+
     masked_roi = apply_mask(filtered_roi, mask)
     cv.imshow("masked_roi", masked_roi)
 
