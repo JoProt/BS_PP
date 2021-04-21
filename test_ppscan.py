@@ -102,7 +102,7 @@ class TestPPscan(unittest.TestCase):
         """
         img = ppscan.cv.imread("devel/l_dummy.jpg", ppscan.cv.IMREAD_COLOR)
         img = ppscan.cv.cvtColor(img, ppscan.cv.COLOR_BGR2GRAY)
-        k1, k2 = ppscan.find_keypoints(img, 0)
+        k1, k2 = ppscan.find_keypoints(img, 1)
         assert k1 == (168, 82)
         assert k2 == (168, 190)
 
