@@ -16,26 +16,23 @@ from typing import Union
 
 import numpy as np
 import cv2 as cv
-import sqlalchemy as db
+
+from sqlalchemy import create_engine
+from sqlalchemy import Column, Integer, String, ForeignKey
+
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm import sessionmaker
 
-engine = db.create_engine("sqlite:///palmprint.db")
+# Verbindung zur Datenbank
+engine = create_engine("sqlite:///palmprint.db")
+
+# Datenmodell laden
 Base = declarative_base()
+
+# Session für Datenbankzugriff erzeugen
 Session = sessionmaker(bind=engine)
 session = Session()
-
-
-# def dbg_show(img):
-#    """
-#    Wrapper für Fkt. zum Anzeigen des Bildes;
-#    zum Debuggen gut.
-#    :param img: anzuzeigendes Bild
-#    """
-#    cv.imshow("DBG", img)
-#    cv.waitKey(0)
-#    cv.destroyAllWindows()
 
 
 # # # # # # #
@@ -44,10 +41,12 @@ session = Session()
 
 
 THRESH_FACTOR = 0.5
+THRESH_SUBIMG = 150.0
+THRESH_CON = 15
 
-ALPHA = 10
-BETA = ALPHA + ALPHA
-GAMMA = ALPHA + BETA
+GAMMA = 13
+G_L = 24 / 32
+G_U = 30 / 32
 
 GABOR_KSIZE = (35, 35)
 GABOR_SIGMA = 5.6179
@@ -57,7 +56,9 @@ GABOR_GAMMA = 0.7  # 0.23 < gamma < 0.92
 GABOR_PSI = 0
 GABOR_THRESHOLD = 255  # 0 to 255
 
+# XXX das ist etwas hoch ... r_08 z.B. wird maskiert, was nicht sein muss
 MASK_THRESHOLD = 110
+
 
 # # # # # #
 # Models  #
@@ -67,17 +68,27 @@ MASK_THRESHOLD = 110
 class User(Base):
     __tablename__ = "users"
 
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String)
+    id = Column(Integer, primary_key=True)
+    name = Column(String)
     palmprints = relationship("Palmprint")
+
+    def __repr__(self):
+        return "<{} {} '{}', {} prints registered>".format(
+            self.__class__.__name__, self.id, self.name, len(self.palmprints)
+        )
 
 
 class Palmprint(Base):
     __tablename__ = "palmprints"
 
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
-    data = db.Column(db.String)
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    data = Column(String)
+
+    def __repr__(self):
+        return "<{} {} (user {})>".format(
+            self.__class__.__name__, self.id, self.user_id
+        )
 
 
 # # # # # #
@@ -190,10 +201,10 @@ def neighbourhood_curvature(
     return retval
 
 
-# TODO manchmal wird hier noch der Daumen gefunden
 def find_valleys(img: np.ndarray, contour: list) -> list:
     """
-    CHVD-Algorithmus, Ong et al. Findet "Täler" in einer Kontur.
+    Kombiniert den CHVD-Algorithmus (Ong et al.) mit einfachem Mask-Matching
+    und findet so die "Täler" in einer Kontur.
 
     :param img: Bild, in dem die Täler gesucht werden
     :param contour: Kontur des Bildes als Punkteliste
@@ -203,13 +214,18 @@ def find_valleys(img: np.ndarray, contour: list) -> list:
     last = 0
     idx = -1
 
+    # durchlaufe die Punkte auf der Kontur
     for i, c in enumerate(contour):
+        # quadratischer Bildausschnitt der Seitenlänge GAMMA mit c als Mittelpunkt
+        subimg = img[c[1] - GAMMA : c[1] + GAMMA, c[0] - GAMMA : c[0] + GAMMA]
         if (
-            neighbourhood_curvature(c, img, 4, ALPHA) == 1.0
-            and 0.86 <= neighbourhood_curvature(c, img, 8, BETA) <= 1.0
-            # and 0.85 <= neighbourhood_curvature(c, img, 16, GAMMA) <= 1.0
+            len(subimg) > 0
+            and (G_L <= neighbourhood_curvature(c, img, 32, GAMMA) <= G_U)
+            and subimg.mean() >= THRESH_SUBIMG
         ):
-            if last / i < 0.97:
+            # prüfe auf mögl. Zusammenhang mit vorheriger Gruppe; starte neue Gruppe,
+            # wenn der Abstand zu groß ist
+            if i - last > THRESH_CON:
                 idx += 1
                 valleys.append([c])
             else:
@@ -229,7 +245,7 @@ def find_keypoints(img: np.ndarray, hand: int = 0) -> Union[tuple, tuple]:
     :returns: Koordinaten der Keypoints
     """
     # weichzeichnen und binarisieren
-    blurred = cv.GaussianBlur(img, (13, 13), 0)
+    blurred = cv.GaussianBlur(img, (7, 7), 0)
     _, thresh = cv.threshold(
         blurred, (THRESH_FACTOR * img.mean()), 255, cv.THRESH_BINARY
     )
@@ -237,24 +253,39 @@ def find_keypoints(img: np.ndarray, hand: int = 0) -> Union[tuple, tuple]:
     # finde die Kontur der Hand; betrachte nur linke Hälfte des Bildes,
     # weil wir dort die wichtigen Kurven erwarten können
     contours, _ = cv.findContours(
-        thresh[:, : int(img.shape[1] / 2)], cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE
+        thresh[:, : int(img.shape[1] / 2)], cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE
     )
 
+    # filtere nur die längste Kontur, um mögl. Störungen zu entfernen
+    contour = max(contours, key=lambda c: len(c))
+
     # mach eine Liste aus Tupeln zur besseren Weiterverarbeitung draus
-    contours = [tuple(c[0]) for c in contours[0]]
+    contour = [tuple(c[0]) for c in contour]
 
     # "Täler" in der Handkontur finden; dort werden sich Keypoints befinden
-    valleys = find_valleys(thresh, contours)
+    valleys = find_valleys(thresh, contour)
+
+    if len(valleys) < 2:
+        raise Exception("Expected at least 2 valleys!")
+
+    # schmeiße 1er-Längen raus, sind meistens Fehler
+    valleys = [v for v in valleys if len(v) > 1]
+
+    # sortiere die Täler nach ihrer y-Koordinate
+    valleys.sort(key=lambda v: v[0][1])
 
     # Werte interpolieren, um eine etwas sauberere Kurve zu bekommen
     valleys_interp = [interpol2d(v, 10) for v in valleys]
 
-    # Anscheinend sind immer der erste und letzte Punkt interessant; stimmt das? Nö
+    # im Optimalfall sollten erster und letzter Punkt die Keypoints sein
     v_1 = valleys_interp[0 - hand]
     v_2 = valleys_interp[hand - 1]
 
     # Punkte auf Tangente beider Täler finden; das sind die Keypoints
     kp_1, kp_2 = find_tangent_points(v_1, v_2)
+
+    if kp_1 is None or kp_2 is None:
+        raise Exception("Couldn't find a tangent for {} and {}!".format(kp_1, kp_2))
 
     return kp_1, kp_2
 
@@ -279,8 +310,7 @@ def transform_to_roi(img: np.ndarray, p_min: tuple, p_max: tuple) -> np.ndarray:
     rot_mat = cv.getRotationMatrix2D(p_min, angle, 1.0)
     rotated = cv.warpAffine(img, rot_mat, img.shape[1::-1])
 
-    # gibt (beschnittenes) Bild zurück
-    # TODO auf Größe des Zuschnitts einigen!
+    # gib (beschnittenes) Bild zurück
     y_start = p_min[1] - d
     y_end = p_min[1] + 70
     x_start = p_min[0] + 10
@@ -300,7 +330,8 @@ def build_mask(img: np.ndarray) -> np.ndarray:
     # generiere leeres np array, füllen mit 'weiß' (255)
     mask = np.empty_like(img)
     mask.fill(255)
-    # setze jedes Maskenpixel auf 0 wenn im gegebenen Bildpixel der Wert kleiner als der Schwellwert ist
+    # setze jedes Maskenpixel auf 0, wenn im gegebenen Bildpixel der Wert kleiner als
+    # der Schwellwert ist
     mask[img < MASK_THRESHOLD] = 0
 
     return mask
@@ -325,6 +356,7 @@ def apply_mask(img: np.ndarray, mask: np.ndarray) -> np.ndarray:
     # cv.imshow("img2", img2)
     masked_img = cv.add(img1, img2)
     # masked_img = cv.bitwise_and(img, img, mask=mask)
+
     return masked_img
 
 
@@ -354,12 +386,14 @@ def build_gabor_filters() -> list:
         }
         kern = cv.getGaborKernel(**params)
         filters.append((kern, params))
+
     return filters
 
 
 def apply_gabor_filters(img: np.ndarray, filters: list) -> np.ndarray:
     """
-    Wendet Filter-Liste auf Bildkopien an, fügt gefilterte Bilder zu einem zusammen und entfernt alle Elemente unter einem festgelegten Schwellwert.
+    Wendet Filter-Liste auf Bildkopien an, fügt gefilterte Bilder zu einem zusammen
+    und entfernt alle Elemente unter einem festgelegten Schwellwert.
 
     :param img: zu filterndes Bild
     :param filters: Liste von Gabor Filtern
@@ -391,9 +425,11 @@ def main():
 
     mask = build_mask(roi)
     cv.imshow("mask", mask)
+
     filters = build_gabor_filters()
     filtered_roi = apply_gabor_filters(roi, filters)
     cv.imshow("filtered_roi", filtered_roi)
+
     masked_roi = apply_mask(filtered_roi, mask)
     cv.imshow("masked_roi", masked_roi)
 
