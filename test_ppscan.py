@@ -158,3 +158,12 @@ class TestPPscan(unittest.TestCase):
         filters = ppscan.build_gabor_filters()
         merged_img = ppscan.apply_gabor_filters(img, filters)
         assert merged_img.shape == img.shape
+
+    def test_db_access(self):
+        """
+        Testet die Verbindung zur Datenbank.
+
+        :return: True, wenn peter die Nummer 1 ist
+        """
+        peter = ppscan.session.query(ppscan.User).first()
+        assert peter.id == 1
