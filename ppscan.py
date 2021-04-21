@@ -292,7 +292,7 @@ def transform_to_roi(img: np.ndarray, p_min: tuple, p_max: tuple) -> np.ndarray:
 
 def build_mask(img: np.ndarray) -> np.ndarray:
     """
-    Generiert eine Maske aus dem gegebenen Bild.
+    Generiert eine Maske aus dem gegebenen Bild. Schwarze Flächen (kein Teil der Hand) werden maskiert.
 
     :param img: Bild welches als Grundlage der Maske dienen soll
     :return: Maske (schwarz/weiß)
@@ -317,14 +317,15 @@ def apply_mask(img: np.ndarray, mask: np.ndarray) -> np.ndarray:
     white_background = np.empty_like(img)
     white_background.fill(255)
 
+    # inverse Maske generieren
     inv_mask = cv.bitwise_not(mask)
-    # cv.imshow("inv_mask", inv_mask)
+    # Maske auf Bild anwenden
     img1 = cv.bitwise_and(img, img, mask=mask)
-    # cv.imshow("img1", img1)
+    # inverse MAske auf weißes Hintergrundbild anwenden
     img2 = cv.bitwise_and(white_background, white_background, mask=inv_mask)
-    # cv.imshow("img2", img2)
+    # beide maskierten Bilder zusammenführen
     masked_img = cv.add(img1, img2)
-    # masked_img = cv.bitwise_and(img, img, mask=mask)
+
     return masked_img
 
 
