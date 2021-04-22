@@ -102,7 +102,7 @@ class TestPPscan(unittest.TestCase):
         """
         img = ppscan.cv.imread("devel/l_dummy.jpg", ppscan.cv.IMREAD_COLOR)
         img = ppscan.cv.cvtColor(img, ppscan.cv.COLOR_BGR2GRAY)
-        k1, k2 = ppscan.find_keypoints(img, 0)
+        k1, k2 = ppscan.find_keypoints(img, 1)
         assert k1 == (168, 82)
         assert k2 == (168, 190)
 
@@ -217,3 +217,12 @@ class TestPPscan(unittest.TestCase):
         filters = ppscan.build_gabor_filters()
         merged_img = ppscan.apply_gabor_filters(img, filters)
         assert merged_img.shape == img.shape
+
+    def test_db_access(self):
+        """
+        Testet die Verbindung zur Datenbank.
+
+        :return: True, wenn peter die Nummer 1 ist
+        """
+        peter = ppscan.session.query(ppscan.User).first()
+        assert peter.id == 1
