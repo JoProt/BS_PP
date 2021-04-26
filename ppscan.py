@@ -24,6 +24,8 @@ from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm import sessionmaker
 
+from scipy.spatial import distance
+
 # Verbindung zur Datenbank
 engine = create_engine("sqlite:///palmprint.db")
 
@@ -417,21 +419,68 @@ def apply_gabor_filters(img: np.ndarray, filters: list) -> np.ndarray:
 # ...
 
 
+def match_Palm_Prints(img_to_match: np.ndarray, img_template: np.ndarray) -> bool:
+    """
+    Vergleicht aktuelles Image mit Images aus Datenbank und sucht Match.
+    Rueckgabewert: 1 -> Images matchen
+    Rueckgabewert: 0 -> Images matchen nicht
+
+    :param img_to_match: abzugleichendes Image
+    :param template_image: Vorlage, gegen welche gematched wird
+    :return: gibt Match (1) oder Non Match (0) zurueck
+    """
+
+    matching_decision: bool = 0
+
+    hamming_distance = distance.hamming([1, 2, 3], [1, 2, 4])
+
+    print("hamming distance: ", hamming_distance)
+    if hamming_distance <= 0.2:
+        matching_decision = 1
+
+    print("matching_decision: ", matching_decision)
+
+    return matching_decision
+
+
 def main():
     img = cv.imread("devel/r_03.jpg", cv.IMREAD_GRAYSCALE)
     k1, k2 = find_keypoints(img)
     roi = transform_to_roi(img, k2, k1)
-    cv.imshow("roi", roi)
+    # cv.imshow("roi", roi)
 
     mask = build_mask(roi)
-    cv.imshow("mask", mask)
+    # cv.imshow("mask", mask)
 
     filters = build_gabor_filters()
     filtered_roi = apply_gabor_filters(roi, filters)
-    cv.imshow("filtered_roi", filtered_roi)
+    # cv.imshow("filtered_roi", filtered_roi)
 
     masked_roi = apply_mask(filtered_roi, mask)
+
     cv.imshow("masked_roi", masked_roi)
+
+    # --Creating 2nd Image for Testing purpose----------------------------------------------------------------------------
+
+    img_template = cv.imread("devel/r_03.jpg", cv.IMREAD_GRAYSCALE)
+    k1_template, k2_template = find_keypoints(img_template)
+    roi_template = transform_to_roi(img_template, k2_template, k1_template)
+    # cv.imshow("roi", roi)
+
+    mask_template = build_mask(roi_template)
+    # cv.imshow("mask", mask)
+
+    filters_template = build_gabor_filters()
+    filtered_roi_template = apply_gabor_filters(roi_template, filters_template)
+    # cv.imshow("filtered_roi", filtered_roi)
+
+    masked_roi_template = apply_mask(filtered_roi, mask_template)
+
+    cv.imshow("masked_roi_template", masked_roi_template)
+
+    # -------------------------------------------------------------------------------------
+
+    match_Palm_Prints(masked_roi, masked_roi_template)
 
     cv.waitKey(0)
     cv.destroyAllWindows()
