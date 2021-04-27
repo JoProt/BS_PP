@@ -26,6 +26,7 @@ from sqlalchemy.orm import sessionmaker
 
 from scipy.spatial import distance
 
+
 # Verbindung zur Datenbank
 engine = create_engine("sqlite:///palmprint.db")
 
@@ -45,6 +46,7 @@ session = Session()
 THRESH_FACTOR = 0.5
 THRESH_SUBIMG = 150.0
 THRESH_CON = 15
+THRESH_HAMMING = 0.2
 
 GAMMA = 13
 G_L = 24 / 32
@@ -416,18 +418,15 @@ def apply_gabor_filters(img: np.ndarray, filters: list) -> np.ndarray:
     return merged_img
 
 
-# ...
-
-
 def match_palm_prints(img_to_match: np.ndarray, img_template: np.ndarray) -> bool:
     """
     Vergleicht aktuelles Image mit Images aus Datenbank und sucht Match.
-    Rueckgabewert: 1 -> Images matchen
-    Rueckgabewert: 0 -> Images matchen nicht
+    Rueckgabewert: True -> Images matchen
+    Rueckgabewert: False -> Images matchen nicht
 
     :param img_to_match: abzugleichendes Image
     :param template_image: Vorlage, gegen welche gematched wird
-    :return: gibt Match (1) oder Non Match (0) zurueck
+    :return: gibt Match (True) oder Non Match (False) zurueck
     """
 
     matching_decision: bool = False
@@ -436,12 +435,12 @@ def match_palm_prints(img_to_match: np.ndarray, img_template: np.ndarray) -> boo
     flattend_img_template = img_template.flatten()
     hamming_distance = distance.hamming(flattend_img_to_match, flattend_img_template)
 
-    print("hamming distance: ", hamming_distance)
+    print("hamming distance: {}".format(hamming_distance))
 
-    if hamming_distance <= 0.2:
+    if hamming_distance <= THRESH_HAMMING:
         matching_decision = True
 
-    print("matching_decision: ", matching_decision)
+    print("matching_decision: {}".format(matching_decision))
 
     return matching_decision
 
@@ -463,7 +462,7 @@ def main():
 
     cv.imshow("masked_roi", masked_roi)
 
-    # --Creating 2nd Image for Testing purpose----------------------------------------------------------------------------
+    # --Creating 2nd Image for Testing purpose----------------------------------------
 
     img_template = cv.imread("devel/r_08.jpg", cv.IMREAD_GRAYSCALE)
     k1_template, k2_template = find_keypoints(img_template)
