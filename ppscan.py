@@ -26,6 +26,7 @@ from sqlalchemy.orm import sessionmaker
 
 from scipy.spatial import distance
 
+
 # Verbindung zur Datenbank
 engine = create_engine("sqlite:///palmprint.db")
 
@@ -45,6 +46,7 @@ session = Session()
 THRESH_FACTOR = 0.5
 THRESH_SUBIMG = 150.0
 THRESH_CON = 15
+THRESH_HAMMING = 0.2
 
 GAMMA = 13
 G_L = 24 / 32
@@ -60,6 +62,8 @@ GABOR_THRESHOLD = 255  # 0 to 255
 
 # XXX das ist etwas hoch ... r_08 z.B. wird maskiert, was nicht sein muss
 MASK_THRESHOLD = 110
+
+ROI_RAD = 50
 
 
 # # # # # #
@@ -305,18 +309,18 @@ def transform_to_roi(img: np.ndarray, p_min: tuple, p_max: tuple) -> np.ndarray:
     # berechne notwendige Abstände
     a = p_max[0] - p_min[0]
     b = p_min[1] - p_max[1]
-    d = round(np.linalg.norm(np.array(p_max) - np.array(p_min)))
     angle = np.rad2deg(np.arctan(a / b))
 
     # rotiere Bild um p_min
     rot_mat = cv.getRotationMatrix2D(p_min, angle, 1.0)
     rotated = cv.warpAffine(img, rot_mat, img.shape[1::-1])
 
-    # gib (beschnittenes) Bild zurück
-    y_start = p_min[1] - d
-    y_end = p_min[1] + 70
+    # beschneide das Bild auf ROI; y_mid ist die halbe Strecke zw. p_min und p_max
+    y_mid = p_min[1] - round(np.linalg.norm(np.array(p_max) - np.array(p_min)) * 0.5)
+    y_start = y_mid - ROI_RAD
+    y_end = y_mid + ROI_RAD
     x_start = p_min[0] + 10
-    x_end = x_start + 350
+    x_end = x_start + (2 * ROI_RAD)
     cropped = rotated[y_start:y_end, x_start:x_end]
 
     return cropped
@@ -416,18 +420,15 @@ def apply_gabor_filters(img: np.ndarray, filters: list) -> np.ndarray:
     return merged_img
 
 
-# ...
-
-
 def match_palm_prints(img_to_match: np.ndarray, img_template: np.ndarray) -> bool:
     """
     Vergleicht aktuelles Image mit Images aus Datenbank und sucht Match.
-    Rueckgabewert: 1 -> Images matchen
-    Rueckgabewert: 0 -> Images matchen nicht
+    Rueckgabewert: True -> Images matchen
+    Rueckgabewert: False -> Images matchen nicht
 
     :param img_to_match: abzugleichendes Image
     :param template_image: Vorlage, gegen welche gematched wird
-    :return: gibt Match (1) oder Non Match (0) zurueck
+    :return: gibt Match (True) oder Non Match (False) zurueck
     """
 
     matching_decision: bool = False
@@ -436,12 +437,12 @@ def match_palm_prints(img_to_match: np.ndarray, img_template: np.ndarray) -> boo
     flattend_img_template = img_template.flatten()
     hamming_distance = distance.hamming(flattend_img_to_match, flattend_img_template)
 
-    print("hamming distance: ", hamming_distance)
+    print("hamming distance: {}".format(hamming_distance))
 
-    if hamming_distance <= 0.2:
+    if hamming_distance <= THRESH_HAMMING:
         matching_decision = True
 
-    print("matching_decision: ", matching_decision)
+    print("matching_decision: {}".format(matching_decision))
 
     return matching_decision
 
@@ -450,35 +451,33 @@ def main():
     img = cv.imread("devel/r_03.jpg", cv.IMREAD_GRAYSCALE)
     k1, k2 = find_keypoints(img)
     roi = transform_to_roi(img, k2, k1)
-    # cv.imshow("roi", roi)
+    cv.imshow("roi", roi)
 
     mask = build_mask(roi)
     # cv.imshow("mask", mask)
 
     filters = build_gabor_filters()
+
     filtered_roi = apply_gabor_filters(roi, filters)
     # cv.imshow("filtered_roi", filtered_roi)
 
     masked_roi = apply_mask(filtered_roi, mask)
-
     cv.imshow("masked_roi", masked_roi)
 
-    # --Creating 2nd Image for Testing purpose----------------------------------------------------------------------------
+    # --Creating 2nd Image for Testing purpose----------------------------------------
 
     img_template = cv.imread("devel/r_08.jpg", cv.IMREAD_GRAYSCALE)
     k1_template, k2_template = find_keypoints(img_template)
     roi_template = transform_to_roi(img_template, k2_template, k1_template)
-    # cv.imshow("roi", roi)
+    cv.imshow("roi_template", roi_template)
 
     mask_template = build_mask(roi_template)
     # cv.imshow("mask", mask)
 
-    filters_template = build_gabor_filters()
-    filtered_roi_template = apply_gabor_filters(roi_template, filters_template)
+    filtered_roi_template = apply_gabor_filters(roi_template, filters)
     # cv.imshow("filtered_roi", filtered_roi)
 
     masked_roi_template = apply_mask(filtered_roi_template, mask_template)
-
     cv.imshow("masked_roi_template", masked_roi_template)
 
     # -------------------------------------------------------------------------------------
