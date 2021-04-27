@@ -432,7 +432,9 @@ def match_Palm_Prints(img_to_match: np.ndarray, img_template: np.ndarray) -> boo
 
     matching_decision: bool = 0
 
-    hamming_distance = distance.hamming([1, 2, 3], [1, 2, 4])
+    flattend_img_to_match = img_to_match.flatten()
+    flattend_img_template = img_template.flatten()
+    hamming_distance = distance.hamming(flattend_img_to_match, flattend_img_template)
 
     print("hamming distance: ", hamming_distance)
     if hamming_distance <= 0.2:
