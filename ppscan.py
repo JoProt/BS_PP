@@ -419,7 +419,7 @@ def apply_gabor_filters(img: np.ndarray, filters: list) -> np.ndarray:
 # ...
 
 
-def match_Palm_Prints(img_to_match: np.ndarray, img_template: np.ndarray) -> bool:
+def match_palm_prints(img_to_match: np.ndarray, img_template: np.ndarray) -> bool:
     """
     Vergleicht aktuelles Image mit Images aus Datenbank und sucht Match.
     Rueckgabewert: 1 -> Images matchen
@@ -430,15 +430,16 @@ def match_Palm_Prints(img_to_match: np.ndarray, img_template: np.ndarray) -> boo
     :return: gibt Match (1) oder Non Match (0) zurueck
     """
 
-    matching_decision: bool = 0
+    matching_decision: bool = False
 
     flattend_img_to_match = img_to_match.flatten()
     flattend_img_template = img_template.flatten()
     hamming_distance = distance.hamming(flattend_img_to_match, flattend_img_template)
 
     print("hamming distance: ", hamming_distance)
+
     if hamming_distance <= 0.2:
-        matching_decision = 1
+        matching_decision = True
 
     print("matching_decision: ", matching_decision)
 
@@ -464,7 +465,7 @@ def main():
 
     # --Creating 2nd Image for Testing purpose----------------------------------------------------------------------------
 
-    img_template = cv.imread("devel/r_03.jpg", cv.IMREAD_GRAYSCALE)
+    img_template = cv.imread("devel/r_08.jpg", cv.IMREAD_GRAYSCALE)
     k1_template, k2_template = find_keypoints(img_template)
     roi_template = transform_to_roi(img_template, k2_template, k1_template)
     # cv.imshow("roi", roi)
@@ -476,13 +477,13 @@ def main():
     filtered_roi_template = apply_gabor_filters(roi_template, filters_template)
     # cv.imshow("filtered_roi", filtered_roi)
 
-    masked_roi_template = apply_mask(filtered_roi, mask_template)
+    masked_roi_template = apply_mask(filtered_roi_template, mask_template)
 
     cv.imshow("masked_roi_template", masked_roi_template)
 
     # -------------------------------------------------------------------------------------
 
-    match_Palm_Prints(masked_roi, masked_roi_template)
+    match_palm_prints(masked_roi, masked_roi_template)
 
     cv.waitKey(0)
     cv.destroyAllWindows()
