@@ -19,6 +19,7 @@ import cv2 as cv
 
 from sqlalchemy import create_engine
 from sqlalchemy import Column, Integer, String, ForeignKey
+import sqlalchemy as db
 
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import relationship
@@ -101,6 +102,13 @@ class Palmprint(Base):
 # Utility #
 # # # # # #
 
+def get_user_parlm(username):
+    query = session.query(User)
+    entry = query.all()
+
+    for user in entry:
+        if user.name == username:
+            return user.palmprints
 
 def interpol2d(points: list, steps: int) -> list:
     """
@@ -448,41 +456,7 @@ def match_palm_prints(img_to_match: np.ndarray, img_template: np.ndarray) -> boo
 
 
 def main():
-    img = cv.imread("devel/r_03.jpg", cv.IMREAD_GRAYSCALE)
-    k1, k2 = find_keypoints(img)
-    roi = transform_to_roi(img, k2, k1)
-    cv.imshow("roi", roi)
-
-    mask = build_mask(roi)
-    # cv.imshow("mask", mask)
-
-    filters = build_gabor_filters()
-
-    filtered_roi = apply_gabor_filters(roi, filters)
-    # cv.imshow("filtered_roi", filtered_roi)
-
-    masked_roi = apply_mask(filtered_roi, mask)
-    cv.imshow("masked_roi", masked_roi)
-
-    # --Creating 2nd Image for Testing purpose----------------------------------------
-
-    img_template = cv.imread("devel/r_08.jpg", cv.IMREAD_GRAYSCALE)
-    k1_template, k2_template = find_keypoints(img_template)
-    roi_template = transform_to_roi(img_template, k2_template, k1_template)
-    cv.imshow("roi_template", roi_template)
-
-    mask_template = build_mask(roi_template)
-    # cv.imshow("mask", mask)
-
-    filtered_roi_template = apply_gabor_filters(roi_template, filters)
-    # cv.imshow("filtered_roi", filtered_roi)
-
-    masked_roi_template = apply_mask(filtered_roi_template, mask_template)
-    cv.imshow("masked_roi_template", masked_roi_template)
-
-    # -------------------------------------------------------------------------------------
-
-    match_palm_prints(masked_roi, masked_roi_template)
+    get_user_parlm('peter')
 
     cv.waitKey(0)
     cv.destroyAllWindows()
