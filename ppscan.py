@@ -102,13 +102,77 @@ class Palmprint(Base):
 # Utility #
 # # # # # #
 
-def get_user_parlm(username):
+def get_user_parlm(username) -> list:
     query = session.query(User)
     entry = query.all()
 
+    palmprints = []
+
     for user in entry:
         if user.name == username:
-            return user.palmprints
+            for palm in user.palmprints:
+                palmprints.append(palm.data)
+
+    return palmprints
+
+
+def get_parlm() -> list:
+    query = session.query(Palmprint)
+    entry = query.all()
+
+    palmprints = []
+
+    for palm in entry:
+        palmprints.append(palm.data)
+
+    return palmprints
+
+
+def insert_palm(user: int, palmprint: list):
+    for palmentry in palmprint:
+        entry = Palmprint(user_id=user, data=palmentry)
+        session.add(entry)
+
+    session.commit()
+    session.flush()
+
+
+def create_user(user, palmprintlist):
+    for palmentry in palmprintlist:
+        entry = User(name=user, palmprints=[Palmprint(data=palmentry)])
+        session.add(entry)
+
+    session.commit()
+    session.flush()
+
+
+def update_palm(palmprint_id, newpalm):
+    palm = session.query(Palmprint).filter_by(id=palmprint_id).first()
+    palm.data = newpalm
+    session.commit()
+    session.flush()
+
+def delete_user(userid):
+    userentry = session.query(User).filter_by(id = userid).first()
+    palmentry = session.query(Palmprint).filter_by(user_id = userid).all()
+    for entry in palmentry:
+        session.delete(entry)
+
+    session.delete(userentry)
+    session.commit()
+    session.flush()
+
+def delete_palmprint(palmid):
+    palmprint = session.query(Palmprint).filter_by(id=palmid).first()
+    session.delete(palmprint)
+    session.commit()
+    session.flush()
+
+    # entry = ppscan.User(id=1,name='peter',palmprints=[ppscan.Palmprint(data=
+    # update = ppscan.db.update(ppscan.User).where(ppscan.User.name =='peter').values(palmprints=
+    # user = ppscan.session.query(ppscan.User).filter_by(name = 'guenther').first()
+    # user.name = "guenther"
+
 
 def interpol2d(points: list, steps: int) -> list:
     """
