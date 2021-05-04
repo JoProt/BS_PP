@@ -92,6 +92,7 @@ class Palmprint(Base):
     roi = Column(String)
     original = Column(String)
 
+    @staticmethod
     def encode(img: np.ndarray) -> str:
         """
         Numpy 2D-Array als Base64-String kodieren.
@@ -104,6 +105,7 @@ class Palmprint(Base):
 
         return b64_img
 
+    @staticmethod
     def decode(b64_img: str) -> np.ndarray:
         """
         Base64-String zu Numpy-Array konvertieren.
@@ -111,13 +113,16 @@ class Palmprint(Base):
         :param b64_img: das kodierte Bild
         :returns: Array, mit dem dem OpenCV arbeiten kann
         """
-        imgarray = np.frombuffer(base64.b64decode(), np.uint8)
+        imgarray = np.frombuffer(base64.b64decode(b64_img), np.uint8)
         img = cv.imdecode(imgarray, cv.IMREAD_GRAYSCALE)
 
         return img
 
     def get_roi(self):
         return self.decode(self.roi)
+
+    def get_original(self):
+        return self.decode(self.original)
 
     def __repr__(self):
         return "<{} {} (user {})>".format(
@@ -158,6 +163,40 @@ def create_user(name: str, palmprints: list):
     session.commit()
 
 
+def list_users():
+    """ Ausgabe aller Nutzer. """
+    users = session.query(User).all()
+    for u in users:
+        print(u)
+
+
+def get_users() -> list:
+    """
+    Abfrage aller Nutzer.
+
+    :param user_id: ID des Nutzers
+    :returns: Nutzer-Objekt
+    """
+    users = session.query(User).all()
+
+    return users
+
+
+def get_user(user_id: int) -> User:
+    """
+    Abfrage eines einzelnen Nutzers.
+
+    :param user_id: ID des Nutzers
+    :returns: Nutzer-Objekt
+    """
+    user = session.query(User).filter_by(id=user_id).one_or_none()
+
+    if user is None:
+        raise Exception("Cannot query user {}: no such user!".format(user_id))
+
+    return user
+
+
 def delete_user(user_id: int):
     """
     Löschen eines bestehenden Nutzers samt zugeordneter Palmprints.
@@ -177,38 +216,6 @@ def delete_user(user_id: int):
 
     session.delete(user)
     session.commit()
-
-
-def get_user_palmprints(username: str) -> list:
-    """
-    Suche alle Palmprints die dem Usernamen zugeordnet sind.
-
-    :param username: String
-    :returns: alle Palmprints des Users in einer Liste
-    """
-    user = session.query(User).filter_by(name=username).one_or_none()
-    palmprints = user.palmprints
-
-    return palmprints
-
-
-def get_palmprints() -> list:
-    """
-    Suche alle Palmprints in der Database.
-
-    :returns: alle Palmprints in einer Liste
-    """
-    query = session.query(Palmprint)
-    entry = query.all()
-
-    palmprints = []
-
-    for palm in entry:
-        imgarray = np.frombuffer(base64.b64decode(palm.roi), np.uint8)
-        palmprint = cv.imdecode(imgarray, cv.IMREAD_COLOR)
-        palmprints.append(palmprint)
-
-    return palmprints
 
 
 def insert_palmprints(user_id: int, palmprints: list):
@@ -233,7 +240,7 @@ def insert_palmprints(user_id: int, palmprints: list):
     session.commit()
 
 
-def update_palmprint(palmprint_id: int, palmprint_data: tuple):
+def update_palmprint(palmprint_id: int, roi=None, original=None):
     """
     Update eines bereits bestehenden Palmprints.
 
@@ -248,11 +255,13 @@ def update_palmprint(palmprint_id: int, palmprint_data: tuple):
             "Cannot update palmprint {}: no such palmprint!".format(palmprint_id)
         )
 
-    new_roi = Palmprint.encode(palmprint_data[0])
-    new_original = Palmprint.encode(palmprint_data[1])
+    if roi is not None:
+        new_roi = Palmprint.encode(roi)
+        palmprint.roi = new_roi
 
-    palm.roi = new_roi
-    palm.original = new_original
+    if original is not None:
+        new_original = Palmprint.encode(original)
+        palmprint.original = new_original
 
     session.commit()
 
@@ -273,6 +282,32 @@ def delete_palmprint(palmprint_id: int):
 
     session.delete(palmprint)
     session.commit()
+
+
+def get_user_palmprints(username: str) -> list:
+    """
+    Suche alle Palmprints die dem Usernamen zugeordnet sind.
+
+    :param username: String
+    :returns: alle Palmprints des Users in einer Liste
+    """
+    user = session.query(User).filter_by(name=username).one_or_none()
+    palmprints = user.palmprints
+
+    return palmprints
+
+
+def get_palmprints() -> list:
+    """
+    Suche alle Palmprints in der Datenbank.
+
+    :returns: alle Palmprints in einer Liste
+    """
+    palmprints = session.query(Palmprint).all()
+
+    palmprints = [pp.get_roi() for pp in palmprints]
+
+    return palmprints
 
 
 # # # # # #
@@ -492,7 +527,8 @@ def find_keypoints(img: np.ndarray, hand: int = 0) -> Union[tuple, tuple]:
     valleys_interp = [interpol2d(v, 10) for v in valleys]
 
     # prüfe, ob es sich um eine linke oder rechte Hand handelt
-    print(left_right_detector(valleys_interp))
+    # XXX actually useless
+    # print(left_right_detector(valleys_interp))
 
     # im Optimalfall sollten erster und letzter Punkt die Keypoints sein
     v_1 = valleys_interp[0 - hand]
