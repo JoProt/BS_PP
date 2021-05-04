@@ -36,6 +36,7 @@ Base = declarative_base()
 Session = sessionmaker(bind=engine)
 session = Session()
 
+
 # # # # # # #
 # Constants #
 # # # # # # #
@@ -95,8 +96,10 @@ class Palmprint(Base):
             self.__class__.__name__, self.id, self.user_id
         )
 
-#wenn db nicht vorhanden, lege eine an
+
+# wenn db nicht vorhanden, lege eine an
 Base.metadata.create_all(engine)
+
 
 # # # # # # #
 # DB Access #
@@ -144,12 +147,14 @@ def insert_palmprint(user_id: int, palmprints: list):
     :returns: None
     """
     for palmentry in palmprints:
-        img_roi = cv.imencode('.jpg', palmentry[0])
-        img_original = cv.imencode('.jpg', palmentry[1])
+        img_roi = cv.imencode(".jpg", palmentry[0])
+        img_original = cv.imencode(".jpg", palmentry[1])
         base64_img_roi = base64.b64encode(img_roi[1])
         base64_img_original = base64.b64encode(img_original[1])
 
-        palmprintentry = Palmprint(user_id=user_id, data=base64_img_roi, original=base64_img_original)
+        palmprintentry = Palmprint(
+            user_id=user_id, data=base64_img_roi, original=base64_img_original
+        )
         session.add(palmprintentry)
 
     session.commit()
@@ -169,12 +174,14 @@ def create_user(username, palmprintlist):
     session.flush()
 
     for palmentry in palmprintlist:
-        img_roi = cv.imencode('.jpg', palmentry[0])
-        img_original = cv.imencode('.jpg', palmentry[1])
+        img_roi = cv.imencode(".jpg", palmentry[0])
+        img_original = cv.imencode(".jpg", palmentry[1])
         base64_img_roi = base64.b64encode(img_roi[1])
         base64_img_original = base64.b64encode(img_original[1])
 
-        palmprintentry = Palmprint(user_id=userentry.id, data=base64_img_roi, original=base64_img_original)
+        palmprintentry = Palmprint(
+            user_id=userentry.id, data=base64_img_roi, original=base64_img_original
+        )
         session.add(palmprintentry)
 
     session.commit()
@@ -190,8 +197,8 @@ def update_palm(palmprint_id, newpalm):
     :returns: None
     """
     palm = session.query(Palmprint).filter_by(id=palmprint_id).first()
-    img_roi = cv.imencode('.jpg', newpalm[0])
-    img_original = cv.imencode('.jpg', newpalm[1])
+    img_roi = cv.imencode(".jpg", newpalm[0])
+    img_original = cv.imencode(".jpg", newpalm[1])
     base64_img_roi = base64.b64encode(img_roi[1])
     base64_img_original = base64.b64encode(img_original[1])
     palm.data = base64_img_roi
@@ -267,16 +274,16 @@ def find_tangent_points(v_1: list, v_2: list) -> Union[tuple, tuple]:
         for p_2 in v_2:
             # Wahrheitskriterium soll auf alle p aus v_1 und v_2 zutreffen
             if all(
-                    [
-                        # ist f(p.y) größer als p.x, d.h. existiert kein Schnittpunkt?
-                        # f sei die Geradengleichung der Geraden zw. p_1 und p_2
-                        (
-                                p_1[0] * ((p[1] - p_2[1]) / (p_1[1] - p_2[1]))
-                                + p_2[0] * ((p[1] - p_1[1]) / (p_2[1] - p_1[1]))
-                        )
-                        >= p[0]
-                        for p in vs
-                    ]
+                [
+                    # ist f(p.y) größer als p.x, d.h. existiert kein Schnittpunkt?
+                    # f sei die Geradengleichung der Geraden zw. p_1 und p_2
+                    (
+                        p_1[0] * ((p[1] - p_2[1]) / (p_1[1] - p_2[1]))
+                        + p_2[0] * ((p[1] - p_1[1]) / (p_2[1] - p_1[1]))
+                    )
+                    >= p[0]
+                    for p in vs
+                ]
             ):
                 # runde Koordinaten zu nächsten ganzzahligen Pixelwerten
                 p_1 = (int(np.round(p_1[0])), int(np.round(p_1[1])))
@@ -321,7 +328,7 @@ def left_right_detector(valleys: list) -> str:
 
 
 def neighbourhood_curvature(
-        p: tuple, img: np.ndarray, n: int, r: int, inside: int = 255, outside: int = 0
+    p: tuple, img: np.ndarray, n: int, r: int, inside: int = 255, outside: int = 0
 ) -> float:
     """
     Überprüfe n Nachbarn im Abstand von r, ob sie innerhalb oder außerhalb
@@ -339,13 +346,13 @@ def neighbourhood_curvature(
     retval = None
     # Randbehandlung; Kurven in Bildrandgebieten sind nicht relevant!
     if (
-            p[0] == 0
-            or p[1] == 0
-            # p[]+r nicht innerhalb von img-Dimensionen
-            or p[0] + r >= img.shape[1]
-            or p[0] - r < 0
-            or p[1] + r >= img.shape[0]
-            or p[1] - r < 0
+        p[0] == 0
+        or p[1] == 0
+        # p[]+r nicht innerhalb von img-Dimensionen
+        or p[0] + r >= img.shape[1]
+        or p[0] - r < 0
+        or p[1] + r >= img.shape[0]
+        or p[1] - r < 0
     ):
         retval = 0.0
     else:
@@ -385,11 +392,11 @@ def find_valleys(img: np.ndarray, contour: list) -> list:
     # durchlaufe die Punkte auf der Kontur
     for i, c in enumerate(contour):
         # quadratischer Bildausschnitt der Seitenlänge GAMMA mit c als Mittelpunkt
-        subimg = img[c[1] - GAMMA: c[1] + GAMMA, c[0] - GAMMA: c[0] + GAMMA]
+        subimg = img[c[1] - GAMMA : c[1] + GAMMA, c[0] - GAMMA : c[0] + GAMMA]
         if (
-                len(subimg) > 0
-                and (G_L <= neighbourhood_curvature(c, img, 32, GAMMA) <= G_U)
-                and subimg.mean() >= THRESH_SUBIMG
+            len(subimg) > 0
+            and (G_L <= neighbourhood_curvature(c, img, 32, GAMMA) <= G_U)
+            and subimg.mean() >= THRESH_SUBIMG
         ):
             # prüfe auf mögl. Zusammenhang mit vorheriger Gruppe; starte neue Gruppe,
             # wenn der Abstand zu groß ist
