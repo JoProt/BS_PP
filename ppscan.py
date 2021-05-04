@@ -102,29 +102,24 @@ class Palmprint(Base):
 # # # # # #
 
 
-def get_user_parlm(username) -> list:
+def get_user_palmprints(username: str) -> list:
     """
-    Suche alle Palmprints die den Usernamen zugeordnet sind.
+    Suche alle Palmprints die dem Usernamen zugeordnet sind.
 
     :param username: String
     :returns: alle Palmprints des Users in einer Liste
     """
-    query = session.query(User)
-    entry = query.all()
+    user = session.query(User).filter_by(name=username).all()
 
-    palmprints = []
-
-    for user in entry:
-        if user.name == username:
-            for palm in user.palmprints:
-                palmprints.append(palm.data)
+    palmprints = user.palmprints
 
     return palmprints
 
 
-def get_parlm() -> list:
+def get_palmprints() -> list:
     """
     Suche alle Palmprints in der Database.
+    
     :returns: alle Palmprints in einer Liste
     """
     query = session.query(Palmprint)
@@ -138,31 +133,32 @@ def get_parlm() -> list:
     return palmprints
 
 
-def insert_palm(user: int, palmprint: list):
+def insert_palmprint(user_id: int, palmprints: list):
     """
     Einfügen von neuen Palmprints eines bestehenden users
 
-    :param user: user_id (Integer)
+    :param user_id: user_id (Integer)
     :param palmprint: Liste aus anzulegenden Palmprints (List of Strings)
     :returns: None
     """
-    for palmentry in palmprint:
-        entry = Palmprint(user_id=user, data=palmentry)
+    for palmprint in palmprints:
+        entry = Palmprint(user_id=user_id, data=palmprint)
         session.add(entry)
 
     session.commit()
     session.flush()
 
 
-def create_user(user, palmprintlist):
+def create_user(username, palmprintlist):
     """
     Anlegen von neuen Usern mit belibig vielen Palmprints
 
-    :param user: username (String)
+    :param username: Name des neuen Nutzers (String)
     :param palmprintlist: Liste aus anzulegenden Palmprints (List of Strings)
     :returns: None
     """
     for palmentry in palmprintlist:
+        # XXX Palmprints bitte separat nach dem User anlegen
         entry = User(name=user, palmprints=[Palmprint(data=palmentry)])
         session.add(entry)
 
