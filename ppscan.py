@@ -573,6 +573,11 @@ def transform_to_roi(img: np.ndarray, p_min: tuple, p_max: tuple) -> np.ndarray:
     return cropped
 
 
+# # # # # # #
+# Filtering #
+# # # # # # #
+
+
 def build_mask(img: np.ndarray) -> np.ndarray:
     """
     Generiert eine Maske aus dem gegebenen Bild.
@@ -667,6 +672,11 @@ def apply_gabor_filters(img: np.ndarray, filters: list) -> np.ndarray:
     return merged_img
 
 
+# # # # # # #
+# Matching  #
+# # # # # # #
+
+# XXX vielleicht doch lieber gleich den numerischen Wert zurückgeben?
 def match_palm_prints(img_to_match: np.ndarray, img_template: np.ndarray) -> bool:
     """
     Vergleicht aktuelles Image mit Images aus Datenbank und sucht Match.
@@ -678,7 +688,7 @@ def match_palm_prints(img_to_match: np.ndarray, img_template: np.ndarray) -> boo
     :return: gibt Match (True) oder Non Match (False) zurueck
     """
 
-    matching_decision: bool = False
+    matching_decision = False
 
     flattend_img_to_match = img_to_match.flatten()
     flattend_img_template = img_template.flatten()
@@ -692,6 +702,34 @@ def match_palm_prints(img_to_match: np.ndarray, img_template: np.ndarray) -> boo
     print("matching_decision: {}".format(matching_decision))
 
     return matching_decision
+
+
+# # # # # # # # # #
+# User Management #
+# # # # # # # # # #
+
+# XXX Grobentwurf
+def enrol(name: str, *palmprint_imgs):
+    """
+    Enrolment-Prozess. Bekommt nur unverarbeitete Bilder.
+
+    :param name: Name des neuen Nutzers
+    :param palmprints: variable Anzahl von OpenCV-Bildobjekten
+    """
+    palmprints = []
+
+    if len(palmprints) > 0:
+        filters = build_gabor_filters()
+
+        for img in palmprint_imgs:
+            k_1, k_2 = find_keypoints(img)
+            roi = transform_to_roi(img, k2, k1)
+            mask = build_mask(roi)
+            roi = apply_gabor_filters(roi, filters)
+            roi = apply_mask(roi, mask)
+            palmprints.add((_roi, img))
+
+    create_user(name, palmprints)
 
 
 def main():
