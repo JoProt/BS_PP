@@ -5,12 +5,13 @@
     Palmprint Scanner
     =================
     [your ad here]
-    
+
     :license: who knows
     :format: black, reST docstrings
 """
-
+import codecs
 import sys
+import base64
 
 from typing import Union
 
@@ -26,7 +27,6 @@ from sqlalchemy.orm import sessionmaker
 
 from scipy.spatial import distance
 
-
 # Verbindung zur Datenbank
 engine = create_engine("sqlite:///palmprint.db")
 
@@ -36,7 +36,6 @@ Base = declarative_base()
 # Session für Datenbankzugriff erzeugen
 Session = sessionmaker(bind=engine)
 session = Session()
-
 
 # # # # # # #
 # Constants #
@@ -90,6 +89,7 @@ class Palmprint(Base):
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("users.id"))
     data = Column(String)
+    #original = Column(String)
 
     def __repr__(self):
         return "<{} {} (user {})>".format(
@@ -109,8 +109,7 @@ def get_user_palmprints(username: str) -> list:
     :param username: String
     :returns: alle Palmprints des Users in einer Liste
     """
-    user = session.query(User).filter_by(name=username).all()
-
+    user = session.query(User).filter_by(name=username).one_or_none()
     palmprints = user.palmprints
 
     return palmprints
@@ -119,7 +118,7 @@ def get_user_palmprints(username: str) -> list:
 def get_palmprints() -> list:
     """
     Suche alle Palmprints in der Database.
-    
+
     :returns: alle Palmprints in einer Liste
     """
     query = session.query(Palmprint)
@@ -128,7 +127,9 @@ def get_palmprints() -> list:
     palmprints = []
 
     for palm in entry:
-        palmprints.append(palm.data)
+        imgarray = np.frombuffer(base64.b64decode(palm.data), np.uint8)
+        palmprint = cv.imdecode(imgarray, cv.IMREAD_COLOR)
+        palmprints.append(palmprint)
 
     return palmprints
 
@@ -142,7 +143,9 @@ def insert_palmprint(user_id: int, palmprints: list):
     :returns: None
     """
     for palmprint in palmprints:
-        entry = Palmprint(user_id=user_id, data=palmprint)
+        img_roi = cv.imencode('.jpg', palmprint)
+        base64_img_roi = base64.b64encode(img_roi[1])
+        entry = Palmprint(user_id=user_id, data=base64_img_roi)
         session.add(entry)
 
     session.commit()
@@ -157,10 +160,19 @@ def create_user(username, palmprintlist):
     :param palmprintlist: Liste aus anzulegenden Palmprints (List of Strings)
     :returns: None
     """
+    userentry = User(name=username)
+    session.add(userentry)
+    session.flush()
+
     for palmentry in palmprintlist:
-        # XXX Palmprints bitte separat nach dem User anlegen
-        entry = User(name=user, palmprints=[Palmprint(data=palmentry)])
-        session.add(entry)
+        img_roi = cv.imencode('.jpg', palmentry[0])
+        # = cv.imencode('.jpg', palmentry[1])
+        base64_img_roi = base64.b64encode(img_roi[1])
+        #base64_img_original = base64.b64encode(img_original[1])
+
+        #palmprintentry = Palmprint(user_id=userentry.id, data=base64_img_roi, original=base64_img_original)
+        palmprintentry = Palmprint(user_id=userentry.id, data=base64_img_roi)
+        session.add(palmprintentry)
 
     session.commit()
     session.flush()
@@ -175,7 +187,9 @@ def update_palm(palmprint_id, newpalm):
     :returns: None
     """
     palm = session.query(Palmprint).filter_by(id=palmprint_id).first()
-    palm.data = newpalm
+    img_roi = cv.imencode('.jpg', newpalm)
+    base64_img_roi = base64.b64encode(img_roi[1])
+    palm.data = base64_img_roi
     session.commit()
     session.flush()
 
@@ -242,16 +256,16 @@ def find_tangent_points(v_1: list, v_2: list) -> Union[tuple, tuple]:
         for p_2 in v_2:
             # Wahrheitskriterium soll auf alle p aus v_1 und v_2 zutreffen
             if all(
-                [
-                    # ist f(p.y) größer als p.x, d.h. existiert kein Schnittpunkt?
-                    # f sei die Geradengleichung der Geraden zw. p_1 und p_2
-                    (
-                        p_1[0] * ((p[1] - p_2[1]) / (p_1[1] - p_2[1]))
-                        + p_2[0] * ((p[1] - p_1[1]) / (p_2[1] - p_1[1]))
-                    )
-                    >= p[0]
-                    for p in vs
-                ]
+                    [
+                        # ist f(p.y) größer als p.x, d.h. existiert kein Schnittpunkt?
+                        # f sei die Geradengleichung der Geraden zw. p_1 und p_2
+                        (
+                                p_1[0] * ((p[1] - p_2[1]) / (p_1[1] - p_2[1]))
+                                + p_2[0] * ((p[1] - p_1[1]) / (p_2[1] - p_1[1]))
+                        )
+                        >= p[0]
+                        for p in vs
+                    ]
             ):
                 # runde Koordinaten zu nächsten ganzzahligen Pixelwerten
                 p_1 = (int(np.round(p_1[0])), int(np.round(p_1[1])))
@@ -267,7 +281,7 @@ def find_tangent_points(v_1: list, v_2: list) -> Union[tuple, tuple]:
 
 
 def neighbourhood_curvature(
-    p: tuple, img: np.ndarray, n: int, r: int, inside: int = 255, outside: int = 0
+        p: tuple, img: np.ndarray, n: int, r: int, inside: int = 255, outside: int = 0
 ) -> float:
     """
     Überprüfe n Nachbarn im Abstand von r, ob sie innerhalb oder außerhalb
@@ -285,13 +299,13 @@ def neighbourhood_curvature(
     retval = None
     # Randbehandlung; Kurven in Bildrandgebieten sind nicht relevant!
     if (
-        p[0] == 0
-        or p[1] == 0
-        # p[]+r nicht innerhalb von img-Dimensionen
-        or p[0] + r >= img.shape[1]
-        or p[0] - r < 0
-        or p[1] + r >= img.shape[0]
-        or p[1] - r < 0
+            p[0] == 0
+            or p[1] == 0
+            # p[]+r nicht innerhalb von img-Dimensionen
+            or p[0] + r >= img.shape[1]
+            or p[0] - r < 0
+            or p[1] + r >= img.shape[0]
+            or p[1] - r < 0
     ):
         retval = 0.0
     else:
@@ -331,11 +345,11 @@ def find_valleys(img: np.ndarray, contour: list) -> list:
     # durchlaufe die Punkte auf der Kontur
     for i, c in enumerate(contour):
         # quadratischer Bildausschnitt der Seitenlänge GAMMA mit c als Mittelpunkt
-        subimg = img[c[1] - GAMMA : c[1] + GAMMA, c[0] - GAMMA : c[0] + GAMMA]
+        subimg = img[c[1] - GAMMA: c[1] + GAMMA, c[0] - GAMMA: c[0] + GAMMA]
         if (
-            len(subimg) > 0
-            and (G_L <= neighbourhood_curvature(c, img, 32, GAMMA) <= G_U)
-            and subimg.mean() >= THRESH_SUBIMG
+                len(subimg) > 0
+                and (G_L <= neighbourhood_curvature(c, img, 32, GAMMA) <= G_U)
+                and subimg.mean() >= THRESH_SUBIMG
         ):
             # prüfe auf mögl. Zusammenhang mit vorheriger Gruppe; starte neue Gruppe,
             # wenn der Abstand zu groß ist
@@ -570,30 +584,16 @@ def main():
     # cv.imshow("filtered_roi", filtered_roi)
 
     masked_roi = apply_mask(filtered_roi, mask)
-    cv.imshow("masked_roi", masked_roi)
 
-    # --Creating 2nd Image for Testing purpose----------------------------------------
+    imglist = []
+    imglist.append((masked_roi, img))
 
-    img_template = cv.imread("devel/r_08.jpg", cv.IMREAD_GRAYSCALE)
-    k1_template, k2_template = find_keypoints(img_template)
-    roi_template = transform_to_roi(img_template, k2_template, k1_template)
-    cv.imshow("roi_template", roi_template)
-
-    mask_template = build_mask(roi_template)
-    # cv.imshow("mask", mask)
-
-    filtered_roi_template = apply_gabor_filters(roi_template, filters)
-    # cv.imshow("filtered_roi", filtered_roi)
-
-    masked_roi_template = apply_mask(filtered_roi_template, mask_template)
-    cv.imshow("masked_roi_template", masked_roi_template)
-
-    # -------------------------------------------------------------------------------------
-
-    match_palm_prints(masked_roi, masked_roi_template)
-
+    #create_user("hans3", imglist)
+    img = get_palmprints()
+    cv.imshow("masked_roi_template", img[0])
     cv.waitKey(0)
     cv.destroyAllWindows()
+    # delete_user(3)
 
 
 if __name__ == "__main__":
