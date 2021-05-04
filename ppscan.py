@@ -97,117 +97,122 @@ class Palmprint(Base):
         )
 
 
+# # # # # # #
+# DB Access #
+# # # # # # #
+
+
+# def get_user_palmprints(username: str) -> list:
+#     """
+#     Suche alle Palmprints die dem Usernamen zugeordnet sind.
+
+#     :param username: String
+#     :returns: alle Palmprints des Users in einer Liste
+#     """
+#     user = session.query(User).filter_by(name=username).all()
+
+#     palmprints = user.palmprints
+
+#     return palmprints
+
+
+# def get_palmprints() -> list:
+#     """
+#     Suche alle Palmprints in der Database.
+
+#     :returns: alle Palmprints in einer Liste
+#     """
+#     query = session.query(Palmprint)
+#     entry = query.all()
+
+#     palmprints = []
+
+#     for palm in entry:
+#         palmprints.append(palm.data)
+
+#     return palmprints
+
+
+# def insert_palmprint(user_id: int, palmprints: list):
+#     """
+#     Einfügen von neuen Palmprints eines bestehenden users
+
+#     :param user_id: user_id (Integer)
+#     :param palmprint: Liste aus anzulegenden Palmprints (List of Strings)
+#     :returns: None
+#     """
+#     for palmprint in palmprints:
+#         entry = Palmprint(user_id=user_id, data=palmprint)
+#         session.add(entry)
+
+#     session.commit()
+#     session.flush()
+
+
+# def create_user(username, palmprintlist):
+#     """
+#     Anlegen von neuen Usern mit belibig vielen Palmprints
+
+#     :param username: Name des neuen Nutzers (String)
+#     :param palmprintlist: Liste aus anzulegenden Palmprints (List of Strings)
+#     :returns: None
+#     """
+#     for palmentry in palmprintlist:
+#         # XXX Palmprints bitte separat nach dem User anlegen
+#         entry = User(name=user, palmprints=[Palmprint(data=palmentry)])
+#         session.add(entry)
+
+#     session.commit()
+#     session.flush()
+
+
+# def update_palm(palmprint_id, newpalm):
+#     """
+#     Update von bereits bestehenden Palmprints
+
+#     :param palmprint_id: Integer
+#     :param newpalm: Neuer Palmprint (String)
+#     :returns: None
+#     """
+#     palm = session.query(Palmprint).filter_by(id=palmprint_id).first()
+#     palm.data = newpalm
+#     session.commit()
+#     session.flush()
+
+
+# def delete_user(userid):
+#     """
+#     Löschen eines bestehenden Users sammt zugeordneter Palmprints
+
+#     :param userid: userid (Integer)
+#     :returns: None
+#     """
+#     userentry = session.query(User).filter_by(id=userid).first()
+#     palmentry = session.query(Palmprint).filter_by(user_id=userid).all()
+#     for entry in palmentry:
+#         session.delete(entry)
+
+#     session.delete(userentry)
+#     session.commit()
+#     session.flush()
+
+
+# def delete_palmprint(palmid):
+#     """
+#     Löschen eines bestehenden Palmprints
+
+#     :param palmid: Palmprint ID (Integer)
+#     :returns: None
+#     """
+#     palmprint = session.query(Palmprint).filter_by(id=palmid).first()
+#     session.delete(palmprint)
+#     session.commit()
+#     session.flush()
+
+
 # # # # # #
 # Utility #
 # # # # # #
-
-
-def get_user_palmprints(username: str) -> list:
-    """
-    Suche alle Palmprints die dem Usernamen zugeordnet sind.
-
-    :param username: String
-    :returns: alle Palmprints des Users in einer Liste
-    """
-    user = session.query(User).filter_by(name=username).all()
-
-    palmprints = user.palmprints
-
-    return palmprints
-
-
-def get_palmprints() -> list:
-    """
-    Suche alle Palmprints in der Database.
-    
-    :returns: alle Palmprints in einer Liste
-    """
-    query = session.query(Palmprint)
-    entry = query.all()
-
-    palmprints = []
-
-    for palm in entry:
-        palmprints.append(palm.data)
-
-    return palmprints
-
-
-def insert_palmprint(user_id: int, palmprints: list):
-    """
-    Einfügen von neuen Palmprints eines bestehenden users
-
-    :param user_id: user_id (Integer)
-    :param palmprint: Liste aus anzulegenden Palmprints (List of Strings)
-    :returns: None
-    """
-    for palmprint in palmprints:
-        entry = Palmprint(user_id=user_id, data=palmprint)
-        session.add(entry)
-
-    session.commit()
-    session.flush()
-
-
-def create_user(username, palmprintlist):
-    """
-    Anlegen von neuen Usern mit belibig vielen Palmprints
-
-    :param username: Name des neuen Nutzers (String)
-    :param palmprintlist: Liste aus anzulegenden Palmprints (List of Strings)
-    :returns: None
-    """
-    for palmentry in palmprintlist:
-        # XXX Palmprints bitte separat nach dem User anlegen
-        entry = User(name=user, palmprints=[Palmprint(data=palmentry)])
-        session.add(entry)
-
-    session.commit()
-    session.flush()
-
-
-def update_palm(palmprint_id, newpalm):
-    """
-    Update von bereits bestehenden Palmprints
-
-    :param palmprint_id: Integer
-    :param newpalm: Neuer Palmprint (String)
-    :returns: None
-    """
-    palm = session.query(Palmprint).filter_by(id=palmprint_id).first()
-    palm.data = newpalm
-    session.commit()
-    session.flush()
-
-
-def delete_user(userid):
-    """
-    Löschen eines bestehenden Users sammt zugeordneter Palmprints
-
-    :param userid: userid (Integer)
-    :returns: None
-    """
-    userentry = session.query(User).filter_by(id=userid).first()
-    palmentry = session.query(Palmprint).filter_by(user_id=userid).all()
-    for entry in palmentry:
-        session.delete(entry)
-
-    session.delete(userentry)
-    session.commit()
-    session.flush()
-
-
-def delete_palmprint(palmid):
-    """
-    Löschen eines bestehenden Palmprints
-
-    :param palmid: Palmprint ID (Integer)
-    :returns: None
-    """
-    palmprint = session.query(Palmprint).filter_by(id=palmid).first()
-    session.delete(palmprint)
-    session.commit()
-    session.flush()
 
 
 def interpol2d(points: list, steps: int) -> list:
@@ -259,6 +264,35 @@ def find_tangent_points(v_1: list, v_2: list) -> Union[tuple, tuple]:
                 return p_1, p_2
 
     return None, None
+
+
+def left_right_detector(valleys: list) -> str:
+    """
+    Finde heraus, ob es sich bei den Valleys um Koordinaten einer linken
+    oder rechten Hand handelt.
+
+    :param valleys: Liste aus Koordinatentupeln
+    :returns: "l", "r" oder None, wenn etwas nicht stimmt
+    """
+    retval = None
+
+    midpoints = [(v[int(len(v) / 2)][0], v[int(len(v) / 2)][1]) for v in valleys]
+
+    dists = []
+
+    for i in range(1, len(midpoints), 1):
+        dists.append(
+            np.linalg.norm(np.array(midpoints[i]) - np.array(midpoints[i - 1]))
+        )
+
+    idx_max = dists.index(max(dists))
+
+    if idx_max == 1:
+        retval = "r"
+    elif idx_max == len(valleys) - 1:
+        retval = "l"
+
+    return retval
 
 
 # # # # # # # # #
@@ -390,6 +424,9 @@ def find_keypoints(img: np.ndarray, hand: int = 0) -> Union[tuple, tuple]:
 
     # Werte interpolieren, um eine etwas sauberere Kurve zu bekommen
     valleys_interp = [interpol2d(v, 10) for v in valleys]
+
+    # prüfe, ob es sich um eine linke oder rechte Hand handelt
+    print(left_right_detector(valleys_interp))
 
     # im Optimalfall sollten erster und letzter Punkt die Keypoints sein
     v_1 = valleys_interp[0 - hand]
