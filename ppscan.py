@@ -19,7 +19,6 @@ import cv2 as cv
 
 from sqlalchemy import create_engine
 from sqlalchemy import Column, Integer, String, ForeignKey
-import sqlalchemy as db
 
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import relationship
@@ -102,7 +101,14 @@ class Palmprint(Base):
 # Utility #
 # # # # # #
 
+
 def get_user_parlm(username) -> list:
+    """
+    Suche alle Palmprints die den Usernamen zugeordnet sind.
+
+    :param username: String
+    :returns: alle Palmprints des Users in einer Liste
+    """
     query = session.query(User)
     entry = query.all()
 
@@ -117,6 +123,10 @@ def get_user_parlm(username) -> list:
 
 
 def get_parlm() -> list:
+    """
+    Suche alle Palmprints in der Database.
+    :returns: alle Palmprints in einer Liste
+    """
     query = session.query(Palmprint)
     entry = query.all()
 
@@ -129,6 +139,13 @@ def get_parlm() -> list:
 
 
 def insert_palm(user: int, palmprint: list):
+    """
+    Einfügen von neuen Palmprints eines bestehenden users
+
+    :param user: user_id (Integer)
+    :param palmprint: Liste aus anzulegenden Palmprints (List of Strings)
+    :returns: None
+    """
     for palmentry in palmprint:
         entry = Palmprint(user_id=user, data=palmentry)
         session.add(entry)
@@ -138,6 +155,13 @@ def insert_palm(user: int, palmprint: list):
 
 
 def create_user(user, palmprintlist):
+    """
+    Anlegen von neuen Usern mit belibig vielen Palmprints
+
+    :param user: username (String)
+    :param palmprintlist: Liste aus anzulegenden Palmprints (List of Strings)
+    :returns: None
+    """
     for palmentry in palmprintlist:
         entry = User(name=user, palmprints=[Palmprint(data=palmentry)])
         session.add(entry)
@@ -147,14 +171,28 @@ def create_user(user, palmprintlist):
 
 
 def update_palm(palmprint_id, newpalm):
+    """
+    Update von bereits bestehenden Palmprints
+
+    :param palmprint_id: Integer
+    :param newpalm: Neuer Palmprint (String)
+    :returns: None
+    """
     palm = session.query(Palmprint).filter_by(id=palmprint_id).first()
     palm.data = newpalm
     session.commit()
     session.flush()
 
+
 def delete_user(userid):
-    userentry = session.query(User).filter_by(id = userid).first()
-    palmentry = session.query(Palmprint).filter_by(user_id = userid).all()
+    """
+    Löschen eines bestehenden Users sammt zugeordneter Palmprints
+
+    :param userid: userid (Integer)
+    :returns: None
+    """
+    userentry = session.query(User).filter_by(id=userid).first()
+    palmentry = session.query(Palmprint).filter_by(user_id=userid).all()
     for entry in palmentry:
         session.delete(entry)
 
@@ -162,16 +200,18 @@ def delete_user(userid):
     session.commit()
     session.flush()
 
+
 def delete_palmprint(palmid):
+    """
+    Löschen eines bestehenden Palmprints
+
+    :param palmid: Palmprint ID (Integer)
+    :returns: None
+    """
     palmprint = session.query(Palmprint).filter_by(id=palmid).first()
     session.delete(palmprint)
     session.commit()
     session.flush()
-
-    # entry = ppscan.User(id=1,name='peter',palmprints=[ppscan.Palmprint(data=
-    # update = ppscan.db.update(ppscan.User).where(ppscan.User.name =='peter').values(palmprints=
-    # user = ppscan.session.query(ppscan.User).filter_by(name = 'guenther').first()
-    # user.name = "guenther"
 
 
 def interpol2d(points: list, steps: int) -> list:
@@ -520,7 +560,41 @@ def match_palm_prints(img_to_match: np.ndarray, img_template: np.ndarray) -> boo
 
 
 def main():
-    get_user_parlm('peter')
+    img = cv.imread("devel/r_03.jpg", cv.IMREAD_GRAYSCALE)
+    k1, k2 = find_keypoints(img)
+    roi = transform_to_roi(img, k2, k1)
+    cv.imshow("roi", roi)
+
+    mask = build_mask(roi)
+    # cv.imshow("mask", mask)
+
+    filters = build_gabor_filters()
+
+    filtered_roi = apply_gabor_filters(roi, filters)
+    # cv.imshow("filtered_roi", filtered_roi)
+
+    masked_roi = apply_mask(filtered_roi, mask)
+    cv.imshow("masked_roi", masked_roi)
+
+    # --Creating 2nd Image for Testing purpose----------------------------------------
+
+    img_template = cv.imread("devel/r_08.jpg", cv.IMREAD_GRAYSCALE)
+    k1_template, k2_template = find_keypoints(img_template)
+    roi_template = transform_to_roi(img_template, k2_template, k1_template)
+    cv.imshow("roi_template", roi_template)
+
+    mask_template = build_mask(roi_template)
+    # cv.imshow("mask", mask)
+
+    filtered_roi_template = apply_gabor_filters(roi_template, filters)
+    # cv.imshow("filtered_roi", filtered_roi)
+
+    masked_roi_template = apply_mask(filtered_roi_template, mask_template)
+    cv.imshow("masked_roi_template", masked_roi_template)
+
+    # -------------------------------------------------------------------------------------
+
+    match_palm_prints(masked_roi, masked_roi_template)
 
     cv.waitKey(0)
     cv.destroyAllWindows()
