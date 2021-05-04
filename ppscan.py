@@ -9,6 +9,7 @@
     :license: who knows
     :format: black, reST docstrings
 """
+
 import sys
 import base64
 
@@ -88,8 +89,35 @@ class Palmprint(Base):
 
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("users.id"))
-    data = Column(String)
+    roi = Column(String)
     original = Column(String)
+
+    def encode(img: np.ndarray) -> str:
+        """
+        Numpy 2D-Array als Base64-String kodieren.
+
+        :param img: Eingangsbild
+        :returns: Bild als Base64 PNG-Bild
+        """
+        _, png_img = cv.imencode(".png", img)
+        b64_img = base64.b64encode(png_img)
+
+        return b64_img
+
+    def decode(b64_img: str) -> np.ndarray:
+        """
+        Base64-String zu Numpy-Array konvertieren.
+
+        :param b64_img: das kodierte Bild
+        :returns: Array, mit dem dem OpenCV arbeiten kann
+        """
+        imgarray = np.frombuffer(base64.b64decode(), np.uint8)
+        img = cv.imdecode(imgarray, cv.IMREAD_GRAYSCALE)
+
+        return img
+
+    def get_roi(self):
+        return self.decode(self.roi)
 
     def __repr__(self):
         return "<{} {} (user {})>".format(
@@ -104,6 +132,51 @@ Base.metadata.create_all(engine)
 # # # # # # #
 # DB Access #
 # # # # # # #
+
+
+def create_user(name: str, palmprints: list):
+    """
+    Anlegen eines neuen Nutzers mit beliebig vielen Palmprints.
+
+    :param name: Name des neuen Nutzers
+    :param palmprints: Liste aus anzulegenden Palmprints als Tupel (roi, original)
+    :returns: None
+    """
+    # neue Nutzerinstanz anlegen
+    user = User(name=name)
+    session.add(user)
+    # Nutzer vorläufig in die DB schreiben, um eine ID zu bekommen
+    session.flush()
+
+    for pp in palmprints:
+        roi = Palmprint.encode(pp[0])
+        original = Palmprint.encode(pp[1])
+        palmprint = Palmprint(user_id=user.id, roi=roi, original=original)
+        session.add(palmprint)
+
+    # Neue Daten endgültig in die DB schreiben
+    session.commit()
+
+
+def delete_user(user_id: int):
+    """
+    Löschen eines bestehenden Nutzers samt zugeordneter Palmprints.
+
+    :param user_id: ID des zu löschenden Nutzers
+    :returns: None
+    """
+    user = session.query(User).filter_by(id=user_id).one_or_none()
+
+    if user is None:
+        raise Exception("Cannot delete user {}: no such user!".format(user_id))
+
+    palmprints = session.query(Palmprint).filter_by(user_id=user_id).all()
+
+    for pp in palmprints:
+        session.delete(pp)
+
+    session.delete(user)
+    session.commit()
 
 
 def get_user_palmprints(username: str) -> list:
@@ -131,110 +204,75 @@ def get_palmprints() -> list:
     palmprints = []
 
     for palm in entry:
-        imgarray = np.frombuffer(base64.b64decode(palm.data), np.uint8)
+        imgarray = np.frombuffer(base64.b64decode(palm.roi), np.uint8)
         palmprint = cv.imdecode(imgarray, cv.IMREAD_COLOR)
         palmprints.append(palmprint)
 
     return palmprints
 
 
-def insert_palmprint(user_id: int, palmprints: list):
+def insert_palmprints(user_id: int, palmprints: list):
     """
-    Einfügen von neuen Palmprints eines bestehenden users
+    Einfügen neuer Palmprints (1 bis N) zu bestehendem Nutzer.
 
-    :param user_id: user_id (Integer)
-    :param palmprint: Liste aus anzulegenden Palmprints (List of Strings)
+    :param user_id: ID des Nutzers
+    :param palmprints: Liste aus Tupeln der Form (roi, original), beides np.ndarrays
     :returns: None
     """
-    for palmentry in palmprints:
-        img_roi = cv.imencode(".jpg", palmentry[0])
-        img_original = cv.imencode(".jpg", palmentry[1])
-        base64_img_roi = base64.b64encode(img_roi[1])
-        base64_img_original = base64.b64encode(img_original[1])
+    user = session.query(User).filter_by(id=user_id).one_or_none()
 
-        palmprintentry = Palmprint(
-            user_id=user_id, data=base64_img_roi, original=base64_img_original
+    if user is None:
+        raise Exception("Cannot insert palmprint for {}: no such user!".format(user_id))
+
+    for pp in palmprints:
+        roi = Palmprint.encode(pp[0])
+        original = Palmprint.encode(pp[1])
+        palmprint = Palmprint(user_id=user.id, roi=roi, original=original)
+        session.add(palmprint)
+
+    session.commit()
+
+
+def update_palmprint(palmprint_id: int, palmprint_data: tuple):
+    """
+    Update eines bereits bestehenden Palmprints.
+
+    :param palmprint_id: ID des Palmprints
+    :param palmprint_data: Tupel aus Originalbild und ROI
+    :returns: None
+    """
+    palmprint = session.query(Palmprint).filter_by(id=palmprint_id).first()
+
+    if palmprint is None:
+        raise Exception(
+            "Cannot update palmprint {}: no such palmprint!".format(palmprint_id)
         )
-        session.add(palmprintentry)
+
+    new_roi = Palmprint.encode(palmprint_data[0])
+    new_original = Palmprint.encode(palmprint_data[1])
+
+    palm.roi = new_roi
+    palm.original = new_original
 
     session.commit()
-    session.flush()
 
 
-def create_user(username, palmprintlist):
+def delete_palmprint(palmprint_id: int):
     """
-    Anlegen von neuen Usern mit belibig vielen Palmprints
+    Löschen eines bestehenden Palmprints.
 
-    :param username: Name des neuen Nutzers (String)
-    :param palmprintlist: Liste aus anzulegenden Palmprints (List of Strings)
+    :param palmprint_id: Palmprint ID
     :returns: None
     """
-    userentry = User(name=username)
-    session.add(userentry)
-    session.flush()
+    palmprint = session.query(Palmprint).filter_by(id=palmprint_id).one_or_none()
 
-    for palmentry in palmprintlist:
-        img_roi = cv.imencode(".jpg", palmentry[0])
-        img_original = cv.imencode(".jpg", palmentry[1])
-        base64_img_roi = base64.b64encode(img_roi[1])
-        base64_img_original = base64.b64encode(img_original[1])
-
-        palmprintentry = Palmprint(
-            user_id=userentry.id, data=base64_img_roi, original=base64_img_original
+    if palmprint is None:
+        raise Exception(
+            "Cannot delete palmprint {}: no such palmprint!".format(palmprint_id)
         )
-        session.add(palmprintentry)
 
-    session.commit()
-    session.flush()
-
-
-def update_palm(palmprint_id, newpalm):
-    """
-    Update von bereits bestehenden Palmprints
-
-    :param palmprint_id: Integer
-    :param newpalm: Neuer Palmprint (String)
-    :returns: None
-    """
-    palm = session.query(Palmprint).filter_by(id=palmprint_id).first()
-    img_roi = cv.imencode(".jpg", newpalm[0])
-    img_original = cv.imencode(".jpg", newpalm[1])
-    base64_img_roi = base64.b64encode(img_roi[1])
-    base64_img_original = base64.b64encode(img_original[1])
-    palm.data = base64_img_roi
-    palm.original = base64_img_original
-    session.commit()
-    session.flush()
-
-
-def delete_user(userid):
-    """
-    Löschen eines bestehenden Users sammt zugeordneter Palmprints
-
-    :param userid: userid (Integer)
-    :returns: None
-    """
-    userentry = session.query(User).filter_by(id=userid).first()
-    palmentry = session.query(Palmprint).filter_by(user_id=userid).all()
-    for entry in palmentry:
-        session.delete(entry)
-
-    session.delete(userentry)
-    session.commit()
-    session.flush()
-
-
-def delete_palmprint(palmid):
-    """
-    Löschen eines bestehenden Palmprints
-
-    :param palmid: Palmprint ID (Integer)
-    :returns: None
-    """
-    palmprint = session.query(Palmprint).filter_by(id=palmid).first()
     session.delete(palmprint)
     session.commit()
-    session.flush()
 
 
 # # # # # #
@@ -254,6 +292,7 @@ def interpol2d(points: list, steps: int) -> list:
     y = np.array([p[1] for p in points])
     i = np.arange(len(points))
     s = np.linspace(i[0], i[-1], steps)
+
     return list(zip(np.interp(s, i, x), np.interp(s, i, y)))
 
 
