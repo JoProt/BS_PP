@@ -9,7 +9,6 @@
     :license: who knows
     :format: black, reST docstrings
 """
-import codecs
 import sys
 import base64
 
@@ -89,13 +88,15 @@ class Palmprint(Base):
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("users.id"))
     data = Column(String)
-    #original = Column(String)
+    original = Column(String)
 
     def __repr__(self):
         return "<{} {} (user {})>".format(
             self.__class__.__name__, self.id, self.user_id
         )
 
+#wenn db nicht vorhanden, lege eine an
+Base.metadata.create_all(engine)
 
 # # # # # #
 # Utility #
@@ -142,11 +143,14 @@ def insert_palmprint(user_id: int, palmprints: list):
     :param palmprint: Liste aus anzulegenden Palmprints (List of Strings)
     :returns: None
     """
-    for palmprint in palmprints:
-        img_roi = cv.imencode('.jpg', palmprint)
+    for palmentry in palmprints:
+        img_roi = cv.imencode('.jpg', palmentry[0])
+        img_original = cv.imencode('.jpg', palmentry[1])
         base64_img_roi = base64.b64encode(img_roi[1])
-        entry = Palmprint(user_id=user_id, data=base64_img_roi)
-        session.add(entry)
+        base64_img_original = base64.b64encode(img_original[1])
+
+        palmprintentry = Palmprint(user_id=user_id, data=base64_img_roi, original=base64_img_original)
+        session.add(palmprintentry)
 
     session.commit()
     session.flush()
@@ -166,12 +170,11 @@ def create_user(username, palmprintlist):
 
     for palmentry in palmprintlist:
         img_roi = cv.imencode('.jpg', palmentry[0])
-        # = cv.imencode('.jpg', palmentry[1])
+        img_original = cv.imencode('.jpg', palmentry[1])
         base64_img_roi = base64.b64encode(img_roi[1])
-        #base64_img_original = base64.b64encode(img_original[1])
+        base64_img_original = base64.b64encode(img_original[1])
 
-        #palmprintentry = Palmprint(user_id=userentry.id, data=base64_img_roi, original=base64_img_original)
-        palmprintentry = Palmprint(user_id=userentry.id, data=base64_img_roi)
+        palmprintentry = Palmprint(user_id=userentry.id, data=base64_img_roi, original=base64_img_original)
         session.add(palmprintentry)
 
     session.commit()
@@ -187,9 +190,12 @@ def update_palm(palmprint_id, newpalm):
     :returns: None
     """
     palm = session.query(Palmprint).filter_by(id=palmprint_id).first()
-    img_roi = cv.imencode('.jpg', newpalm)
+    img_roi = cv.imencode('.jpg', newpalm[0])
+    img_original = cv.imencode('.jpg', newpalm[1])
     base64_img_roi = base64.b64encode(img_roi[1])
+    base64_img_original = base64.b64encode(img_original[1])
     palm.data = base64_img_roi
+    palm.original = base64_img_original
     session.commit()
     session.flush()
 
@@ -584,16 +590,30 @@ def main():
     # cv.imshow("filtered_roi", filtered_roi)
 
     masked_roi = apply_mask(filtered_roi, mask)
+    cv.imshow("masked_roi", masked_roi)
 
-    imglist = []
-    imglist.append((masked_roi, img))
+    # --Creating 2nd Image for Testing purpose----------------------------------------
 
-    #create_user("hans3", imglist)
-    img = get_palmprints()
-    cv.imshow("masked_roi_template", img[0])
+    img_template = cv.imread("devel/r_08.jpg", cv.IMREAD_GRAYSCALE)
+    k1_template, k2_template = find_keypoints(img_template)
+    roi_template = transform_to_roi(img_template, k2_template, k1_template)
+    cv.imshow("roi_template", roi_template)
+
+    mask_template = build_mask(roi_template)
+    # cv.imshow("mask", mask)
+
+    filtered_roi_template = apply_gabor_filters(roi_template, filters)
+    # cv.imshow("filtered_roi", filtered_roi)
+
+    masked_roi_template = apply_mask(filtered_roi_template, mask_template)
+    cv.imshow("masked_roi_template", masked_roi_template)
+
+    # -------------------------------------------------------------------------------------
+
+    match_palm_prints(masked_roi, masked_roi_template)
+
     cv.waitKey(0)
     cv.destroyAllWindows()
-    # delete_user(3)
 
 
 if __name__ == "__main__":
