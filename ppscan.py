@@ -164,7 +164,7 @@ def create_user(name: str, palmprints: list):
 
 
 def list_users():
-    """ Ausgabe aller Nutzer. """
+    """Ausgabe aller Nutzer."""
     users = session.query(User).all()
     for u in users:
         print(u)
