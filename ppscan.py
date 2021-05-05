@@ -63,7 +63,7 @@ GABOR_THRESHOLD = 255  # 0 to 255
 # XXX das ist etwas hoch ... r_08 z.B. wird maskiert, was nicht sein muss
 MASK_THRESHOLD = 110
 
-ROI_RAD = 50
+ROI_RAD = 75
 
 
 # # # # # #
@@ -315,6 +315,19 @@ def get_palmprints() -> list:
 # # # # # #
 
 
+def load_img(path: str) -> np.ndarray:
+    """
+    Wrapper um cv.imread(), damit auch wirklich immer
+    Graustufenbilder eingelesen werden.
+
+    :param path: Dateipfad
+    :returns: Bild als 2D Numpy Array
+    """
+    img = cv.imread(path, cv.IMREAD_GRAYSCALE)
+
+    return img
+
+
 def interpol2d(points: list, steps: int) -> list:
     """
     Interpoliere steps Punkte auf Basis von points.
@@ -484,36 +497,14 @@ def find_valleys(img: np.ndarray, contour: list) -> list:
     return valleys
 
 
-def find_keypoints(img: np.ndarray, hand: int = 0) -> Union[tuple, tuple]:
+def find_keypoints(valleys: list) -> Union[tuple, tuple]:
     """
     Finde die Keypoints des Bildes, in unserem Fall die beiden Lücken
     zwischen Zeige und Mittelfinger bzw. Ring- und kleinem Finger.
 
     :param img: Eingangsbild
-    :param hand: Code der Hand; 0=rechts, 1=links
     :returns: Koordinaten der Keypoints
     """
-    # weichzeichnen und binarisieren
-    blurred = cv.GaussianBlur(img, (7, 7), 0)
-    _, thresh = cv.threshold(
-        blurred, (THRESH_FACTOR * img.mean()), 255, cv.THRESH_BINARY
-    )
-
-    # finde die Kontur der Hand; betrachte nur linke Hälfte des Bildes,
-    # weil wir dort die wichtigen Kurven erwarten können
-    contours, _ = cv.findContours(
-        thresh[:, : int(img.shape[1] / 2)], cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE
-    )
-
-    # filtere nur die längste Kontur, um mögl. Störungen zu entfernen
-    contour = max(contours, key=lambda c: len(c))
-
-    # mach eine Liste aus Tupeln zur besseren Weiterverarbeitung draus
-    contour = [tuple(c[0]) for c in contour]
-
-    # "Täler" in der Handkontur finden; dort werden sich Keypoints befinden
-    valleys = find_valleys(thresh, contour)
-
     if len(valleys) < 2:
         raise Exception("Expected at least 2 valleys!")
 
@@ -526,13 +517,9 @@ def find_keypoints(img: np.ndarray, hand: int = 0) -> Union[tuple, tuple]:
     # Werte interpolieren, um eine etwas sauberere Kurve zu bekommen
     valleys_interp = [interpol2d(v, 10) for v in valleys]
 
-    # prüfe, ob es sich um eine linke oder rechte Hand handelt
-    # XXX actually useless
-    # print(left_right_detector(valleys_interp))
-
     # im Optimalfall sollten erster und letzter Punkt die Keypoints sein
-    v_1 = valleys_interp[0 - hand]
-    v_2 = valleys_interp[hand - 1]
+    v_1 = valleys_interp[0]
+    v_2 = valleys_interp[-1]
 
     # Punkte auf Tangente beider Täler finden; das sind die Keypoints
     kp_1, kp_2 = find_tangent_points(v_1, v_2)
@@ -571,6 +558,43 @@ def transform_to_roi(img: np.ndarray, p_min: tuple, p_max: tuple) -> np.ndarray:
     cropped = rotated[y_start:y_end, x_start:x_end]
 
     return cropped
+
+
+def extract_roi(img: np.ndarray) -> np.ndarray:
+    """
+    Wrapper für den ROI-Findungsprozess.
+
+    :param img: Bild, aus dem die ROI extrahiert werden soll
+    :returns: ROI
+    """
+    # weichzeichnen und binarisieren
+    blurred = cv.GaussianBlur(img, (7, 7), 0)
+    _, thresh = cv.threshold(
+        blurred, (THRESH_FACTOR * img.mean()), 255, cv.THRESH_BINARY
+    )
+
+    # finde die Kontur der Hand; betrachte nur linke Hälfte des Bildes,
+    # weil wir dort die wichtigen Kurven erwarten können
+    contours, _ = cv.findContours(
+        thresh[:, : int(img.shape[1] / 2)], cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE
+    )
+
+    # filtere nur die längste Kontur, um mögl. Störungen zu entfernen
+    contour = max(contours, key=lambda c: len(c))
+
+    # mach eine Liste aus Tupeln zur besseren Weiterverarbeitung draus
+    contour = [tuple(c[0]) for c in contour]
+
+    # "Täler" in der Handkontur finden; dort werden sich Keypoints befinden
+    valleys = find_valleys(thresh, contour)
+
+    # beide Keypoints finden
+    kp_1, kp_2 = find_keypoints(valleys)
+
+    # Bild um Keypoints rotieren und zuschneiden
+    roi = transform_to_roi(img, kp_2, kp_1)
+
+    return roi
 
 
 # # # # # # #
@@ -733,14 +757,14 @@ def enrol(name: str, *palmprint_imgs):
 
 
 def main():
-    img = cv.imread("devel/r_03.jpg", cv.IMREAD_GRAYSCALE)
-    k1, k2 = find_keypoints(img)
-    roi = transform_to_roi(img, k2, k1)
+    img = load_img("devel/r_03.jpg")
+    roi = extract_roi(img)
     cv.imshow("roi", roi)
 
     mask = build_mask(roi)
     # cv.imshow("mask", mask)
 
+    # XXX könnte man daraus nicht ein globales Objekt machen?
     filters = build_gabor_filters()
 
     filtered_roi = apply_gabor_filters(roi, filters)
@@ -751,9 +775,8 @@ def main():
 
     # --Creating 2nd Image for Testing purpose----------------------------------------
 
-    img_template = cv.imread("devel/r_08.jpg", cv.IMREAD_GRAYSCALE)
-    k1_template, k2_template = find_keypoints(img_template)
-    roi_template = transform_to_roi(img_template, k2_template, k1_template)
+    img_template = load_img("devel/r_08.jpg")
+    roi_template = extract_roi(img_template)
     cv.imshow("roi_template", roi_template)
 
     mask_template = build_mask(roi_template)
