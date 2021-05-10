@@ -731,19 +731,14 @@ def slide_img(img_to_match, img_template) -> bool:
     :param template_image: Vorlage, gegen welche gematched wird
     :return: kleinste Hamming Distanz zwischen den Bildern
     """
-    match_palm_prints(img_to_match, img_template)
-    print("-----------------------")
     # speichert alle Hamming Distanzen
     hamming_distances = []
 
     # Translationsmatrix
     trans_matrice = [[], []]
 
-    # Image Dimensionen
-    rows, cols = img_to_match.shape
-
     # Verschiebungsalgorithmus
-    # verschieben nach oben link
+    # verschieben nach oben links
     trans_x = -10  # pos -> rechts & neg -> links
     trans_y = -10  # pos -> runter & neg -> hoch
     trans_matrice = [[1, 0, trans_x], [0, 1, trans_y]]
