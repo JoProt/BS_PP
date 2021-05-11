@@ -842,16 +842,15 @@ def enrol(name: str, *palmprint_imgs):
     """
     palmprints = []
 
-    if len(palmprints) > 0:
+    if len(palmprints) == 0:
         filters = build_gabor_filters()
 
         for img in palmprint_imgs:
-            k_1, k_2 = find_keypoints(img)
-            roi = transform_to_roi(img, k2, k1)
+            roi = extract_roi(img)
             mask = build_mask(roi)
             roi = apply_gabor_filters(roi, filters)
             roi = apply_mask(roi, mask)
-            palmprints.add((_roi, img))
+            palmprints.append((roi, img))
 
     create_user(name, palmprints)
 
@@ -864,15 +863,15 @@ def main():
 
     # XXX könnte man daraus nicht ein globales Objekt machen?
     filters = build_gabor_filters()
-    
+
     filtered_roi = apply_gabor_filters(roi, filters)
     masked_roi = apply_mask(filtered_roi, mask)
 
     # --Creating 2nd Image for Testing purpose-----------------------------------------
     img_template = load_img("devel/r_08.jpg")
-    roi_template = extract_roi(img_template)   
+    roi_template = extract_roi(img_template)
     mask_template = build_mask(roi_template)
-    
+
     filtered_roi_template = apply_gabor_filters(roi_template, filters)
     masked_roi_template = apply_mask(filtered_roi_template, mask_template)
 
