@@ -5,12 +5,13 @@
     Palmprint Scanner
     =================
     [your ad here]
-    
+
     :license: who knows
     :format: black, reST docstrings
 """
 
 import sys
+import base64
 
 from typing import Union
 
@@ -46,9 +47,9 @@ THRESH_SUBIMG = 150.0
 THRESH_CON = 15
 THRESH_HAMMING = 0.2
 
-GAMMA = 13
-G_L = 24 / 32
-G_U = 30 / 32
+GAMMA = 10
+G_L = 23 / 32
+G_U = 31 / 32
 
 GABOR_KSIZE = (35, 35)
 GABOR_SIGMA = 5.6179
@@ -61,7 +62,7 @@ GABOR_THRESHOLD = 150  # 0 to 255
 # XXX das ist etwas hoch ... r_08 z.B. wird maskiert, was nicht sein muss
 MASK_THRESHOLD = 110
 
-ROI_RAD = 50
+ROI_RAD = 75
 
 
 # # # # # #
@@ -87,7 +88,40 @@ class Palmprint(Base):
 
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("users.id"))
-    data = Column(String)
+    roi = Column(String)
+    original = Column(String)
+
+    @staticmethod
+    def encode(img: np.ndarray) -> str:
+        """
+        Numpy 2D-Array als Base64-String kodieren.
+
+        :param img: Eingangsbild
+        :returns: Bild als Base64 PNG-Bild
+        """
+        _, png_img = cv.imencode(".png", img)
+        b64_img = base64.b64encode(png_img)
+
+        return b64_img
+
+    @staticmethod
+    def decode(b64_img: str) -> np.ndarray:
+        """
+        Base64-String zu Numpy-Array konvertieren.
+
+        :param b64_img: das kodierte Bild
+        :returns: Array, mit dem dem OpenCV arbeiten kann
+        """
+        imgarray = np.frombuffer(base64.b64decode(b64_img), np.uint8)
+        img = cv.imdecode(imgarray, cv.IMREAD_GRAYSCALE)
+
+        return img
+
+    def get_roi(self):
+        return self.decode(self.roi)
+
+    def get_original(self):
+        return self.decode(self.original)
 
     def __repr__(self):
         return "<{} {} (user {})>".format(
@@ -95,9 +129,202 @@ class Palmprint(Base):
         )
 
 
+# wenn db nicht vorhanden, lege eine an
+Base.metadata.create_all(engine)
+
+
+# # # # # # #
+# DB Access #
+# # # # # # #
+
+
+def create_user(name: str, palmprints: list):
+    """
+    Anlegen eines neuen Nutzers mit beliebig vielen Palmprints.
+
+    :param name: Name des neuen Nutzers
+    :param palmprints: Liste aus anzulegenden Palmprints als Tupel (roi, original)
+    :returns: None
+    """
+    # neue Nutzerinstanz anlegen
+    user = User(name=name)
+    session.add(user)
+    # Nutzer vorläufig in die DB schreiben, um eine ID zu bekommen
+    session.flush()
+
+    for pp in palmprints:
+        roi = Palmprint.encode(pp[0])
+        original = Palmprint.encode(pp[1])
+        palmprint = Palmprint(user_id=user.id, roi=roi, original=original)
+        session.add(palmprint)
+
+    # Neue Daten endgültig in die DB schreiben
+    session.commit()
+
+
+def list_users():
+    """Ausgabe aller Nutzer."""
+    users = session.query(User).all()
+    for u in users:
+        print(u)
+
+
+def get_users() -> list:
+    """
+    Abfrage aller Nutzer.
+
+    :param user_id: ID des Nutzers
+    :returns: Nutzer-Objekt
+    """
+    users = session.query(User).all()
+
+    return users
+
+
+def get_user(user_id: int) -> User:
+    """
+    Abfrage eines einzelnen Nutzers.
+
+    :param user_id: ID des Nutzers
+    :returns: Nutzer-Objekt
+    """
+    user = session.query(User).filter_by(id=user_id).one_or_none()
+
+    if user is None:
+        raise Exception("Cannot query user {}: no such user!".format(user_id))
+
+    return user
+
+
+def delete_user(user_id: int):
+    """
+    Löschen eines bestehenden Nutzers samt zugeordneter Palmprints.
+
+    :param user_id: ID des zu löschenden Nutzers
+    :returns: None
+    """
+    user = session.query(User).filter_by(id=user_id).one_or_none()
+
+    if user is None:
+        raise Exception("Cannot delete user {}: no such user!".format(user_id))
+
+    palmprints = session.query(Palmprint).filter_by(user_id=user_id).all()
+
+    for pp in palmprints:
+        session.delete(pp)
+
+    session.delete(user)
+    session.commit()
+
+
+def insert_palmprints(user_id: int, palmprints: list):
+    """
+    Einfügen neuer Palmprints (1 bis N) zu bestehendem Nutzer.
+
+    :param user_id: ID des Nutzers
+    :param palmprints: Liste aus Tupeln der Form (roi, original), beides np.ndarrays
+    :returns: None
+    """
+    user = session.query(User).filter_by(id=user_id).one_or_none()
+
+    if user is None:
+        raise Exception("Cannot insert palmprint for {}: no such user!".format(user_id))
+
+    for pp in palmprints:
+        roi = Palmprint.encode(pp[0])
+        original = Palmprint.encode(pp[1])
+        palmprint = Palmprint(user_id=user.id, roi=roi, original=original)
+        session.add(palmprint)
+
+    session.commit()
+
+
+def update_palmprint(palmprint_id: int, roi=None, original=None):
+    """
+    Update eines bereits bestehenden Palmprints.
+
+    :param palmprint_id: ID des Palmprints
+    :param palmprint_data: Tupel aus Originalbild und ROI
+    :returns: None
+    """
+    palmprint = session.query(Palmprint).filter_by(id=palmprint_id).first()
+
+    if palmprint is None:
+        raise Exception(
+            "Cannot update palmprint {}: no such palmprint!".format(palmprint_id)
+        )
+
+    if roi is not None:
+        new_roi = Palmprint.encode(roi)
+        palmprint.roi = new_roi
+
+    if original is not None:
+        new_original = Palmprint.encode(original)
+        palmprint.original = new_original
+
+    session.commit()
+
+
+def delete_palmprint(palmprint_id: int):
+    """
+    Löschen eines bestehenden Palmprints.
+
+    :param palmprint_id: Palmprint ID
+    :returns: None
+    """
+    palmprint = session.query(Palmprint).filter_by(id=palmprint_id).one_or_none()
+
+    if palmprint is None:
+        raise Exception(
+            "Cannot delete palmprint {}: no such palmprint!".format(palmprint_id)
+        )
+
+    session.delete(palmprint)
+    session.commit()
+
+
+def get_user_palmprints(username: str) -> list:
+    """
+    Suche alle Palmprints die dem Usernamen zugeordnet sind.
+
+    :param username: String
+    :returns: alle Palmprints des Users in einer Liste
+    """
+    user = session.query(User).filter_by(name=username).one_or_none()
+    palmprints = user.palmprints
+
+    return palmprints
+
+
+def get_palmprints() -> list:
+    """
+    Suche alle Palmprints in der Datenbank.
+
+    :returns: alle Palmprints in einer Liste
+    """
+    palmprints = session.query(Palmprint).all()
+
+    palmprints = [pp.get_roi() for pp in palmprints]
+
+    return palmprints
+
+
 # # # # # #
 # Utility #
 # # # # # #
+
+
+def load_img(path: str) -> np.ndarray:
+    """
+    Wrapper um cv.imread(), damit auch wirklich immer
+    Graustufenbilder eingelesen werden.
+
+    :param path: Dateipfad
+    :returns: Bild als 2D Numpy Array
+    """
+    img = cv.imread(path, cv.IMREAD_GRAYSCALE)
+
+    return img
 
 
 def interpol2d(points: list, steps: int) -> list:
@@ -112,6 +339,7 @@ def interpol2d(points: list, steps: int) -> list:
     y = np.array([p[1] for p in points])
     i = np.arange(len(points))
     s = np.linspace(i[0], i[-1], steps)
+
     return list(zip(np.interp(s, i, x), np.interp(s, i, y)))
 
 
@@ -149,6 +377,35 @@ def find_tangent_points(v_1: list, v_2: list) -> Union[tuple, tuple]:
                 return p_1, p_2
 
     return None, None
+
+
+def left_right_detector(valleys: list) -> str:
+    """
+    Finde heraus, ob es sich bei den Valleys um Koordinaten einer linken
+    oder rechten Hand handelt.
+
+    :param valleys: Liste aus Koordinatentupeln
+    :returns: "l", "r" oder None, wenn etwas nicht stimmt
+    """
+    retval = None
+
+    midpoints = [(v[int(len(v) / 2)][0], v[int(len(v) / 2)][1]) for v in valleys]
+
+    dists = []
+
+    for i in range(1, len(midpoints), 1):
+        dists.append(
+            np.linalg.norm(np.array(midpoints[i]) - np.array(midpoints[i - 1]))
+        )
+
+    idx_max = dists.index(max(dists))
+
+    if idx_max == 1:
+        retval = "r"
+    elif idx_max == len(valleys) - 1:
+        retval = "l"
+
+    return retval
 
 
 # # # # # # # # #
@@ -239,36 +496,14 @@ def find_valleys(img: np.ndarray, contour: list) -> list:
     return valleys
 
 
-def find_keypoints(img: np.ndarray, hand: int = 0) -> Union[tuple, tuple]:
+def find_keypoints(valleys: list) -> Union[tuple, tuple]:
     """
     Finde die Keypoints des Bildes, in unserem Fall die beiden Lücken
     zwischen Zeige und Mittelfinger bzw. Ring- und kleinem Finger.
 
     :param img: Eingangsbild
-    :param hand: Code der Hand; 0=rechts, 1=links
     :returns: Koordinaten der Keypoints
     """
-    # weichzeichnen und binarisieren
-    blurred = cv.GaussianBlur(img, (7, 7), 0)
-    _, thresh = cv.threshold(
-        blurred, (THRESH_FACTOR * img.mean()), 255, cv.THRESH_BINARY
-    )
-
-    # finde die Kontur der Hand; betrachte nur linke Hälfte des Bildes,
-    # weil wir dort die wichtigen Kurven erwarten können
-    contours, _ = cv.findContours(
-        thresh[:, : int(img.shape[1] / 2)], cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE
-    )
-
-    # filtere nur die längste Kontur, um mögl. Störungen zu entfernen
-    contour = max(contours, key=lambda c: len(c))
-
-    # mach eine Liste aus Tupeln zur besseren Weiterverarbeitung draus
-    contour = [tuple(c[0]) for c in contour]
-
-    # "Täler" in der Handkontur finden; dort werden sich Keypoints befinden
-    valleys = find_valleys(thresh, contour)
-
     if len(valleys) < 2:
         raise Exception("Expected at least 2 valleys!")
 
@@ -282,8 +517,8 @@ def find_keypoints(img: np.ndarray, hand: int = 0) -> Union[tuple, tuple]:
     valleys_interp = [interpol2d(v, 10) for v in valleys]
 
     # im Optimalfall sollten erster und letzter Punkt die Keypoints sein
-    v_1 = valleys_interp[0 - hand]
-    v_2 = valleys_interp[hand - 1]
+    v_1 = valleys_interp[0]
+    v_2 = valleys_interp[-1]
 
     # Punkte auf Tangente beider Täler finden; das sind die Keypoints
     kp_1, kp_2 = find_tangent_points(v_1, v_2)
@@ -322,6 +557,48 @@ def transform_to_roi(img: np.ndarray, p_min: tuple, p_max: tuple) -> np.ndarray:
     cropped = rotated[y_start:y_end, x_start:x_end]
 
     return cropped
+
+
+def extract_roi(img: np.ndarray) -> np.ndarray:
+    """
+    Wrapper für den ROI-Findungsprozess.
+
+    :param img: Bild, aus dem die ROI extrahiert werden soll
+    :returns: ROI
+    """
+    # weichzeichnen und binarisieren
+    blurred = cv.GaussianBlur(img, (7, 7), 0)
+    _, thresh = cv.threshold(
+        blurred, (THRESH_FACTOR * img.mean()), 255, cv.THRESH_BINARY
+    )
+
+    # finde die Kontur der Hand; betrachte nur linke Hälfte des Bildes,
+    # weil wir dort die wichtigen Kurven erwarten können
+    contours, _ = cv.findContours(
+        thresh[:, : int(img.shape[1] / 2)], cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE
+    )
+
+    # filtere nur die längste Kontur, um mögl. Störungen zu entfernen
+    contour = max(contours, key=lambda c: len(c))
+
+    # mach eine Liste aus Tupeln zur besseren Weiterverarbeitung draus
+    contour = [tuple(c[0]) for c in contour]
+
+    # "Täler" in der Handkontur finden; dort werden sich Keypoints befinden
+    valleys = find_valleys(thresh, contour)
+
+    # beide Keypoints finden
+    kp_1, kp_2 = find_keypoints(valleys)
+
+    # Bild um Keypoints rotieren und zuschneiden
+    roi = transform_to_roi(img, kp_2, kp_1)
+
+    return roi
+
+
+# # # # # # #
+# Filtering #
+# # # # # # #
 
 
 def build_mask(img: np.ndarray) -> np.ndarray:
@@ -436,13 +713,11 @@ def filtered_img_to_binary(filtered_img: np.ndarray) -> np.ndarray:
 
 def match_palm_prints(img_to_match: np.ndarray, img_template: np.ndarray) -> bool:
     """
-    Vergleicht aktuelles Image mit Images aus Datenbank und sucht Match.
-    Rueckgabewert: True -> Images matchen
-    Rueckgabewert: False -> Images matchen nicht
+    Vergleicht ausgewaehltes Image mit Template Image und berechnet die Hamming Distanz zwischen Diesen.
 
-    :param img_to_match: abzugleichendes Image
+    :param img_slided: abzugleichendes, pixelverschobenes Image
     :param template_image: Vorlage, gegen welche gematched wird
-    :return: gibt Match (True) oder Non Match (False) zurueck
+    :return: Hamming Distanz zwischen den Bildern
     """
 
     matching_decision: bool = False
@@ -452,31 +727,152 @@ def match_palm_prints(img_to_match: np.ndarray, img_template: np.ndarray) -> boo
     ## vorangegangene Zeilen haben eigene Funktion bekommen (filtered_img_to_binary())
     hamming_distance = distance.hamming(img_to_match, img_template)
 
+    # NOTE Print nur fuer Debugging. Bei Abgabe entfernen
     print("hamming distance: {}".format(hamming_distance))
 
-    if hamming_distance <= THRESH_HAMMING:
-        matching_decision = True
+    return hamming_distance
 
-    print("matching_decision: {}".format(matching_decision))
 
-    return matching_decision
+def slide_img(img_to_match, img_template) -> bool:
+    """
+    pixelbasierte Verschiebung des img_to_match um den besten Match zuerhalten. Anschliessend return der kleinsten Hamming Distanz
+
+    :param img_to_match: abzugleichendes Image
+    :param template_image: Vorlage, gegen welche gematched wird
+    :return: kleinste Hamming Distanz zwischen den Bildern
+    """
+    # speichert alle Hamming Distanzen
+    hamming_distances = []
+
+    # Translationsmatrix
+    trans_matrice = [[], []]
+
+    # Verschiebungsalgorithmus
+    # verschieben nach oben links
+    trans_x = -10  # pos -> rechts & neg -> links
+    trans_y = -10  # pos -> runter & neg -> hoch
+    trans_matrice = [[1, 0, trans_x], [0, 1, trans_y]]
+    trans_matrice = np.float32(trans_matrice)
+    hamming_distances.append(translate_image(img_to_match, img_template, trans_matrice))
+
+    # verschieben nach oben
+    trans_x = 0
+    trans_y = -10
+    trans_matrice = [[1, 0, trans_x], [0, 1, trans_y]]
+    trans_matrice = np.float32(trans_matrice)
+    hamming_distances.append(translate_image(img_to_match, img_template, trans_matrice))
+    # verschieben nach oben rechts
+    trans_x = +10
+    trans_y = -10
+    trans_matrice = [[1, 0, trans_x], [0, 1, trans_y]]
+    trans_matrice = np.float32(trans_matrice)
+    hamming_distances.append(translate_image(img_to_match, img_template, trans_matrice))
+    # verschieben nach rechts
+    trans_x = +10
+    trans_y = 0
+    trans_matrice = [[1, 0, trans_x], [0, 1, trans_y]]
+    trans_matrice = np.float32(trans_matrice)
+    hamming_distances.append(translate_image(img_to_match, img_template, trans_matrice))
+
+    # verschieben nach unten rechts
+    trans_x = +10
+    trans_y = 10
+    trans_matrice = [[1, 0, trans_x], [0, 1, trans_y]]
+    trans_matrice = np.float32(trans_matrice)
+    hamming_distances.append(translate_image(img_to_match, img_template, trans_matrice))
+
+    # verschieben nach unten
+    trans_x = 0
+    trans_y = 10
+    trans_matrice = [[1, 0, trans_x], [0, 1, trans_y]]
+    trans_matrice = np.float32(trans_matrice)
+    hamming_distances.append(translate_image(img_to_match, img_template, trans_matrice))
+
+    # verschieben nach unten links
+    trans_x = -10
+    trans_y = 10
+    trans_matrice = [[1, 0, trans_x], [0, 1, trans_y]]
+    trans_matrice = np.float32(trans_matrice)
+    hamming_distances.append(translate_image(img_to_match, img_template, trans_matrice))
+
+    # verschieben nach links
+    trans_x = -10
+    trans_y = 0
+    trans_matrice = [[1, 0, trans_x], [0, 1, trans_y]]
+    trans_matrice = np.float32(trans_matrice)
+    hamming_distances.append(translate_image(img_to_match, img_template, trans_matrice))
+
+    # orginal
+    hamming_distances.append(match_palm_prints(img_to_match, img_template))
+
+    if len(hamming_distances) == 0:
+        # return Max Distanz, da keine Distanz berechnet wurde
+        return 1
+    else:
+        return min(hamming_distances)
+
+
+def translate_image(img_to_match, img_template, trans_matrice) -> float:
+    """
+    berechnet Hamming Distanz fuer verschobenes Image ueber dem Template Image um Translationsmatrix trans_matrice
+    """
+    # set 1 bei Default fuer non-Match
+    hamming_distance = 1
+
+    img_slided = cv.warpAffine(
+        img_to_match, trans_matrice, (img_to_match.shape[0], img_to_match.shape[1])
+    )
+
+    hamming_distance = match_palm_prints(img_slided, img_template)
+
+    return hamming_distance
+
+
+# # # # # # # # # #
+# User Management #
+# # # # # # # # # #
+
+# XXX Grobentwurf
+def enrol(name: str, *palmprint_imgs):
+    """
+    Enrolment-Prozess. Bekommt nur unverarbeitete Bilder.
+
+    :param name: Name des neuen Nutzers
+    :param palmprints: variable Anzahl von OpenCV-Bildobjekten
+    """
+    palmprints = []
+
+    if len(palmprints) > 0:
+        filters = build_gabor_filters()
+
+        for img in palmprint_imgs:
+            k_1, k_2 = find_keypoints(img)
+            roi = transform_to_roi(img, k2, k1)
+            mask = build_mask(roi)
+            roi = apply_gabor_filters(roi, filters)
+            roi = apply_mask(roi, mask)
+            palmprints.add((_roi, img))
+
+    create_user(name, palmprints)
 
 
 def main():
     # --Creating 1st Image for Testing purpose-----------------------------------------
-    img = cv.imread("devel/r_03.jpg", cv.IMREAD_GRAYSCALE)
-    k1, k2 = find_keypoints(img)
-    roi = transform_to_roi(img, k2, k1)
+    img = load_img("devel/r_03.jpg")
+    roi = extract_roi(img)
     mask = build_mask(roi)
+
+    # XXX könnte man daraus nicht ein globales Objekt machen?
     filters = build_gabor_filters()
+    
     filtered_roi = apply_gabor_filters(roi, filters)
     masked_roi = apply_mask(filtered_roi, mask)
 
     # --Creating 2nd Image for Testing purpose-----------------------------------------
-    img_template = cv.imread("devel/r_08.jpg", cv.IMREAD_GRAYSCALE)
-    k1_template, k2_template = find_keypoints(img_template)
-    roi_template = transform_to_roi(img_template, k2_template, k1_template)
+    img_template = load_img("devel/r_08.jpg")
+    roi_template = extract_roi(img_template)   
     mask_template = build_mask(roi_template)
+    
     filtered_roi_template = apply_gabor_filters(roi_template, filters)
     masked_roi_template = apply_mask(filtered_roi_template, mask_template)
 
@@ -492,6 +888,7 @@ def main():
 
     # --Check for Match of binary images-----------------------------------------------
     match_palm_prints(bin_roi, bin_roi_template)
+    print("kleinste Hamming Distanz: ", slide_img(masked_roi, masked_roi_template))
 
     # --Press any Key to end-----------------------------------------------------------
     cv.waitKey(0)
