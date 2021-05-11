@@ -103,8 +103,8 @@ class TestPPscan(unittest.TestCase):
         img = ppscan.cv.imread("devel/l_dummy.jpg", ppscan.cv.IMREAD_COLOR)
         img = ppscan.cv.cvtColor(img, ppscan.cv.COLOR_BGR2GRAY)
         k1, k2 = ppscan.find_keypoints(img, 1)
-        assert k1 == (168, 82)
-        assert k2 == (168, 190)
+        assert k1 == (169, 188)
+        assert k2 == (169, 81)
 
     def test_find_keypoints_r_dummy(self):
         """
@@ -115,11 +115,74 @@ class TestPPscan(unittest.TestCase):
         img = ppscan.cv.imread("devel/r_dummy.jpg", ppscan.cv.IMREAD_COLOR)
         img = ppscan.cv.cvtColor(img, ppscan.cv.COLOR_BGR2GRAY)
         k1, k2 = ppscan.find_keypoints(img, 0)
-        assert k1 == (168, 210)
-        assert k2 == (168, 318)
+        assert k1 == (169, 209)
+        assert k2 == (169, 319)
 
-    # def test_transform_to_roi(self):
-    #   TODO: wenn einheitliche Größe des Zuschnitts bestimmt
+    @parameterized.expand(
+        [
+            ("devel/l_01.jpg",),
+            ("devel/l_04.jpg",),
+        ]
+    )
+    def test_transform_to_roi_left(self, file):
+        """
+        Testet ob ROI für linke Hand plausibel ist.
+
+        :param file: vollständiges Handbild
+        :return: True, wenn ROI dargestellt werden kann
+        """
+        img = ppscan.cv.imread(file, ppscan.cv.IMREAD_GRAYSCALE)
+        k1, k2 = ppscan.find_keypoints(img, 1)
+        roi = ppscan.transform_to_roi(img, k2, k1)
+        assert roi.shape[0] > 0
+        assert roi.shape[1] > 0
+        assert roi.shape[0] == roi.shape[1]
+
+    @parameterized.expand(
+        [
+            ("devel/r_03.jpg",),
+            ("devel/r_08.jpg",),
+        ]
+    )
+    def test_transform_to_roi_right(self, file):
+        """
+        Testet ob ROI für rechte Hand plausibel ist.
+
+        :param file: vollständiges Handbild
+        :return: True, wenn ROI dargestellt werden kann
+        """
+        img = ppscan.cv.imread(file, ppscan.cv.IMREAD_GRAYSCALE)
+        k1, k2 = ppscan.find_keypoints(img, 0)
+        roi = ppscan.transform_to_roi(img, k2, k1)
+        assert roi.shape[0] > 0
+        assert roi.shape[1] > 0
+        assert roi.shape[0] == roi.shape[1]
+
+    def test_build_mask(self):
+        """
+        Rudimentärer Test der Maskenbildung. Eingabebild zur Generierung der Maske ist vertikal geteilt,
+        mit einer Hälfte schwarz, der anderen weiß. Die generierte Maske maskiert alle durch MASK_THRESHOLD
+        markierten Bereiche, indem diese in der Maske als schwarze Pixel hinterlegt werden.
+
+        :return: True, wenn Maske und Eingabe Bild übereinstimmen.
+        """
+        img = ppscan.cv.imread("devel/mask_dummy.jpg", ppscan.cv.IMREAD_GRAYSCALE)
+        mask = ppscan.build_mask(img)
+        assert mask.all() == img.all()
+
+    def test_apply_mask(self):
+        """
+        Wendet auf das Bild 'mask_dummy' (vertikal geteilt, eine Hälfte schwarz, andere weiß) das gleiche
+        Bild als Maske an. Ergebnis muss ein weißes Bild sein.
+
+        :return: True, wenn maskiertes Bild komplett weiß ist
+        """
+        img = ppscan.cv.imread("devel/mask_dummy.jpg", ppscan.cv.IMREAD_GRAYSCALE)
+        mask = img
+        masked = ppscan.apply_mask(img, mask)
+        white = ppscan.np.empty_like(img)
+        white.fill(255)
+        assert masked.all() == white.all()
 
     def test_papers_GABOR_CONST(self):
         """

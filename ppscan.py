@@ -37,7 +37,6 @@ Base = declarative_base()
 Session = sessionmaker(bind=engine)
 session = Session()
 
-
 # # # # # # #
 # Constants #
 # # # # # # #
@@ -58,7 +57,7 @@ GABOR_THETAS = np.arange(0, np.pi, np.pi / 32)
 GABOR_LAMBDA = 1 / 0.0916
 GABOR_GAMMA = 0.7  # 0.23 < gamma < 0.92
 GABOR_PSI = 0
-GABOR_THRESHOLD = 255  # 0 to 255
+GABOR_THRESHOLD = 150  # 0 to 255
 
 # XXX das ist etwas hoch ... r_08 z.B. wird maskiert, was nicht sein muss
 MASK_THRESHOLD = 110
@@ -604,7 +603,7 @@ def extract_roi(img: np.ndarray) -> np.ndarray:
 
 def build_mask(img: np.ndarray) -> np.ndarray:
     """
-    Generiert eine Maske aus dem gegebenen Bild.
+    Generiert eine Maske aus dem gegebenen Bild. Schwarze Flächen (kein Teil der Hand) werden maskiert.
 
     :param img: Bild welches als Grundlage der Maske dienen soll
     :return: Maske (schwarz/weiß)
@@ -630,14 +629,14 @@ def apply_mask(img: np.ndarray, mask: np.ndarray) -> np.ndarray:
     white_background = np.empty_like(img)
     white_background.fill(255)
 
+    # inverse Maske generieren
     inv_mask = cv.bitwise_not(mask)
-    # cv.imshow("inv_mask", inv_mask)
+    # Maske auf Bild anwenden
     img1 = cv.bitwise_and(img, img, mask=mask)
-    # cv.imshow("img1", img1)
+    # inverse MAske auf weißes Hintergrundbild anwenden
     img2 = cv.bitwise_and(white_background, white_background, mask=inv_mask)
-    # cv.imshow("img2", img2)
+    # beide maskierten Bilder zusammenführen
     masked_img = cv.add(img1, img2)
-    # masked_img = cv.bitwise_and(img, img, mask=mask)
 
     return masked_img
 
@@ -690,18 +689,29 @@ def apply_gabor_filters(img: np.ndarray, filters: list) -> np.ndarray:
         filtered_img = cv.filter2D(img, cv.CV_8UC3, kern)
         np.minimum(merged_img, filtered_img, merged_img)
 
-    # use threshold to remove lines
+    # use threshold to remove lines and make it (kind of) binary
     merged_img[merged_img > GABOR_THRESHOLD] = 255
+    merged_img[merged_img < GABOR_THRESHOLD] = 0
 
     return merged_img
 
 
-# # # # # # #
-# Matching  #
-# # # # # # #
+def filtered_img_to_binary(filtered_img: np.ndarray) -> np.ndarray:
+    """
+    Formt gegebenes Bild in eindimensionales Array um (flatten). Da das gegebene Bild nur aus 0 oder 255
+    besteht (siehe apply_gabor_filters()), werden diese in True (1) und False (0) umgewandelt.
+
+    :param filtered_img:
+    :return:
+    """
+    flattened = filtered_img.flatten()
+    flattened[flattened == 0] = True
+    flattened[flattened > 1] = False
+
+    return flattened
 
 
-def match_palm_prints(img_slided: np.ndarray, img_template: np.ndarray) -> float:
+def match_palm_prints(img_to_match: np.ndarray, img_template: np.ndarray) -> bool:
     """
     Vergleicht ausgewaehltes Image mit Template Image und berechnet die Hamming Distanz zwischen Diesen.
 
@@ -710,12 +720,12 @@ def match_palm_prints(img_slided: np.ndarray, img_template: np.ndarray) -> float
     :return: Hamming Distanz zwischen den Bildern
     """
 
-    # flatten der 2 Dim Arrays zu 1 Dim Array
-    flattend_img_slided = img_slided.flatten()
-    flattend_img_template = img_template.flatten()
+    matching_decision: bool = False
 
-    # berechne Hamming Distanz
-    hamming_distance = distance.hamming(flattend_img_slided, flattend_img_template)
+    ## flattend_img_to_match = img_to_match.flatten()
+    ## flattend_img_template = img_template.flatten()
+    ## vorangegangene Zeilen haben eigene Funktion bekommen (filtered_img_to_binary())
+    hamming_distance = distance.hamming(img_to_match, img_template)
 
     # NOTE Print nur fuer Debugging. Bei Abgabe entfernen
     print("hamming distance: {}".format(hamming_distance))
@@ -847,41 +857,40 @@ def enrol(name: str, *palmprint_imgs):
 
 
 def main():
+    # --Creating 1st Image for Testing purpose-----------------------------------------
     img = load_img("devel/r_03.jpg")
     roi = extract_roi(img)
-    cv.imshow("roi", roi)
-
     mask = build_mask(roi)
-    # cv.imshow("mask", mask)
 
     # XXX könnte man daraus nicht ein globales Objekt machen?
     filters = build_gabor_filters()
-
+    
     filtered_roi = apply_gabor_filters(roi, filters)
-    # cv.imshow("filtered_roi", filtered_roi)
-
     masked_roi = apply_mask(filtered_roi, mask)
-    cv.imshow("masked_roi", masked_roi)
 
-    # --Creating 2nd Image for Testing purpose----------------------------------------
-
+    # --Creating 2nd Image for Testing purpose-----------------------------------------
     img_template = load_img("devel/r_08.jpg")
-    roi_template = extract_roi(img_template)
-    cv.imshow("roi_template", roi_template)
-
+    roi_template = extract_roi(img_template)   
     mask_template = build_mask(roi_template)
-    # cv.imshow("mask", mask)
-
+    
     filtered_roi_template = apply_gabor_filters(roi_template, filters)
-    # cv.imshow("filtered_roi", filtered_roi)
-
     masked_roi_template = apply_mask(filtered_roi_template, mask_template)
+
+    # --Generating Debug-Pictures as batch (better performance)------------------------
+    cv.imshow("roi", roi)
+    cv.imshow("masked_roi", masked_roi)
+    cv.imshow("roi_template", roi_template)
     cv.imshow("masked_roi_template", masked_roi_template)
 
-    # -------------------------------------------------------------------------------------
+    # --Make them binary---------------------------------------------------------------
+    bin_roi = filtered_img_to_binary(masked_roi)
+    bin_roi_template = filtered_img_to_binary(masked_roi_template)
 
+    # --Check for Match of binary images-----------------------------------------------
+    match_palm_prints(bin_roi, bin_roi_template)
     print("kleinste Hamming Distanz: ", slide_img(masked_roi, masked_roi_template))
 
+    # --Press any Key to end-----------------------------------------------------------
     cv.waitKey(0)
     cv.destroyAllWindows()
 
