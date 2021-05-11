@@ -842,57 +842,37 @@ def enrol(name: str, *palmprint_imgs):
     """
     palmprints = []
 
-    if len(palmprints) > 0:
+    if len(palmprints) == 0:
         filters = build_gabor_filters()
 
         for img in palmprint_imgs:
-            k_1, k_2 = find_keypoints(img)
-            roi = transform_to_roi(img, k2, k1)
+            roi = extract_roi(img)
             mask = build_mask(roi)
             roi = apply_gabor_filters(roi, filters)
             roi = apply_mask(roi, mask)
-            palmprints.add((_roi, img))
+            palmprints.append((roi, img))
 
     create_user(name, palmprints)
 
 
 def main():
-    # --Creating 1st Image for Testing purpose-----------------------------------------
-    img = load_img("devel/r_03.jpg")
-    roi = extract_roi(img)
-    mask = build_mask(roi)
 
-    # XXX könnte man daraus nicht ein globales Objekt machen?
-    filters = build_gabor_filters()
-    
-    filtered_roi = apply_gabor_filters(roi, filters)
-    masked_roi = apply_mask(filtered_roi, mask)
+    img01 = load_img("testdaten/klaus/l_01.jpg")
+    img02 = load_img("testdaten/klaus/l_02.jpg")
+    img03 = load_img("testdaten/klaus/l_03.jpg")
+    img04 = load_img("testdaten/klaus/l_04.jpg")
+    img05 = load_img("testdaten/klaus/l_05.jpg")
+    img06 = load_img("testdaten/klaus/l_06.jpg")
+    img07 = load_img("testdaten/klaus/l_07.jpg")
+    img08 = load_img("testdaten/klaus/r_01.jpg")
+    img09 = load_img("testdaten/klaus/r_02.jpg")
+    img10 = load_img("testdaten/klaus/r_03.jpg")
+    img11 = load_img("testdaten/klaus/r_04.jpg")
+    img12 = load_img("testdaten/klaus/r_05.jpg")
+    img13 = load_img("testdaten/klaus/r_06.jpg")
+    img14 = load_img("testdaten/klaus/r_07.jpg")
 
-    # --Creating 2nd Image for Testing purpose-----------------------------------------
-    img_template = load_img("devel/r_08.jpg")
-    roi_template = extract_roi(img_template)   
-    mask_template = build_mask(roi_template)
-    
-    filtered_roi_template = apply_gabor_filters(roi_template, filters)
-    masked_roi_template = apply_mask(filtered_roi_template, mask_template)
-
-    # --Generating Debug-Pictures as batch (better performance)------------------------
-    cv.imshow("roi", roi)
-    cv.imshow("masked_roi", masked_roi)
-    cv.imshow("roi_template", roi_template)
-    cv.imshow("masked_roi_template", masked_roi_template)
-
-    # --Make them binary---------------------------------------------------------------
-    bin_roi = filtered_img_to_binary(masked_roi)
-    bin_roi_template = filtered_img_to_binary(masked_roi_template)
-
-    # --Check for Match of binary images-----------------------------------------------
-    match_palm_prints(bin_roi, bin_roi_template)
-    print("kleinste Hamming Distanz: ", slide_img(masked_roi, masked_roi_template))
-
-    # --Press any Key to end-----------------------------------------------------------
-    cv.waitKey(0)
-    cv.destroyAllWindows()
+    enrol("klaus", img01, img02, img03, img04, img05, img06, img07, img08, img09, img10, img11, img12, img13, img14 )
 
 
 if __name__ == "__main__":
