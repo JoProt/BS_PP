@@ -711,7 +711,7 @@ def filtered_img_to_binary(filtered_img: np.ndarray) -> np.ndarray:
     return flattened
 
 
-def match_palm_prints(img_to_match: np.ndarray, img_template: np.ndarray) -> bool:
+def match_palm_prints(img_to_match: np.ndarray, img_template: np.ndarray) -> float:
     """
     Vergleicht ausgewaehltes Image mit Template Image und berechnet die Hamming Distanz zwischen Diesen.
 
@@ -720,15 +720,9 @@ def match_palm_prints(img_to_match: np.ndarray, img_template: np.ndarray) -> boo
     :return: Hamming Distanz zwischen den Bildern
     """
 
-    matching_decision: bool = False
-
-    ## flattend_img_to_match = img_to_match.flatten()
-    ## flattend_img_template = img_template.flatten()
-    ## vorangegangene Zeilen haben eigene Funktion bekommen (filtered_img_to_binary())
-    hamming_distance = distance.hamming(img_to_match, img_template)
-
-    # NOTE Print nur fuer Debugging. Bei Abgabe entfernen
-    print("hamming distance: {}".format(hamming_distance))
+    hamming_distance = distance.hamming(
+        filtered_img_to_binary(img_to_match), filtered_img_to_binary(img_template)
+    )
 
     return hamming_distance
 
@@ -748,62 +742,55 @@ def slide_img(img_to_match, img_template) -> bool:
     trans_matrice = [[], []]
 
     # Verschiebungsalgorithmus
-    # verschieben nach oben links
-    trans_x = -10  # pos -> rechts & neg -> links
-    trans_y = -10  # pos -> runter & neg -> hoch
-    trans_matrice = [[1, 0, trans_x], [0, 1, trans_y]]
-    trans_matrice = np.float32(trans_matrice)
-    hamming_distances.append(translate_image(img_to_match, img_template, trans_matrice))
+    trans_x = [
+        -1,
+        0,
+        1,
+        1,
+        1,
+        0,
+        -1,
+        -1,
+        -2,
+        0,
+        2,
+        2,
+        2,
+        0,
+        -2,
+        -2,
+    ]  # pos -> rechts & neg -> links
+    trans_y = [
+        -1,
+        -1,
+        -1,
+        0,
+        1,
+        1,
+        1,
+        0,
+        -2,
+        -2,
+        -2,
+        0,
+        2,
+        2,
+        2,
+        0,
+    ]  # pos -> runter & neg -> hoch
 
-    # verschieben nach oben
-    trans_x = 0
-    trans_y = -10
-    trans_matrice = [[1, 0, trans_x], [0, 1, trans_y]]
-    trans_matrice = np.float32(trans_matrice)
-    hamming_distances.append(translate_image(img_to_match, img_template, trans_matrice))
-    # verschieben nach oben rechts
-    trans_x = +10
-    trans_y = -10
-    trans_matrice = [[1, 0, trans_x], [0, 1, trans_y]]
-    trans_matrice = np.float32(trans_matrice)
-    hamming_distances.append(translate_image(img_to_match, img_template, trans_matrice))
-    # verschieben nach rechts
-    trans_x = +10
-    trans_y = 0
-    trans_matrice = [[1, 0, trans_x], [0, 1, trans_y]]
-    trans_matrice = np.float32(trans_matrice)
-    hamming_distances.append(translate_image(img_to_match, img_template, trans_matrice))
-
-    # verschieben nach unten rechts
-    trans_x = +10
-    trans_y = 10
-    trans_matrice = [[1, 0, trans_x], [0, 1, trans_y]]
-    trans_matrice = np.float32(trans_matrice)
-    hamming_distances.append(translate_image(img_to_match, img_template, trans_matrice))
-
-    # verschieben nach unten
-    trans_x = 0
-    trans_y = 10
-    trans_matrice = [[1, 0, trans_x], [0, 1, trans_y]]
-    trans_matrice = np.float32(trans_matrice)
-    hamming_distances.append(translate_image(img_to_match, img_template, trans_matrice))
-
-    # verschieben nach unten links
-    trans_x = -10
-    trans_y = 10
-    trans_matrice = [[1, 0, trans_x], [0, 1, trans_y]]
-    trans_matrice = np.float32(trans_matrice)
-    hamming_distances.append(translate_image(img_to_match, img_template, trans_matrice))
-
-    # verschieben nach links
-    trans_x = -10
-    trans_y = 0
-    trans_matrice = [[1, 0, trans_x], [0, 1, trans_y]]
-    trans_matrice = np.float32(trans_matrice)
-    hamming_distances.append(translate_image(img_to_match, img_template, trans_matrice))
+    # anwenden der Translation
+    for trans in trans_x:
+        trans_matrice = [[1, 0, trans_x[trans]], [0, 1, trans_y[trans]]]
+        trans_matrice = np.float32(trans_matrice)
+        hamming_distances.append(
+            translate_image(img_to_match, img_template, trans_matrice)
+        )
 
     # orginal
     hamming_distances.append(match_palm_prints(img_to_match, img_template))
+
+    print(hamming_distances)
 
     if len(hamming_distances) == 0:
         # return Max Distanz, da keine Distanz berechnet wurde
@@ -881,12 +868,6 @@ def main():
     cv.imshow("roi_template", roi_template)
     cv.imshow("masked_roi_template", masked_roi_template)
 
-    # --Make them binary---------------------------------------------------------------
-    bin_roi = filtered_img_to_binary(masked_roi)
-    bin_roi_template = filtered_img_to_binary(masked_roi_template)
-
-    # --Check for Match of binary images-----------------------------------------------
-    match_palm_prints(bin_roi, bin_roi_template)
     print("kleinste Hamming Distanz: ", slide_img(masked_roi, masked_roi_template))
 
     # --Press any Key to end-----------------------------------------------------------
