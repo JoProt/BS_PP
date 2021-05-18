@@ -45,7 +45,7 @@ session = Session()
 THRESH_FACTOR = 0.5
 THRESH_SUBIMG = 150.0
 THRESH_CON = 15
-THRESH_HAMMING = 0.2
+THRESH_HAMMING = 0.43
 
 GAMMA = 10
 G_L = 23 / 32
@@ -63,6 +63,8 @@ GABOR_THRESHOLD = 150  # 0 to 255
 MASK_THRESHOLD = 110
 
 ROI_RAD = 75
+
+SHREKD = False
 
 
 # # # # # #
@@ -823,7 +825,7 @@ def translate_image(img_to_match, img_template, trans_matrice) -> float:
 # User Management #
 # # # # # # # # # #
 
-# XXX Grobentwurf
+
 def enrol(name: str, *palmprint_imgs):
     """
     Enrolment-Prozess. Bekommt nur unverarbeitete Bilder.
@@ -846,6 +848,11 @@ def enrol(name: str, *palmprint_imgs):
     create_user(name, palmprints)
 
 
+# # # # #
+# Main  #
+# # # # #
+
+
 def main():
     filters = build_gabor_filters()
 
@@ -858,22 +865,40 @@ def main():
 
     for palmprint in palmprints_list:
         user = get_user(palmprint.user_id)
-        hamming_scores.append(slide_img(filtered_roi, palmprint.get_roi()), user.name)
+        hamming_scores.append((slide_img(filtered_roi, palmprint.get_roi()), user.name))
 
-    theMIN = min(hamming_scores, keys=lambda s: s[0])
-    print(theMIN)
+    theMIN = min(hamming_scores, key=lambda s: s[0])
+    # theMAX = max(hamming_scores, key=lambda s: s[0])
+    # hamming_scores.sort(key=lambda s: s[0])
 
-    # # --Generating Debug-Pictures as batch (better performance)------------------------
-    # cv.imshow("roi", roi)
-    # cv.imshow("masked_roi", masked_roi)
-    # cv.imshow("roi_template", roi_template)
-    # cv.imshow("masked_roi_template", masked_roi_template)
-    #
-    # print("kleinste Hamming Distanz: ", slide_img(masked_roi, masked_roi_template))
-    #
-    # # --Press any Key to end-----------------------------------------------------------
-    # cv.waitKey(0)
-    # cv.destroyAllWindows()
+    if theMIN[0] <= THRESH_HAMMING:
+        print(f"Hello, {theMIN[1].capitalize()} ;)")
+    else:
+        if SHREKD:
+            print(
+                """
+                  GET OUT OF MY SWAMP
+
+            ⢀⡴⠑⡄⠀⠀⠀⠀⠀⠀⠀⣀⣀⣤⣤⣤⣀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀ 
+            ⠸⡇⠀⠿⡀⠀⠀⠀⣀⡴⢿⣿⣿⣿⣿⣿⣿⣿⣷⣦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀ 
+            ⠀⠀⠀⠀⠑⢄⣠⠾⠁⣀⣄⡈⠙⣿⣿⣿⣿⣿⣿⣿⣿⣆⠀⠀⠀⠀⠀⠀⠀⠀ 
+            ⠀⠀⠀⠀⢀⡀⠁⠀⠀⠈⠙⠛⠂⠈⣿⣿⣿⣿⣿⠿⡿⢿⣆⠀⠀⠀⠀⠀⠀⠀ 
+            ⠀⠀⠀⢀⡾⣁⣀⠀⠴⠂⠙⣗⡀⠀⢻⣿⣿⠭⢤⣴⣦⣤⣹⠀⠀⠀⢀⢴⣶⣆ 
+            ⠀⠀⢀⣾⣿⣿⣿⣷⣮⣽⣾⣿⣥⣴⣿⣿⡿⢂⠔⢚⡿⢿⣿⣦⣴⣾⠁⠸⣼⡿ 
+            ⠀⢀⡞⠁⠙⠻⠿⠟⠉⠀⠛⢹⣿⣿⣿⣿⣿⣌⢤⣼⣿⣾⣿⡟⠉⠀⠀⠀⠀⠀ 
+            ⠀⣾⣷⣶⠇⠀⠀⣤⣄⣀⡀⠈⠻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡇⠀⠀⠀⠀⠀⠀ 
+            ⠀⠉⠈⠉⠀⠀⢦⡈⢻⣿⣿⣿⣶⣶⣶⣶⣤⣽⡹⣿⣿⣿⣿⡇⠀⠀⠀⠀⠀⠀ 
+            ⠀⠀⠀⠀⠀⠀⠀⠉⠲⣽⡻⢿⣿⣿⣿⣿⣿⣿⣷⣜⣿⣿⣿⡇⠀⠀⠀⠀⠀⠀ 
+            ⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⣷⣶⣮⣭⣽⣿⣿⣿⣿⣿⣿⣿⠀⠀⠀⠀⠀⠀⠀ 
+            ⠀⠀⠀⠀⠀⠀⣀⣀⣈⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠇⠀⠀⠀⠀⠀⠀⠀ 
+            ⠀⠀⠀⠀⠀⠀⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠃⠀⠀⠀⠀⠀⠀⠀⠀ 
+            ⠀⠀⠀⠀⠀⠀⠀⠹⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠟⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀ 
+            ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠛⠻⠿⠿⠿⠿⠛⠉
+                """
+            )
+        else:
+            print("Sorry, try again!")
+            print(f"Matching score: {theMIN[0]}")
 
 
 if __name__ == "__main__":
