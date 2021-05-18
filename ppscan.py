@@ -780,7 +780,7 @@ def slide_img(img_to_match, img_template) -> bool:
     ]  # pos -> runter & neg -> hoch
 
     # anwenden der Translation
-    
+
     for trans in trans_x:
         trans_matrice = [[1, 0, trans_x[trans]], [0, 1, trans_y[trans]]]
         trans_matrice = np.float32(trans_matrice)
@@ -788,10 +788,10 @@ def slide_img(img_to_match, img_template) -> bool:
             translate_image(img_to_match, img_template, trans_matrice)
         )
 
-    # orginal
+    # orginal unverschoben
     hamming_distances.append(match_palm_prints(img_to_match, img_template))
 
-    print(hamming_distances)
+    # print(hamming_distances)
 
     if len(hamming_distances) == 0:
         # return Max Distanz, da keine Distanz berechnet wurde
@@ -805,14 +805,16 @@ def translate_image(img_to_match, img_template, trans_matrice) -> float:
     berechnet Hamming Distanz fuer verschobenes Image ueber dem Template Image um Translationsmatrix trans_matrice
     """
     # set 1 bei Default fuer non-Match
-    
+
     hamming_distance = 1
 
     img_slided = cv.warpAffine(
         img_to_match, trans_matrice, (img_to_match.shape[0], img_to_match.shape[1])
-    )     
+    )
 
-    hamming_distance = match_palm_prints(img_slided[2:-2, 2:-2], img_template[2:-2, 2:-2])
+    hamming_distance = match_palm_prints(
+        img_slided[2:-2, 2:-2], img_template[2:-2, 2:-2]
+    )
 
     return hamming_distance
 
@@ -845,36 +847,33 @@ def enrol(name: str, *palmprint_imgs):
 
 
 def main():
-    # --Creating 1st Image for Testing purpose-----------------------------------------
-    img = load_img("testdaten/peter/r_03.jpg")
-    roi = extract_roi(img)
-    mask = build_mask(roi)
-
-    # XXX könnte man daraus nicht ein globales Objekt machen?
     filters = build_gabor_filters()
 
+    img_input = load_img(sys.argv[1])
+    roi = extract_roi(img_input)
     filtered_roi = apply_gabor_filters(roi, filters)
-    masked_roi = apply_mask(filtered_roi, mask)
 
-    # --Creating 2nd Image for Testing purpose-----------------------------------------
-    img_template = load_img("testdaten/peter/r_05.jpg")
-    roi_template = extract_roi(img_template)
-    mask_template = build_mask(roi_template)
+    palmprints_list = session.query(Palmprint).all()
+    hamming_scores = []
 
-    filtered_roi_template = apply_gabor_filters(roi_template, filters)
-    masked_roi_template = apply_mask(filtered_roi_template, mask_template)
+    for palmprint in palmprints_list:
+        user = get_user(palmprint.user_id)
+        hamming_scores.append(slide_img(filtered_roi, palmprint.get_roi()), user.name)
 
-    # --Generating Debug-Pictures as batch (better performance)------------------------
-    cv.imshow("roi", roi)
-    cv.imshow("masked_roi", masked_roi)
-    cv.imshow("roi_template", roi_template)
-    cv.imshow("masked_roi_template", masked_roi_template)
+    theMIN = min(hamming_scores, keys=lambda s: s[0])
+    print(theMIN)
 
-    print("kleinste Hamming Distanz: ", slide_img(masked_roi, masked_roi_template))
-
-    # --Press any Key to end-----------------------------------------------------------
-    cv.waitKey(0)
-    cv.destroyAllWindows()
+    # # --Generating Debug-Pictures as batch (better performance)------------------------
+    # cv.imshow("roi", roi)
+    # cv.imshow("masked_roi", masked_roi)
+    # cv.imshow("roi_template", roi_template)
+    # cv.imshow("masked_roi_template", masked_roi_template)
+    #
+    # print("kleinste Hamming Distanz: ", slide_img(masked_roi, masked_roi_template))
+    #
+    # # --Press any Key to end-----------------------------------------------------------
+    # cv.waitKey(0)
+    # cv.destroyAllWindows()
 
 
 if __name__ == "__main__":
