@@ -98,7 +98,9 @@ class TestPPscan(unittest.TestCase):
             blurred, (ppscan.THRESH_FACTOR * img.mean()), 255, ppscan.cv.THRESH_BINARY
         )
         contours, _ = ppscan.cv.findContours(
-            thresh[:, : int(img.shape[1] / 2)], ppscan.cv.RETR_LIST, ppscan.cv.CHAIN_APPROX_SIMPLE
+            thresh[:, : int(img.shape[1] / 2)],
+            ppscan.cv.RETR_LIST,
+            ppscan.cv.CHAIN_APPROX_SIMPLE,
         )
         contour = max(contours, key=lambda c: len(c))
         contour = [tuple(c[0]) for c in contour]
