@@ -354,7 +354,8 @@ def find_tangent_points(v_1: list, v_2: list) -> Union[tuple, tuple]:
     und einem Punkt auf der anderen Kurve eine Tangente beider Kurven ist.
     Wenn ja, gib jeweils die Punkte beider Kurven zurück, die auf der Tangente liegen.
 
-    :param v_1, v_2: zu betrachtende Kurven (Listen aus Koordinatentupeln)
+    :param v_1: erste zu betrachtende Kurve (Listen aus Koordinatentupeln)
+    :param v_2: zweite zu betrachtende Kurve (Listen aus Koordinatentupeln)
     :returns: Punkte der Tangente bei Existenz, None andernfalls
     """
     vs = v_1 + v_2
