@@ -16,6 +16,7 @@ import sys
 import base64
 
 from typing import Union
+from collections import namedtuple
 
 import numpy as np
 import cv2 as cv
@@ -68,6 +69,15 @@ ROI_RAD = 75
 
 SHREKD = False
 
+# Farben
+C_NORM = "\033[0m"
+C_RED = "\033[91m"
+C_GREEN = "\033[92m"
+
+# Sonderzeichen
+mark_check = C_GREEN + "✔️" + C_NORM
+mark_fail = C_RED + "✗" + C_NORM
+
 
 # # # # # #
 # Models  #
@@ -75,11 +85,16 @@ SHREKD = False
 
 
 class User(Base):
+    """
+    Klasse für registrierte Nutzer in der Datenbank, damit beim
+    Matching der Hand eine Identität zugeordnet werden kann.
+    """
+
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True)
     name = Column(String)
-    palmprints = relationship("Palmprint")
+    palmprints = relationship("Palmprint", backref="user")
 
     def __repr__(self):
         return "<{} {} '{}', {} prints registered>".format(
@@ -121,10 +136,20 @@ class Palmprint(Base):
 
         return img
 
-    def get_roi(self):
+    def get_roi(self) -> np.ndarray:
+        """
+        ROI Getter.
+
+        :returns: ROI als Numpy-Matrix
+        """
         return self.decode(self.roi)
 
     def get_original(self):
+        """
+        Getter für Originalbild, aus dem die ROI extrahiert wurde.
+
+        returns: Bild als Numpy-Matrix
+        """
         return self.decode(self.original)
 
     def __repr__(self):
@@ -855,8 +880,6 @@ def enrol(name: str, *palmprint_imgs):
             roi = extract_roi(img)
             mask = build_mask(roi)
             roi = apply_gabor_filters(roi, filters)
-            ## maske hier schon anwenden? das brauchts doch nicht dachte ich
-            # roi = apply_mask(roi, mask)
             palmprints.append((roi, img))
 
     create_user(name, palmprints)
@@ -877,21 +900,27 @@ def main():
     palmprints_list = session.query(Palmprint).all()
     hamming_scores = []
 
-    for palmprint in palmprints_list:
-        user = get_user(palmprint.user_id)
-        hamming_scores.append((slide_img(filtered_roi, palmprint.get_roi()), user.name))
+    Match = namedtuple("Match", ["score", "user"])
 
-    theMIN = min(hamming_scores, key=lambda s: s[0])
+    for palmprint in palmprints_list:
+        hamming_scores.append(
+            Match(
+                score=slide_img(filtered_roi, palmprint.get_roi()),
+                user=palmprint.user.name,
+            )
+        )
+
+    theMIN = min(hamming_scores, key=lambda m: m.score)
     # theMAX = max(hamming_scores, key=lambda s: s[0])
     # hamming_scores.sort(key=lambda s: s[0])
 
-    if theMIN[0] <= THRESH_HAMMING:
-        print(f"Hello, {theMIN[1].capitalize()} ;)")
+    if theMIN.score <= THRESH_HAMMING:
+        print(f"[{mark_check}] Hello, {theMIN.user.capitalize()} ;)")
     else:
         if SHREKD:
             print(
                 """
-                  GET OUT OF MY SWAMP
+                  GET OUT OF MY SWAMP\033[92;1m
 
             ⢀⡴⠑⡄⠀⠀⠀⠀⠀⠀⠀⣀⣀⣤⣤⣤⣀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀ 
             ⠸⡇⠀⠿⡀⠀⠀⠀⣀⡴⢿⣿⣿⣿⣿⣿⣿⣿⣷⣦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀ 
@@ -907,12 +936,13 @@ def main():
             ⠀⠀⠀⠀⠀⠀⣀⣀⣈⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠇⠀⠀⠀⠀⠀⠀⠀ 
             ⠀⠀⠀⠀⠀⠀⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠃⠀⠀⠀⠀⠀⠀⠀⠀ 
             ⠀⠀⠀⠀⠀⠀⠀⠹⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠟⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀ 
-            ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠛⠻⠿⠿⠿⠿⠛⠉
+            ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠛⠻⠿⠿⠿⠿⠛⠉\033[0m
                 """
             )
         else:
-            print("Sorry, try again!")
-            print(f"Matching score: {theMIN[0]}")
+            print(
+                f"[{mark_fail}] Sorry, try again! Matching score {theMIN.score:.5f} is too high!"
+            )
 
 
 if __name__ == "__main__":
