@@ -190,6 +190,19 @@ class TestPPscan(unittest.TestCase):
         merged_img = ppscan.apply_gabor_filters(img, filters)
         assert merged_img.shape == img.shape
 
+    def test_find_tangent_points_NONE(self):
+        v_1 = []
+        v_2 = []
+        test1, test2 = ppscan.find_tangent_points(v_1, v_2)
+        assert test1 == None
+        assert test2 == None
+
+    def test_find_keypoints_exception(self):
+        valleys = []
+        with self.assertRaises(Exception) as context:
+            ppscan.find_keypoints(valleys)
+        self.assertTrue("Expected at least 2 valleys!" in str(context.exception))
+
     def test_db_access(self):
         """
         Testet die Verbindung zur Datenbank.
