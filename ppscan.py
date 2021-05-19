@@ -434,7 +434,8 @@ def neighbourhood_curvature(
     :param outside: Farbe, die als "außerhalb der Fläche" gilt
     :returns: "Kurvigkeit"
     """
-    retval = None
+    # TODO retval hier überfllüssig, da er entweder in if oder else eh gesetzt wird
+    # retval = None
     # Randbehandlung; Kurven in Bildrandgebieten sind nicht relevant!
     if (
         p[0] == 0
@@ -828,12 +829,13 @@ def translate_image(img_to_match, img_template, trans_matrice) -> float:
     """
     # set 1 bei Default fuer non-Match
 
-    hamming_distance = 1
+    hamming_distance = 1.0
 
     img_slided = cv.warpAffine(
         img_to_match, trans_matrice, (img_to_match.shape[0], img_to_match.shape[1])
     )
 
+    # TODO: Hier wird die 1.0 einfach von Müll überschrieben, falls match_palm_prints() keine exception wirft
     hamming_distance = match_palm_prints(
         img_slided[2:-2, 2:-2], img_template[2:-2, 2:-2]
     )
