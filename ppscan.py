@@ -6,6 +6,8 @@
     =================
     [your ad here]
 
+    :authors:
+    :version:
     :license: who knows
     :format: black, reST docstrings
 """
@@ -620,7 +622,9 @@ def build_mask(img: np.ndarray) -> np.ndarray:
     return mask
 
 
-def apply_mask(img: np.ndarray, mask: np.ndarray) -> np.ndarray:
+def hamming_with_masks(
+    img1: np.ndarray, mask1: np.ndarray, img2: np.ndarray, mask2: np.ndarray
+) -> np.ndarray:
     """
     Gegebene Maske auf gegebenes Bild anwenden.
 
@@ -628,19 +632,25 @@ def apply_mask(img: np.ndarray, mask: np.ndarray) -> np.ndarray:
     :param mask: Maske des Bildes
     :return: maskiertes Bild
     """
-    white_background = np.empty_like(img)
-    white_background.fill(255)
 
-    # inverse Maske generieren
-    inv_mask = cv.bitwise_not(mask)
-    # Maske auf Bild anwenden
-    img1 = cv.bitwise_and(img, img, mask=mask)
-    # inverse MAske auf weißes Hintergrundbild anwenden
-    img2 = cv.bitwise_and(white_background, white_background, mask=inv_mask)
-    # beide maskierten Bilder zusammenführen
-    masked_img = cv.add(img1, img2)
+    # flatten images and masks
+    img1.flatten()
+    img2.flatten()
+    mask1.flatten()
+    mask2.flatten()
 
-    return masked_img
+    # check if images and masks are binary
+    if img1.max() == 1 and img2.max() == 1 and mask1.max() == 1 and mask2.max() == 1:
+        # img1 xor img2
+        img_xor = np.logical_xor(img1, img2)
+        # mask1 and mask2
+        mask_and = np.logical_and(mask1, mask2)
+        # img_xor and mask_and
+        masked = np.logical_and(img_xor, mask_and)
+        # calc hamming distance (number of ones in 'masked' divided by length of 'masked')
+        hamming = ((masked == 1).sum()) / masked.size
+
+        return hamming
 
 
 def build_gabor_filters() -> list:
@@ -842,7 +852,8 @@ def enrol(name: str, *palmprint_imgs):
             roi = extract_roi(img)
             mask = build_mask(roi)
             roi = apply_gabor_filters(roi, filters)
-            roi = apply_mask(roi, mask)
+            ## maske hier schon anwenden? das brauchts doch nicht dachte ich
+            # roi = apply_mask(roi, mask)
             palmprints.append((roi, img))
 
     create_user(name, palmprints)
