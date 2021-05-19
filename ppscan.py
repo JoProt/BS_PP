@@ -513,6 +513,9 @@ def find_keypoints(valleys: list) -> Union[tuple, tuple]:
 
     # schmeiße 1er-Längen raus, sind meistens Fehler
     valleys = [v for v in valleys if len(v) > 1]
+    # test ob überhaupt noch valleys vorhanden sind
+    if valleys.__len__() == 0:
+        raise Exception("No valleys found!")
 
     # sortiere die Täler nach ihrer y-Koordinate
     valleys.sort(key=lambda v: v[0][1])
@@ -527,6 +530,7 @@ def find_keypoints(valleys: list) -> Union[tuple, tuple]:
     # Punkte auf Tangente beider Täler finden; das sind die Keypoints
     kp_1, kp_2 = find_tangent_points(v_1, v_2)
 
+    # TODO: Test this exception
     if kp_1 is None or kp_2 is None:
         raise Exception("Couldn't find a tangent for {} and {}!".format(kp_1, kp_2))
 

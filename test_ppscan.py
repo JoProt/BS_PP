@@ -197,11 +197,18 @@ class TestPPscan(unittest.TestCase):
         assert test1 == None
         assert test2 == None
 
-    def test_find_keypoints_exception(self):
+    def test_find_keypoints_exceptions(self):
         valleys = []
         with self.assertRaises(Exception) as context:
             ppscan.find_keypoints(valleys)
         self.assertTrue("Expected at least 2 valleys!" in str(context.exception))
+
+        valleys = [[[0, 0]],[[0, 0]]]
+        with self.assertRaises(Exception) as context:
+            ppscan.find_keypoints(valleys)
+        self.assertTrue(
+            "No valleys found!" in str(context.exception)
+        )
 
     def test_db_access(self):
         """
