@@ -417,7 +417,7 @@ def left_right_detector(valleys: list) -> str:
 # Preprocessing #
 # # # # # # # # #
 
-
+# TODO: parameter 'outside' nie genutzt
 def neighbourhood_curvature(
     p: tuple, img: np.ndarray, n: int, r: int, inside: int = 255, outside: int = 0
 ) -> float:
@@ -761,7 +761,7 @@ def slide_img(img_to_match, img_template) -> float:
     # speichert alle Hamming Distanzen
     hamming_distances = []
 
-    # Translationsmatrix
+    # Translationsmatrix TODO: hier unnötig, da in for-Schleife genau so gesetzt
     trans_matrice = [[], []]
 
     # Verschiebungsalgorithmus
@@ -853,7 +853,7 @@ def enrol(name: str, *palmprint_imgs):
     Enrolment-Prozess. Bekommt nur unverarbeitete Bilder.
 
     :param name: Name des neuen Nutzers
-    :param palmprints: variable Anzahl von OpenCV-Bildobjekten
+    :param palmprint_imgs: variable Anzahl von OpenCV-Bildobjekten
     """
     palmprints = []
 
@@ -862,9 +862,9 @@ def enrol(name: str, *palmprint_imgs):
 
         for img in palmprint_imgs:
             roi = extract_roi(img)
-            mask = build_mask(roi)
+            # mask = build_mask(roi)
             roi = apply_gabor_filters(roi, filters)
-            ## maske hier schon anwenden? das brauchts doch nicht dachte ich
+            # maske hier schon anwenden? das brauchts doch nicht dachte ich
             # roi = apply_mask(roi, mask)
             palmprints.append((roi, img))
 
