@@ -216,3 +216,5 @@ class TestPPscan(unittest.TestCase):
         """
         peter = ppscan.session.query(ppscan.User).first()
         assert peter.id == 1
+
+    # TODO: Tests für Datenbankverbindung
