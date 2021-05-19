@@ -203,12 +203,10 @@ class TestPPscan(unittest.TestCase):
             ppscan.find_keypoints(valleys)
         self.assertTrue("Expected at least 2 valleys!" in str(context.exception))
 
-        valleys = [[[0, 0]],[[0, 0]]]
+        valleys = [[[0, 0]], [[0, 0]]]
         with self.assertRaises(Exception) as context:
             ppscan.find_keypoints(valleys)
-        self.assertTrue(
-            "No valleys found!" in str(context.exception)
-        )
+        self.assertTrue("No valleys found!" in str(context.exception))
 
     def test_db_access(self):
         """

@@ -6,6 +6,7 @@
     =================
     [your ad here]
 
+    TODO: author and version
     :authors:
     :version:
     :license: who knows
@@ -96,7 +97,7 @@ class Palmprint(Base):
     original = Column(String)
 
     @staticmethod
-    def encode(img: np.ndarray) -> str:
+    def encode(img: np.ndarray) -> bytes:
         """
         Numpy 2D-Array als Base64-String kodieren.
 
@@ -177,7 +178,6 @@ def get_users() -> list:
     """
     Abfrage aller Nutzer.
 
-    :param user_id: ID des Nutzers
     :returns: Nutzer-Objekt
     """
     users = session.query(User).all()
@@ -248,7 +248,8 @@ def update_palmprint(palmprint_id: int, roi=None, original=None):
     Update eines bereits bestehenden Palmprints.
 
     :param palmprint_id: ID des Palmprints
-    :param palmprint_data: Tupel aus Originalbild und ROI
+    :param roi:
+    :param original:
     :returns: None
     """
     palmprint = session.query(Palmprint).filter_by(id=palmprint_id).first()
@@ -505,7 +506,7 @@ def find_keypoints(valleys: list) -> Union[tuple, tuple]:
     Finde die Keypoints des Bildes, in unserem Fall die beiden Lücken
     zwischen Zeige und Mittelfinger bzw. Ring- und kleinem Finger.
 
-    :param img: Eingangsbild
+    :param valleys: Liste von gefundenen Valleys
     :returns: Koordinaten der Keypoints
     """
     if len(valleys) < 2:
@@ -630,11 +631,13 @@ def hamming_with_masks(
     img1: np.ndarray, mask1: np.ndarray, img2: np.ndarray, mask2: np.ndarray
 ) -> np.ndarray:
     """
-    Gegebene Maske auf gegebenes Bild anwenden.
+    Gegebene Masken auf jeweils zugehöriges Bild anwenden. Und daraus dann die HammingDistance bestimmen
 
-    :param img: zu maskierendes Bild
-    :param mask: Maske des Bildes
-    :return: maskiertes Bild
+    :param img1: zu maskierendes Bild (binary 0,1)
+    :param mask1: Maske des Bildes (binary 0,1)
+    :param img2: zu maskierendes (zweites) Bild (binary 0,1)
+    :param mask2: Maske des zweiten Bildes (binary 0,1)
+    :return: HammingDistance
     """
 
     # flatten images and masks
@@ -644,7 +647,7 @@ def hamming_with_masks(
     mask2.flatten()
 
     # check if images and masks are binary
-    if img1.max() == 1 and img2.max() == 1 and mask1.max() == 1 and mask2.max() == 1:
+    if max(img1) == 1 and max(img2) == 1 and max(mask1) == 1 and max(mask2) == 1:
         # img1 xor img2
         img_xor = np.logical_xor(img1, img2)
         # mask1 and mask2
@@ -657,7 +660,7 @@ def hamming_with_masks(
         return hamming
 
     else:
-        print("values in image and/or mask not binary")
+        raise Exception("values in image and/or mask not binary")
 
 
 def build_gabor_filters() -> list:
@@ -715,15 +718,15 @@ def apply_gabor_filters(img: np.ndarray, filters: list) -> np.ndarray:
     return merged_img
 
 
-def filtered_img_to_binary(filtered_img: np.ndarray) -> np.ndarray:
+def img_to_binary(img: np.ndarray) -> np.ndarray:
     """
     Formt gegebenes Bild in eindimensionales Array um (flatten). Da das gegebene Bild nur aus 0 oder 255
     besteht (siehe apply_gabor_filters()), werden diese in True (1) und False (0) umgewandelt.
 
-    :param filtered_img:
+    :param img: Bild, das binarisiert werden soll
     :return:
     """
-    flattened = filtered_img.flatten()
+    flattened = img.flatten()
     flattened[flattened == 0] = True
     flattened[flattened > 1] = False
 
@@ -734,24 +737,24 @@ def match_palm_prints(img_to_match: np.ndarray, img_template: np.ndarray) -> flo
     """
     Vergleicht ausgewaehltes Image mit Template Image und berechnet die Hamming Distanz zwischen Diesen.
 
-    :param img_slided: abzugleichendes, pixelverschobenes Image
-    :param template_image: Vorlage, gegen welche gematched wird
+    :param img_to_match: abzugleichendes, pixelverschobenes Image
+    :param img_template: Vorlage, gegen welche gematched wird
     :return: Hamming Distanz zwischen den Bildern
     """
 
     hamming_distance = distance.hamming(
-        filtered_img_to_binary(img_to_match), filtered_img_to_binary(img_template)
+        img_to_binary(img_to_match), img_to_binary(img_template)
     )
 
     return hamming_distance
 
 
-def slide_img(img_to_match, img_template) -> bool:
+def slide_img(img_to_match, img_template) -> float:
     """
     pixelbasierte Verschiebung des img_to_match um den besten Match zuerhalten. Anschliessend return der kleinsten Hamming Distanz
 
     :param img_to_match: abzugleichendes Image
-    :param template_image: Vorlage, gegen welche gematched wird
+    :param img_template: Vorlage, gegen welche gematched wird
     :return: kleinste Hamming Distanz zwischen den Bildern
     """
     # speichert alle Hamming Distanzen
@@ -814,7 +817,7 @@ def slide_img(img_to_match, img_template) -> bool:
 
     if len(hamming_distances) == 0:
         # return Max Distanz, da keine Distanz berechnet wurde
-        return 1
+        return 1.0
     else:
         return min(hamming_distances)
 
