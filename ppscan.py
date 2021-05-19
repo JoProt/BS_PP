@@ -652,6 +652,9 @@ def hamming_with_masks(
 
         return hamming
 
+    else:
+        print("values in image and/or mask not binary")
+
 
 def build_gabor_filters() -> list:
     """
