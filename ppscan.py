@@ -783,7 +783,6 @@ def match_palm_prints(img_to_match: np.ndarray, img_template: np.ndarray) -> flo
     hamming_distance = hamming_with_masks(bin_img1, bin_mask1, bin_img2, bin_mask2)
     """
 
-
     return hamming_distance
 
 
