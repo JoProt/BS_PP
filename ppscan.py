@@ -6,6 +6,7 @@
     =================
     [your ad here]
 
+    TODO: author and version
     :authors:
     :version:
     :license: who knows
@@ -111,7 +112,7 @@ class Palmprint(Base):
     original = Column(String)
 
     @staticmethod
-    def encode(img: np.ndarray) -> str:
+    def encode(img: np.ndarray) -> bytes:
         """
         Numpy 2D-Array als Base64-String kodieren.
 
@@ -202,7 +203,6 @@ def get_users() -> list:
     """
     Abfrage aller Nutzer.
 
-    :param user_id: ID des Nutzers
     :returns: Nutzer-Objekt
     """
     users = session.query(User).all()
@@ -273,7 +273,8 @@ def update_palmprint(palmprint_id: int, roi=None, original=None):
     Update eines bereits bestehenden Palmprints.
 
     :param palmprint_id: ID des Palmprints
-    :param palmprint_data: Tupel aus Originalbild und ROI
+    :param roi:
+    :param original:
     :returns: None
     """
     palmprint = session.query(Palmprint).filter_by(id=palmprint_id).first()
@@ -378,7 +379,8 @@ def find_tangent_points(v_1: list, v_2: list) -> Union[tuple, tuple]:
     und einem Punkt auf der anderen Kurve eine Tangente beider Kurven ist.
     Wenn ja, gib jeweils die Punkte beider Kurven zurück, die auf der Tangente liegen.
 
-    :param v_1, v_2: zu betrachtende Kurven (Listen aus Koordinatentupeln)
+    :param v_1: erste zu betrachtende Kurve (Listen aus Koordinatentupeln)
+    :param v_2: zweite zu betrachtende Kurve (Listen aus Koordinatentupeln)
     :returns: Punkte der Tangente bei Existenz, None andernfalls
     """
     vs = v_1 + v_2
@@ -441,7 +443,7 @@ def left_right_detector(valleys: list) -> str:
 # Preprocessing #
 # # # # # # # # #
 
-
+# TODO: parameter 'outside' nie genutzt
 def neighbourhood_curvature(
     p: tuple, img: np.ndarray, n: int, r: int, inside: int = 255, outside: int = 0
 ) -> float:
@@ -458,7 +460,8 @@ def neighbourhood_curvature(
     :param outside: Farbe, die als "außerhalb der Fläche" gilt
     :returns: "Kurvigkeit"
     """
-    retval = None
+    # TODO retval hier überfllüssig, da er entweder in if oder else eh gesetzt wird
+    # retval = None
     # Randbehandlung; Kurven in Bildrandgebieten sind nicht relevant!
     if (
         p[0] == 0
@@ -530,7 +533,7 @@ def find_keypoints(valleys: list) -> Union[tuple, tuple]:
     Finde die Keypoints des Bildes, in unserem Fall die beiden Lücken
     zwischen Zeige und Mittelfinger bzw. Ring- und kleinem Finger.
 
-    :param img: Eingangsbild
+    :param valleys: Liste von gefundenen Valleys
     :returns: Koordinaten der Keypoints
     """
     if len(valleys) < 2:
@@ -538,6 +541,9 @@ def find_keypoints(valleys: list) -> Union[tuple, tuple]:
 
     # schmeiße 1er-Längen raus, sind meistens Fehler
     valleys = [v for v in valleys if len(v) > 1]
+    # test ob überhaupt noch valleys vorhanden sind
+    if valleys.__len__() == 0:
+        raise Exception("No valleys found!")
 
     # sortiere die Täler nach ihrer y-Koordinate
     valleys.sort(key=lambda v: v[0][1])
@@ -552,6 +558,7 @@ def find_keypoints(valleys: list) -> Union[tuple, tuple]:
     # Punkte auf Tangente beider Täler finden; das sind die Keypoints
     kp_1, kp_2 = find_tangent_points(v_1, v_2)
 
+    # TODO: Test this exception
     if kp_1 is None or kp_2 is None:
         raise Exception("Couldn't find a tangent for {} and {}!".format(kp_1, kp_2))
 
@@ -651,11 +658,13 @@ def hamming_with_masks(
     img1: np.ndarray, mask1: np.ndarray, img2: np.ndarray, mask2: np.ndarray
 ) -> np.ndarray:
     """
-    Gegebene Maske auf gegebenes Bild anwenden.
+    Gegebene Masken auf jeweils zugehöriges Bild anwenden. Und daraus dann die HammingDistance bestimmen
 
-    :param img: zu maskierendes Bild
-    :param mask: Maske des Bildes
-    :return: maskiertes Bild
+    :param img1: zu maskierendes Bild (binary 0,1)
+    :param mask1: Maske des Bildes (binary 0,1)
+    :param img2: zu maskierendes (zweites) Bild (binary 0,1)
+    :param mask2: Maske des zweiten Bildes (binary 0,1)
+    :return: HammingDistance
     """
 
     # flatten images and masks
@@ -665,7 +674,7 @@ def hamming_with_masks(
     mask2.flatten()
 
     # check if images and masks are binary
-    if img1.max() == 1 and img2.max() == 1 and mask1.max() == 1 and mask2.max() == 1:
+    if max(img1) == 1 and max(img2) == 1 and max(mask1) == 1 and max(mask2) == 1:
         # img1 xor img2
         img_xor = np.logical_xor(img1, img2)
         # mask1 and mask2
@@ -678,7 +687,7 @@ def hamming_with_masks(
         return hamming
 
     else:
-        print("values in image and/or mask not binary")
+        raise Exception("values in image and/or mask not binary")
 
 
 def build_gabor_filters() -> list:
@@ -736,15 +745,15 @@ def apply_gabor_filters(img: np.ndarray, filters: list) -> np.ndarray:
     return merged_img
 
 
-def filtered_img_to_binary(filtered_img: np.ndarray) -> np.ndarray:
+def img_to_binary(img: np.ndarray) -> np.ndarray:
     """
     Formt gegebenes Bild in eindimensionales Array um (flatten). Da das gegebene Bild nur aus 0 oder 255
     besteht (siehe apply_gabor_filters()), werden diese in True (1) und False (0) umgewandelt.
 
-    :param filtered_img:
+    :param img: Bild, das binarisiert werden soll
     :return:
     """
-    flattened = filtered_img.flatten()
+    flattened = img.flatten()
     flattened[flattened == 0] = True
     flattened[flattened > 1] = False
 
@@ -755,30 +764,30 @@ def match_palm_prints(img_to_match: np.ndarray, img_template: np.ndarray) -> flo
     """
     Vergleicht ausgewaehltes Image mit Template Image und berechnet die Hamming Distanz zwischen Diesen.
 
-    :param img_slided: abzugleichendes, pixelverschobenes Image
-    :param template_image: Vorlage, gegen welche gematched wird
+    :param img_to_match: abzugleichendes, pixelverschobenes Image
+    :param img_template: Vorlage, gegen welche gematched wird
     :return: Hamming Distanz zwischen den Bildern
     """
 
     hamming_distance = distance.hamming(
-        filtered_img_to_binary(img_to_match), filtered_img_to_binary(img_template)
+        img_to_binary(img_to_match), img_to_binary(img_template)
     )
 
     return hamming_distance
 
 
-def slide_img(img_to_match, img_template) -> bool:
+def slide_img(img_to_match, img_template) -> float:
     """
     pixelbasierte Verschiebung des img_to_match um den besten Match zuerhalten. Anschliessend return der kleinsten Hamming Distanz
 
     :param img_to_match: abzugleichendes Image
-    :param template_image: Vorlage, gegen welche gematched wird
+    :param img_template: Vorlage, gegen welche gematched wird
     :return: kleinste Hamming Distanz zwischen den Bildern
     """
     # speichert alle Hamming Distanzen
     hamming_distances = []
 
-    # Translationsmatrix
+    # Translationsmatrix TODO: hier unnötig, da in for-Schleife genau so gesetzt
     trans_matrice = [[], []]
 
     # Verschiebungsalgorithmus
@@ -835,7 +844,7 @@ def slide_img(img_to_match, img_template) -> bool:
 
     if len(hamming_distances) == 0:
         # return Max Distanz, da keine Distanz berechnet wurde
-        return 1
+        return 1.0
     else:
         return min(hamming_distances)
 
@@ -846,12 +855,13 @@ def translate_image(img_to_match, img_template, trans_matrice) -> float:
     """
     # set 1 bei Default fuer non-Match
 
-    hamming_distance = 1
+    hamming_distance = 1.0
 
     img_slided = cv.warpAffine(
         img_to_match, trans_matrice, (img_to_match.shape[0], img_to_match.shape[1])
     )
 
+    # TODO: Hier wird die 1.0 einfach von Müll überschrieben, falls match_palm_prints() keine exception wirft
     hamming_distance = match_palm_prints(
         img_slided[2:-2, 2:-2], img_template[2:-2, 2:-2]
     )
@@ -869,7 +879,7 @@ def enrol(name: str, *palmprint_imgs):
     Enrolment-Prozess. Bekommt nur unverarbeitete Bilder.
 
     :param name: Name des neuen Nutzers
-    :param palmprints: variable Anzahl von OpenCV-Bildobjekten
+    :param palmprint_imgs: variable Anzahl von OpenCV-Bildobjekten
     """
     palmprints = []
 
@@ -878,7 +888,6 @@ def enrol(name: str, *palmprint_imgs):
 
         for img in palmprint_imgs:
             roi = extract_roi(img)
-            mask = build_mask(roi)
             roi = apply_gabor_filters(roi, filters)
             palmprints.append((roi, img))
 
