@@ -7,7 +7,7 @@
     [your ad here]
 
     TODO: author and version
-    :authors:
+    :authors: L. Basedow, L. Gillner, J. Prothmann, C. Werner
     :version:
     :license: who knows
     :format: black, reST docstrings
