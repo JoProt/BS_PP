@@ -760,9 +760,9 @@ def img_to_binary(img: np.ndarray) -> np.ndarray:
     return flattened
 
 
-def match_palm_prints(img_to_match: np.ndarray, img_template: np.ndarray) -> float:
+def calculate_hamming(img_to_match: np.ndarray, img_template: np.ndarray) -> float:
     """
-    Vergleicht ausgewaehltes Image mit Template Image und berechnet die Hamming Distanz zwischen Diesen.
+    Vergleicht ausgewaehltes Image mit Template Image und berechnet die Hamming Distanz dazwischen.
 
     :param img_to_match: abzugleichendes, pixelverschobenes Image
     :param img_template: Vorlage, gegen welche gematched wird
@@ -786,9 +786,9 @@ def match_palm_prints(img_to_match: np.ndarray, img_template: np.ndarray) -> flo
     return hamming_distance
 
 
-def slide_img(img_to_match, img_template) -> float:
+def matching(img_to_match, img_template) -> float:
     """
-    pixelbasierte Verschiebung des img_to_match um den besten Match zuerhalten. Anschliessend return der kleinsten Hamming Distanz
+    Ausführen des Matching-Algorithmusses. Durch Vorgaben wird zuerst eine pixelbasierte Translation durchgeführt und anschließend die Hamming Distanz berechnet.
 
     :param img_to_match: abzugleichendes Image
     :param img_template: Vorlage, gegen welche gematched wird
@@ -848,7 +848,7 @@ def slide_img(img_to_match, img_template) -> float:
         )
 
     # orginal unverschoben
-    hamming_distances.append(match_palm_prints(img_to_match, img_template))
+    hamming_distances.append(calculate_hamming(img_to_match, img_template))
 
     # print(hamming_distances)
 
@@ -861,7 +861,11 @@ def slide_img(img_to_match, img_template) -> float:
 
 def translate_image(img_to_match, img_template, trans_matrice) -> float:
     """
-    berechnet Hamming Distanz fuer verschobenes Image ueber dem Template Image um Translationsmatrix trans_matrice
+    Verschiebt zumatchendes Image um die Translationsmatrix.
+
+    :param img_to_match: abzugleichendes Image
+    :param img_template: Vorlage, gegen welche gematched wird
+    :return: kleinste Hamming Distanz zwischen den Bildern
     """
     # set 1 bei Default fuer non-Match
 
@@ -871,8 +875,8 @@ def translate_image(img_to_match, img_template, trans_matrice) -> float:
         img_to_match, trans_matrice, (img_to_match.shape[0], img_to_match.shape[1])
     )
 
-    # TODO: Hier wird die 1.0 einfach von Müll überschrieben, falls match_palm_prints() keine exception wirft
-    hamming_distance = match_palm_prints(
+    # TODO: Hier wird die 1.0 einfach von Müll überschrieben, falls calculate_hamming() keine exception wirft
+    hamming_distance = calculate_hamming(
         img_slided[2:-2, 2:-2], img_template[2:-2, 2:-2]
     )
 
@@ -910,58 +914,62 @@ def enrol(name: str, *palmprint_imgs):
 
 
 def main():
-    filters = build_gabor_filters()
 
-    img_input = load_img(sys.argv[1])
-    roi = extract_roi(img_input)
-    filtered_roi = apply_gabor_filters(roi, filters)
-
-    palmprints_list = session.query(Palmprint).all()
-    hamming_scores = []
-
-    Match = namedtuple("Match", ["score", "user"])
-
-    for palmprint in palmprints_list:
-        hamming_scores.append(
-            Match(
-                score=slide_img(filtered_roi, palmprint.get_roi()),
-                user=palmprint.user.name,
-            )
-        )
-
-    theMIN = min(hamming_scores, key=lambda m: m.score)
-    # theMAX = max(hamming_scores, key=lambda s: s[0])
-    # hamming_scores.sort(key=lambda s: s[0])
-
-    if theMIN.score <= THRESH_HAMMING:
-        print(f"[{mark_check}] Hello, {theMIN.user.capitalize()} ;)")
+    if len(sys.argv) != 2:
+        print("Nutzungshinweis: python3 ppscan.py <pfad>")
     else:
-        if SHREKD:
-            print(
-                """
-                  GET OUT OF MY SWAMP\033[92;1m
+        filters = build_gabor_filters()
 
-            ⢀⡴⠑⡄⠀⠀⠀⠀⠀⠀⠀⣀⣀⣤⣤⣤⣀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀ 
-            ⠸⡇⠀⠿⡀⠀⠀⠀⣀⡴⢿⣿⣿⣿⣿⣿⣿⣿⣷⣦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀ 
-            ⠀⠀⠀⠀⠑⢄⣠⠾⠁⣀⣄⡈⠙⣿⣿⣿⣿⣿⣿⣿⣿⣆⠀⠀⠀⠀⠀⠀⠀⠀ 
-            ⠀⠀⠀⠀⢀⡀⠁⠀⠀⠈⠙⠛⠂⠈⣿⣿⣿⣿⣿⠿⡿⢿⣆⠀⠀⠀⠀⠀⠀⠀ 
-            ⠀⠀⠀⢀⡾⣁⣀⠀⠴⠂⠙⣗⡀⠀⢻⣿⣿⠭⢤⣴⣦⣤⣹⠀⠀⠀⢀⢴⣶⣆ 
-            ⠀⠀⢀⣾⣿⣿⣿⣷⣮⣽⣾⣿⣥⣴⣿⣿⡿⢂⠔⢚⡿⢿⣿⣦⣴⣾⠁⠸⣼⡿ 
-            ⠀⢀⡞⠁⠙⠻⠿⠟⠉⠀⠛⢹⣿⣿⣿⣿⣿⣌⢤⣼⣿⣾⣿⡟⠉⠀⠀⠀⠀⠀ 
-            ⠀⣾⣷⣶⠇⠀⠀⣤⣄⣀⡀⠈⠻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡇⠀⠀⠀⠀⠀⠀ 
-            ⠀⠉⠈⠉⠀⠀⢦⡈⢻⣿⣿⣿⣶⣶⣶⣶⣤⣽⡹⣿⣿⣿⣿⡇⠀⠀⠀⠀⠀⠀ 
-            ⠀⠀⠀⠀⠀⠀⠀⠉⠲⣽⡻⢿⣿⣿⣿⣿⣿⣿⣷⣜⣿⣿⣿⡇⠀⠀⠀⠀⠀⠀ 
-            ⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⣷⣶⣮⣭⣽⣿⣿⣿⣿⣿⣿⣿⠀⠀⠀⠀⠀⠀⠀ 
-            ⠀⠀⠀⠀⠀⠀⣀⣀⣈⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠇⠀⠀⠀⠀⠀⠀⠀ 
-            ⠀⠀⠀⠀⠀⠀⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠃⠀⠀⠀⠀⠀⠀⠀⠀ 
-            ⠀⠀⠀⠀⠀⠀⠀⠹⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠟⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀ 
-            ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠛⠻⠿⠿⠿⠿⠛⠉\033[0m
-                """
+        img_input = load_img(sys.argv[1])
+        roi = extract_roi(img_input)
+        filtered_roi = apply_gabor_filters(roi, filters)
+
+        palmprints_list = session.query(Palmprint).all()
+        hamming_scores = []
+
+        Match = namedtuple("Match", ["score", "user"])
+
+        for palmprint in palmprints_list:
+            hamming_scores.append(
+                Match(
+                    score=matching(filtered_roi, palmprint.get_roi()),
+                    user=palmprint.user.name,
+                )
             )
+
+        theMIN = min(hamming_scores, key=lambda m: m.score)
+        # theMAX = max(hamming_scores, key=lambda s: s[0])
+        # hamming_scores.sort(key=lambda s: s[0])
+
+        if theMIN.score <= THRESH_HAMMING:
+            print(f"[{mark_check}] Hello, {theMIN.user.capitalize()} ;)")
         else:
-            print(
-                f"[{mark_fail}] Sorry, try again! Matching score {theMIN.score:.5f} is too high!"
-            )
+            if SHREKD:
+                print(
+                    """
+                    GET OUT OF MY SWAMP\033[92;1m
+
+                ⢀⡴⠑⡄⠀⠀⠀⠀⠀⠀⠀⣀⣀⣤⣤⣤⣀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀ 
+                ⠸⡇⠀⠿⡀⠀⠀⠀⣀⡴⢿⣿⣿⣿⣿⣿⣿⣿⣷⣦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀ 
+                ⠀⠀⠀⠀⠑⢄⣠⠾⠁⣀⣄⡈⠙⣿⣿⣿⣿⣿⣿⣿⣿⣆⠀⠀⠀⠀⠀⠀⠀⠀ 
+                ⠀⠀⠀⠀⢀⡀⠁⠀⠀⠈⠙⠛⠂⠈⣿⣿⣿⣿⣿⠿⡿⢿⣆⠀⠀⠀⠀⠀⠀⠀ 
+                ⠀⠀⠀⢀⡾⣁⣀⠀⠴⠂⠙⣗⡀⠀⢻⣿⣿⠭⢤⣴⣦⣤⣹⠀⠀⠀⢀⢴⣶⣆ 
+                ⠀⠀⢀⣾⣿⣿⣿⣷⣮⣽⣾⣿⣥⣴⣿⣿⡿⢂⠔⢚⡿⢿⣿⣦⣴⣾⠁⠸⣼⡿ 
+                ⠀⢀⡞⠁⠙⠻⠿⠟⠉⠀⠛⢹⣿⣿⣿⣿⣿⣌⢤⣼⣿⣾⣿⡟⠉⠀⠀⠀⠀⠀ 
+                ⠀⣾⣷⣶⠇⠀⠀⣤⣄⣀⡀⠈⠻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡇⠀⠀⠀⠀⠀⠀ 
+                ⠀⠉⠈⠉⠀⠀⢦⡈⢻⣿⣿⣿⣶⣶⣶⣶⣤⣽⡹⣿⣿⣿⣿⡇⠀⠀⠀⠀⠀⠀ 
+                ⠀⠀⠀⠀⠀⠀⠀⠉⠲⣽⡻⢿⣿⣿⣿⣿⣿⣿⣷⣜⣿⣿⣿⡇⠀⠀⠀⠀⠀⠀ 
+                ⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⣷⣶⣮⣭⣽⣿⣿⣿⣿⣿⣿⣿⠀⠀⠀⠀⠀⠀⠀ 
+                ⠀⠀⠀⠀⠀⠀⣀⣀⣈⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠇⠀⠀⠀⠀⠀⠀⠀ 
+                ⠀⠀⠀⠀⠀⠀⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠃⠀⠀⠀⠀⠀⠀⠀⠀ 
+                ⠀⠀⠀⠀⠀⠀⠀⠹⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠟⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀ 
+                ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠛⠻⠿⠿⠿⠿⠛⠉\033[0m
+                    """
+                )
+            else:
+                print(
+                    f"[{mark_fail}] Sorry, try again! Matching score {theMIN.score:.5f} is too high!"
+                )
 
 
 if __name__ == "__main__":
