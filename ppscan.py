@@ -7,7 +7,7 @@
     [your ad here]
 
     TODO: author and version
-    :authors:
+    :authors: L. Basedow, L. Gillner, J. Prothmann, C. Werner
     :version:
     :license: who knows
     :format: black, reST docstrings
@@ -656,7 +656,7 @@ def build_mask(img: np.ndarray) -> np.ndarray:
 
 def hamming_with_masks(
     img1: np.ndarray, mask1: np.ndarray, img2: np.ndarray, mask2: np.ndarray
-) -> np.ndarray:
+) -> float:
     """
     Gegebene Masken auf jeweils zugehöriges Bild anwenden. Und daraus dann die HammingDistance bestimmen
 
@@ -772,6 +772,16 @@ def match_palm_prints(img_to_match: np.ndarray, img_template: np.ndarray) -> flo
     hamming_distance = distance.hamming(
         img_to_binary(img_to_match), img_to_binary(img_template)
     )
+
+    """
+    TODO: zum Testen
+    
+    bin_img1 = img_to_binary(img_to_match)
+    bin_img2 = img_to_binary(img_template)
+    bin_mask1 = img_to_binary(build_mask(img_to_match))
+    bin_mask2 = img_to_binary(build_mask(img_template))
+    hamming_distance = hamming_with_masks(bin_img1, bin_mask1, bin_img2, bin_mask2)
+    """
 
     return hamming_distance
 
