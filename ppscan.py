@@ -15,6 +15,8 @@
 
 import sys
 import base64
+import os
+
 
 from typing import Union
 from collections import namedtuple
@@ -30,6 +32,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.orm import sessionmaker
 
 from scipy.spatial import distance
+
 
 # Verbindung zur Datenbank
 engine = create_engine("sqlite:///palmprint.db")
@@ -352,9 +355,12 @@ def load_img(path: str) -> np.ndarray:
     :param path: Dateipfad
     :returns: Bild als 2D Numpy Array
     """
-    img = cv.imread(path, cv.IMREAD_GRAYSCALE)
+    if os.path.exists(path):
+        img = cv.imread(path, cv.IMREAD_GRAYSCALE)
 
-    return img
+        return img
+    else:
+        raise Exception("Angegebener Pfad nicht vorhanden!")
 
 
 def interpol2d(points: list, steps: int) -> list:
