@@ -6,10 +6,9 @@
     =================
     [your ad here]
 
-    TODO: author and version
     :authors: L. Basedow, L. Gillner, J. Prothmann, C. Werner
-    :version:
-    :license: who knows
+    :version: 0.9
+    :license: TODO
     :format: black, reST docstrings
 """
 
@@ -43,6 +42,7 @@ Base = declarative_base()
 # Session für Datenbankzugriff erzeugen
 Session = sessionmaker(bind=engine)
 session = Session()
+
 
 # # # # # # #
 # Constants #
@@ -92,6 +92,13 @@ class User(Base):
     """
     Klasse für registrierte Nutzer in der Datenbank, damit beim
     Matching der Hand eine Identität zugeordnet werden kann.
+
+    :attr __tablename__: Name der Tabelle in der echten Datenbank.
+    :attr id: Primary Key Identifier jedes Palmprints;
+        Auto-Increment, wird von der Datenbank selbst gesetzt.
+    :attr name: Name des Nutzers.
+    :attr palmprints: Liste aus Palmprints, die zu dieser ID gehören;
+        wird von SQLAlchemy gesetzt, BITTE NICHT MANUELL ÄNDERN!
     """
 
     __tablename__ = "users"
@@ -107,6 +114,23 @@ class User(Base):
 
 
 class Palmprint(Base):
+    """
+    Klasse für Palmprints. Palmprints werden separat vom Nutzer
+    gespeichert, da so sowohl eine beliebige Anzahl von Prints
+    pro Nutzer möglich ist. Dank SQLAlchemy bleibt die Beziehung
+    zwischen Nutzern und ihren Prints erhalten, sodass sowohl von
+    Nutzern auf ihre enrollten Prints, als auch von Prints zu den
+    zugehörigen Nutzern referenziert werden kann.
+
+    :attr __tablename__: Name der Tabelle in der echten Datenbank.
+    :attr id: Primary Key Identifier jedes Palmprints;
+        Auto-Increment, wird von der Datenbank selbst gesetzt.
+    :attr user_id: ID eines bereits existierenden Nutzers.
+    :attr roi: Nur der ROI-Ausschnitt des Palmprints; Base64-kodiert.
+    :attr original: Das Originalbild als Fallback, falls an der ROI
+        einmal was geändert werden soll; Base64-kodiert.
+    """
+
     __tablename__ = "palmprints"
 
     id = Column(Integer, primary_key=True)
@@ -451,7 +475,7 @@ def left_right_detector(valleys: list) -> str:
 
 # TODO: parameter 'outside' nie genutzt
 def neighbourhood_curvature(
-    p: tuple, img: np.ndarray, n: int, r: int, inside: int = 255, outside: int = 0
+    p: tuple, img: np.ndarray, n: int, r: int, inside: int = 255
 ) -> float:
     """
     Überprüfe n Nachbarn im Abstand von r, ob sie innerhalb oder außerhalb
@@ -466,8 +490,6 @@ def neighbourhood_curvature(
     :param outside: Farbe, die als "außerhalb der Fläche" gilt
     :returns: "Kurvigkeit"
     """
-    # TODO retval hier überfllüssig, da er entweder in if oder else eh gesetzt wird
-    # retval = None
     # Randbehandlung; Kurven in Bildrandgebieten sind nicht relevant!
     if (
         p[0] == 0
@@ -478,7 +500,7 @@ def neighbourhood_curvature(
         or p[1] + r >= img.shape[0]
         or p[1] - r < 0
     ):
-        retval = 0.0
+        return 0.0
     else:
         stepsize = int(360 / n)
         neighvals = []
@@ -495,9 +517,7 @@ def neighbourhood_curvature(
                 (img[y_p, x_p], img[y_n, x_p], img[y_n, x_n], img[y_p, x_n])
             )
 
-        retval = (sum(neighvals) / inside) / n
-
-    return retval
+        return (sum(neighvals) / inside) / n
 
 
 def find_valleys(img: np.ndarray, contour: list) -> list:
@@ -648,7 +668,7 @@ def build_mask(img: np.ndarray) -> np.ndarray:
     Generiert eine Maske aus dem gegebenen Bild. Schwarze Flächen (kein Teil der Hand) werden maskiert.
 
     :param img: Bild welches als Grundlage der Maske dienen soll
-    :return: Maske (schwarz/weiß)
+    :returns: Maske (schwarz/weiß)
     """
     # generiere leeres np array, füllen mit 'weiß' (255)
     mask = np.empty_like(img)
@@ -670,7 +690,7 @@ def hamming_with_masks(
     :param mask1: Maske des Bildes (binary 0,1)
     :param img2: zu maskierendes (zweites) Bild (binary 0,1)
     :param mask2: Maske des zweiten Bildes (binary 0,1)
-    :return: HammingDistance
+    :returns: HammingDistance
     """
 
     # flatten images and masks
@@ -700,7 +720,7 @@ def build_gabor_filters() -> list:
     """
     Generiert eine Liste von Gabor Filtern aus gegebenen Konstanten.
 
-    :return: Liste von Gabor Filtern
+    :returns: Liste von Gabor Filtern
     """
     # ksize - size of gabor filter (n, n)
     # sigma - standard deviation of the gaussian function
@@ -733,7 +753,7 @@ def apply_gabor_filters(img: np.ndarray, filters: list) -> np.ndarray:
 
     :param img: zu filterndes Bild
     :param filters: Liste von Gabor Filtern
-    :return: gefiltertes Bild
+    :returns: gefiltertes Bild
     """
     # generate empty np array and fill it with 'white' (255)
     merged_img = np.empty_like(img)
@@ -757,7 +777,7 @@ def img_to_binary(img: np.ndarray) -> np.ndarray:
     besteht (siehe apply_gabor_filters()), werden diese in True (1) und False (0) umgewandelt.
 
     :param img: Bild, das binarisiert werden soll
-    :return:
+    :returns:
     """
     flattened = img.flatten()
     flattened[flattened == 0] = True
@@ -772,7 +792,7 @@ def calculate_hamming(img_to_match: np.ndarray, img_template: np.ndarray) -> flo
 
     :param img_to_match: abzugleichendes, pixelverschobenes Image
     :param img_template: Vorlage, gegen welche gematched wird
-    :return: Hamming Distanz zwischen den Bildern
+    :returns: Hamming Distanz zwischen den Bildern
     """
 
     hamming_distance = distance.hamming(
@@ -798,7 +818,7 @@ def matching(img_to_match, img_template) -> float:
 
     :param img_to_match: abzugleichendes Image
     :param img_template: Vorlage, gegen welche gematched wird
-    :return: kleinste Hamming Distanz zwischen den Bildern
+    :returns: kleinste Hamming Distanz zwischen den Bildern
     """
     # speichert alle Hamming Distanzen
     hamming_distances = []
@@ -871,7 +891,7 @@ def translate_image(img_to_match, img_template, trans_matrice) -> float:
 
     :param img_to_match: abzugleichendes Image
     :param img_template: Vorlage, gegen welche gematched wird
-    :return: kleinste Hamming Distanz zwischen den Bildern
+    :returns: kleinste Hamming Distanz zwischen den Bildern
     """
     # set 1 bei Default fuer non-Match
 
@@ -920,9 +940,13 @@ def enrol(name: str, *palmprint_imgs):
 
 
 def main():
-
+    """
+    Das eigentliche Programm; Bild einlesen und prüfen, ob Print
+    zu einem registrierten Nutzer passt.
+    Wenn ja, gib den Namen aus.
+    """
     if len(sys.argv) != 2:
-        print("Nutzungshinweis: python3 ppscan.py <pfad>")
+        print("Aufruf: python3 ppscan.py <pfad/zum/bild>")
     else:
         filters = build_gabor_filters()
 
@@ -943,12 +967,15 @@ def main():
                 )
             )
 
-        theMIN = min(hamming_scores, key=lambda m: m.score)
-        # theMAX = max(hamming_scores, key=lambda s: s[0])
-        # hamming_scores.sort(key=lambda s: s[0])
+        # minimaler Matching Score
+        m_min = min(hamming_scores, key=lambda m: m.score)
+        # maximaler Matching Score
+        # m_max = max(hamming_scores, key=lambda m: m.score)
+        # alle Matching Scores, aufsteigend sortiert
+        # hamming_scores.sort(key=lambda m: m.score)
 
-        if theMIN.score <= THRESH_HAMMING:
-            print(f"[{mark_check}] Hello, {theMIN.user.capitalize()} ;)")
+        if m_min.score <= THRESH_HAMMING:
+            print("[{0}] Hallo, {1}!".format(mark_check, m_min.user.capitalize()))
         else:
             if SHREKD:
                 print(
@@ -974,7 +1001,9 @@ def main():
                 )
             else:
                 print(
-                    f"[{mark_fail}] Sorry, try again! Matching score {theMIN.score:.5f} is too high!"
+                    "[{0}] Ungültig! Matching score {1:.5f} ist zu hoch!".format(
+                        mark_fail, m_min.score
+                    )
                 )
 
 
