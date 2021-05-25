@@ -372,6 +372,23 @@ def get_palmprints() -> list:
 # # # # # #
 
 
+def progress(current: int, maximum: int):
+    """
+    Zeige den aktuellen Fortschitt beim Loopen
+    über eine Liste in Prozent.
+
+    :param current: aktuelle Position im Loop
+    :param maximum: höchster Index im Loop
+    """
+    current += 1
+    prog = int(100 * (current/maximum))
+
+    print(f"{prog}%", end="\r")
+
+    if current == maximum:
+        print()
+
+
 def load_img(path: str) -> np.ndarray:
     """
     Wrapper um cv.imread(), damit auch wirklich immer
@@ -944,66 +961,73 @@ def main():
     zu einem registrierten Nutzer passt.
     Wenn ja, gib den Namen aus.
     """
+    file_input = sys.argv[1]
+
     if len(sys.argv) != 2:
         print("Aufruf: python3 ppscan.py <pfad/zum/bild>")
+        return -1
+    
+    print("ppscan\n------")
+    print("Starte Matching für {} ...".format(os.path.basename(file_input)))
+
+    filters = build_gabor_filters()
+
+    img_input = load_img(file_input)
+    roi = extract_roi(img_input)
+    filtered_roi = apply_gabor_filters(roi, filters)
+
+    palmprints_list = session.query(Palmprint).all()
+    hamming_scores = []
+
+    Match = namedtuple("Match", ["score", "user"])
+
+    for i, palmprint in enumerate(palmprints_list):
+        hamming_scores.append(
+            Match(
+                score=matching(filtered_roi, palmprint.get_roi()),
+                user=palmprint.user.name,
+            )
+        )
+        progress(i, len(palmprints_list))
+
+    # minimaler Matching Score
+    m_min = min(hamming_scores, key=lambda m: m.score)
+    # maximaler Matching Score
+    # m_max = max(hamming_scores, key=lambda m: m.score)
+    # alle Matching Scores, aufsteigend sortiert
+    # hamming_scores.sort(key=lambda m: m.score)
+
+    if m_min.score <= THRESH_HAMMING:
+        print("[{0}] Hallo, {1}!".format(mark_check, m_min.user.capitalize()))
     else:
-        filters = build_gabor_filters()
+        if SHREKD:
+            print(
+                """
+                GET OUT OF MY SWAMP\033[92;1m
 
-        img_input = load_img(sys.argv[1])
-        roi = extract_roi(img_input)
-        filtered_roi = apply_gabor_filters(roi, filters)
-
-        palmprints_list = session.query(Palmprint).all()
-        hamming_scores = []
-
-        Match = namedtuple("Match", ["score", "user"])
-
-        for palmprint in palmprints_list:
-            hamming_scores.append(
-                Match(
-                    score=matching(filtered_roi, palmprint.get_roi()),
-                    user=palmprint.user.name,
+            ⢀⡴⠑⡄⠀⠀⠀⠀⠀⠀⠀⣀⣀⣤⣤⣤⣀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀ 
+            ⠸⡇⠀⠿⡀⠀⠀⠀⣀⡴⢿⣿⣿⣿⣿⣿⣿⣿⣷⣦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀ 
+            ⠀⠀⠀⠀⠑⢄⣠⠾⠁⣀⣄⡈⠙⣿⣿⣿⣿⣿⣿⣿⣿⣆⠀⠀⠀⠀⠀⠀⠀⠀ 
+            ⠀⠀⠀⠀⢀⡀⠁⠀⠀⠈⠙⠛⠂⠈⣿⣿⣿⣿⣿⠿⡿⢿⣆⠀⠀⠀⠀⠀⠀⠀ 
+            ⠀⠀⠀⢀⡾⣁⣀⠀⠴⠂⠙⣗⡀⠀⢻⣿⣿⠭⢤⣴⣦⣤⣹⠀⠀⠀⢀⢴⣶⣆ 
+            ⠀⠀⢀⣾⣿⣿⣿⣷⣮⣽⣾⣿⣥⣴⣿⣿⡿⢂⠔⢚⡿⢿⣿⣦⣴⣾⠁⠸⣼⡿ 
+            ⠀⢀⡞⠁⠙⠻⠿⠟⠉⠀⠛⢹⣿⣿⣿⣿⣿⣌⢤⣼⣿⣾⣿⡟⠉⠀⠀⠀⠀⠀ 
+            ⠀⣾⣷⣶⠇⠀⠀⣤⣄⣀⡀⠈⠻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡇⠀⠀⠀⠀⠀⠀ 
+            ⠀⠉⠈⠉⠀⠀⢦⡈⢻⣿⣿⣿⣶⣶⣶⣶⣤⣽⡹⣿⣿⣿⣿⡇⠀⠀⠀⠀⠀⠀ 
+            ⠀⠀⠀⠀⠀⠀⠀⠉⠲⣽⡻⢿⣿⣿⣿⣿⣿⣿⣷⣜⣿⣿⣿⡇⠀⠀⠀⠀⠀⠀ 
+            ⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⣷⣶⣮⣭⣽⣿⣿⣿⣿⣿⣿⣿⠀⠀⠀⠀⠀⠀⠀ 
+            ⠀⠀⠀⠀⠀⠀⣀⣀⣈⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠇⠀⠀⠀⠀⠀⠀⠀ 
+            ⠀⠀⠀⠀⠀⠀⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠃⠀⠀⠀⠀⠀⠀⠀⠀ 
+            ⠀⠀⠀⠀⠀⠀⠀⠹⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠟⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀ 
+            ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠛⠻⠿⠿⠿⠿⠛⠉\033[0m
+                """
+            )
+        else:
+            print(
+                "[{0}] Ungültig! Matching Score {1:.5f} ist zu hoch!".format(
+                    mark_fail, m_min.score
                 )
             )
-
-        # minimaler Matching Score
-        m_min = min(hamming_scores, key=lambda m: m.score)
-        # maximaler Matching Score
-        # m_max = max(hamming_scores, key=lambda m: m.score)
-        # alle Matching Scores, aufsteigend sortiert
-        # hamming_scores.sort(key=lambda m: m.score)
-
-        if m_min.score <= THRESH_HAMMING:
-            print("[{0}] Hallo, {1}!".format(mark_check, m_min.user.capitalize()))
-        else:
-            if SHREKD:
-                print(
-                    """
-                    GET OUT OF MY SWAMP\033[92;1m
-
-                ⢀⡴⠑⡄⠀⠀⠀⠀⠀⠀⠀⣀⣀⣤⣤⣤⣀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀ 
-                ⠸⡇⠀⠿⡀⠀⠀⠀⣀⡴⢿⣿⣿⣿⣿⣿⣿⣿⣷⣦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀ 
-                ⠀⠀⠀⠀⠑⢄⣠⠾⠁⣀⣄⡈⠙⣿⣿⣿⣿⣿⣿⣿⣿⣆⠀⠀⠀⠀⠀⠀⠀⠀ 
-                ⠀⠀⠀⠀⢀⡀⠁⠀⠀⠈⠙⠛⠂⠈⣿⣿⣿⣿⣿⠿⡿⢿⣆⠀⠀⠀⠀⠀⠀⠀ 
-                ⠀⠀⠀⢀⡾⣁⣀⠀⠴⠂⠙⣗⡀⠀⢻⣿⣿⠭⢤⣴⣦⣤⣹⠀⠀⠀⢀⢴⣶⣆ 
-                ⠀⠀⢀⣾⣿⣿⣿⣷⣮⣽⣾⣿⣥⣴⣿⣿⡿⢂⠔⢚⡿⢿⣿⣦⣴⣾⠁⠸⣼⡿ 
-                ⠀⢀⡞⠁⠙⠻⠿⠟⠉⠀⠛⢹⣿⣿⣿⣿⣿⣌⢤⣼⣿⣾⣿⡟⠉⠀⠀⠀⠀⠀ 
-                ⠀⣾⣷⣶⠇⠀⠀⣤⣄⣀⡀⠈⠻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡇⠀⠀⠀⠀⠀⠀ 
-                ⠀⠉⠈⠉⠀⠀⢦⡈⢻⣿⣿⣿⣶⣶⣶⣶⣤⣽⡹⣿⣿⣿⣿⡇⠀⠀⠀⠀⠀⠀ 
-                ⠀⠀⠀⠀⠀⠀⠀⠉⠲⣽⡻⢿⣿⣿⣿⣿⣿⣿⣷⣜⣿⣿⣿⡇⠀⠀⠀⠀⠀⠀ 
-                ⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⣷⣶⣮⣭⣽⣿⣿⣿⣿⣿⣿⣿⠀⠀⠀⠀⠀⠀⠀ 
-                ⠀⠀⠀⠀⠀⠀⣀⣀⣈⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠇⠀⠀⠀⠀⠀⠀⠀ 
-                ⠀⠀⠀⠀⠀⠀⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠃⠀⠀⠀⠀⠀⠀⠀⠀ 
-                ⠀⠀⠀⠀⠀⠀⠀⠹⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠟⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀ 
-                ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠛⠻⠿⠿⠿⠿⠛⠉\033[0m
-                    """
-                )
-            else:
-                print(
-                    "[{0}] Ungültig! Matching score {1:.5f} ist zu hoch!".format(
-                        mark_fail, m_min.score
-                    )
-                )
 
 
 if __name__ == "__main__":
