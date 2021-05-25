@@ -30,7 +30,8 @@ from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm import sessionmaker
 
-from scipy.spatial import distance
+# unused, weil Bibliotheksfunktion für HammingDistanz nur als Fallback
+# from scipy.spatial import distance
 
 
 # Verbindung zur Datenbank
@@ -66,8 +67,8 @@ GABOR_GAMMA = 0.7  # 0.23 < gamma < 0.92
 GABOR_PSI = 0
 GABOR_THRESHOLD = 150  # 0 to 255
 
-# XXX das ist etwas hoch ... r_08 z.B. wird maskiert, was nicht sein muss
-MASK_THRESHOLD = 110
+# 110 etwas zu hoch
+MASK_THRESHOLD = 85
 
 ROI_RAD = 75
 
@@ -473,7 +474,7 @@ def left_right_detector(valleys: list) -> str:
 # Preprocessing #
 # # # # # # # # #
 
-# TODO: parameter 'outside' nie genutzt
+
 def neighbourhood_curvature(
     p: tuple, img: np.ndarray, n: int, r: int, inside: int = 255
 ) -> float:
@@ -487,7 +488,6 @@ def neighbourhood_curvature(
     :param n: Anzahl der Nachbarn
     :param r: Abstand der Nachbarn
     :param inside: Farbe, die als "innen" qualifiziert
-    :param outside: Farbe, die als "außerhalb der Fläche" gilt
     :returns: "Kurvigkeit"
     """
     # Randbehandlung; Kurven in Bildrandgebieten sind nicht relevant!
@@ -795,20 +795,19 @@ def calculate_hamming(img_to_match: np.ndarray, img_template: np.ndarray) -> flo
     :returns: Hamming Distanz zwischen den Bildern
     """
 
+    """
+    # Bibliotheksfunktion zur Sicherheit (Fallback)
     hamming_distance = distance.hamming(
         img_to_binary(img_to_match), img_to_binary(img_template)
     )
-
     """
-    TODO: zum Testen
 
     bin_img1 = img_to_binary(img_to_match)
     bin_img2 = img_to_binary(img_template)
     bin_mask1 = img_to_binary(build_mask(img_to_match))
     bin_mask2 = img_to_binary(build_mask(img_template))
     hamming_distance = hamming_with_masks(bin_img1, bin_mask1, bin_img2, bin_mask2)
-    """
-    
+
     return hamming_distance
 
 
@@ -882,26 +881,27 @@ def matching(img_to_match, img_template) -> float:
         return min(hamming_distances)
 
 
-def translate_image(img_to_match, img_template, trans_matrice) -> float:
+def translate_image(img_to_match, img_template, trans_matrix) -> float:
     """
     Verschiebt zumatchendes Image um die Translationsmatrix.
 
     :param img_to_match: abzugleichendes Image
     :param img_template: Vorlage, gegen welche gematched wird
+    :param trans_matrix: zu nutzende Tranformationsmatrix
     :returns: kleinste Hamming Distanz zwischen den Bildern
     """
-    # set 1 bei Default fuer non-Match
-
-    hamming_distance = 1.0
 
     img_slided = cv.warpAffine(
-        img_to_match, trans_matrice, (img_to_match.shape[0], img_to_match.shape[1])
+        img_to_match, trans_matrix, (img_to_match.shape[0], img_to_match.shape[1])
     )
 
-    # TODO: Hier wird die 1.0 einfach von Müll überschrieben, falls calculate_hamming() keine exception wirft
-    hamming_distance = calculate_hamming(
-        img_slided[2:-2, 2:-2], img_template[2:-2, 2:-2]
-    )
+    try:
+        hamming_distance = calculate_hamming(
+            img_slided[2:-2, 2:-2], img_template[2:-2, 2:-2]
+        )
+    except Exception:
+        # set 1.0 bei Default fuer non-Match
+        hamming_distance = 1.0
 
     return hamming_distance
 
