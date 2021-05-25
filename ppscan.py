@@ -798,6 +798,16 @@ def calculate_hamming(img_to_match: np.ndarray, img_template: np.ndarray) -> flo
     hamming_distance = distance.hamming(
         img_to_binary(img_to_match), img_to_binary(img_template)
     )
+
+    """
+    TODO: zum Testen
+
+    bin_img1 = img_to_binary(img_to_match)
+    bin_img2 = img_to_binary(img_template)
+    bin_mask1 = img_to_binary(build_mask(img_to_match))
+    bin_mask2 = img_to_binary(build_mask(img_template))
+    hamming_distance = hamming_with_masks(bin_img1, bin_mask1, bin_img2, bin_mask2)
+    """
     
     return hamming_distance
 
