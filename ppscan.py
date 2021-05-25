@@ -31,7 +31,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.orm import sessionmaker
 
 # unused, weil Bibliotheksfunktion für HammingDistanz nur als Fallback
-# from scipy.spatial import distance
+from scipy.spatial import distance
 
 
 # Verbindung zur Datenbank
@@ -670,12 +670,13 @@ def build_mask(img: np.ndarray) -> np.ndarray:
     :param img: Bild welches als Grundlage der Maske dienen soll
     :returns: Maske (schwarz/weiß)
     """
+    # TODO
     # generiere leeres np array, füllen mit 'weiß' (255)
     mask = np.empty_like(img)
-    mask.fill(255)
+    mask.fill(0)
     # setze jedes Maskenpixel auf 0, wenn im gegebenen Bildpixel der Wert kleiner als
     # der Schwellwert ist
-    mask[img < MASK_THRESHOLD] = 0
+    mask[img > MASK_THRESHOLD] = 1
 
     return mask
 
@@ -701,14 +702,15 @@ def hamming_with_masks(
 
     # check if images and masks are binary
     if max(img1) == 1 and max(img2) == 1 and max(mask1) == 1 and max(mask2) == 1:
-        # img1 xor img2
-        img_xor = np.logical_xor(img1, img2)
-        # mask1 and mask2
+        # merge masks
         mask_and = np.logical_and(mask1, mask2)
-        # img_xor and mask_and
-        masked = np.logical_and(img_xor, mask_and)
+        # mask images
+        masked1 = np.logical_and(img1, mask_and)
+        masked2 = np.logical_and(img2, mask_and)
+        # compare images
+        masked = np.logical_xor(masked1, masked2)
         # calc hamming distance (number of ones in 'masked' divided by length of 'masked')
-        hamming = ((masked == 1).sum()) / masked.size
+        hamming = ((masked == True).sum()) / masked.size
 
         return hamming
 
