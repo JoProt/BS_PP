@@ -798,17 +798,7 @@ def calculate_hamming(img_to_match: np.ndarray, img_template: np.ndarray) -> flo
     hamming_distance = distance.hamming(
         img_to_binary(img_to_match), img_to_binary(img_template)
     )
-
-    """
-    TODO: zum Testen
     
-    bin_img1 = img_to_binary(img_to_match)
-    bin_img2 = img_to_binary(img_template)
-    bin_mask1 = img_to_binary(build_mask(img_to_match))
-    bin_mask2 = img_to_binary(build_mask(img_template))
-    hamming_distance = hamming_with_masks(bin_img1, bin_mask1, bin_img2, bin_mask2)
-    """
-
     return hamming_distance
 
 
@@ -822,9 +812,6 @@ def matching(img_to_match, img_template) -> float:
     """
     # speichert alle Hamming Distanzen
     hamming_distances = []
-
-    # Translationsmatrix TODO: hier unnötig, da in for-Schleife genau so gesetzt
-    trans_matrice = [[], []]
 
     # Verschiebungsalgorithmus
     trans_x = [
@@ -873,7 +860,7 @@ def matching(img_to_match, img_template) -> float:
             translate_image(img_to_match, img_template, trans_matrice)
         )
 
-    # orginal unverschoben
+    # unverschoben
     hamming_distances.append(calculate_hamming(img_to_match, img_template))
 
     # print(hamming_distances)
