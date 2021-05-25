@@ -381,7 +381,7 @@ def progress(current: int, maximum: int):
     :param maximum: höchster Index im Loop
     """
     current += 1
-    prog = int(100 * (current/maximum))
+    prog = int(100 * (current / maximum))
 
     print(f"{prog}%", end="\r")
 
@@ -702,15 +702,15 @@ def hamming_with_masks(
     img1: np.ndarray, mask1: np.ndarray, img2: np.ndarray, mask2: np.ndarray
 ) -> float:
     """
-    Gegebene Masken auf jeweils zugehöriges Bild anwenden. Und daraus dann die HammingDistance bestimmen
+    Gegebene Masken auf jeweils zugehöriges Bild anwenden.
+    Und daraus dann die Hammingdistanz bestimmen.
 
     :param img1: zu maskierendes Bild (binary 0,1)
     :param mask1: Maske des Bildes (binary 0,1)
     :param img2: zu maskierendes (zweites) Bild (binary 0,1)
     :param mask2: Maske des zweiten Bildes (binary 0,1)
-    :returns: HammingDistance
+    :returns: Hammingdistanz
     """
-
     # flatten images and masks
     img1.flatten()
     img2.flatten()
@@ -719,15 +719,14 @@ def hamming_with_masks(
 
     # check if images and masks are binary
     if max(img1) == 1 and max(img2) == 1 and max(mask1) == 1 and max(mask2) == 1:
-        # merge masks
+        # UND-Verknüpfung Masken
         mask_and = np.logical_and(mask1, mask2)
-        # mask images
-        masked1 = np.logical_and(img1, mask_and)
-        masked2 = np.logical_and(img2, mask_and)
-        # compare images
-        masked = np.logical_xor(masked1, masked2)
-        # calc hamming distance (number of ones in 'masked' divided by length of 'masked')
-        hamming = ((masked == True).sum()) / masked.size
+        # XOR-Verknüpfung Bilder
+        img_xor = np.logical_xor(img1, img2)
+        # UND-Verknüpfung Bildunterschiede und kombinierte Maske
+        img_and_mask = np.logical_and(img_xor, mask_and)
+        # hamming distance (number of ones in 'masked' divided by length of 'masked')
+        hamming = ((img_and_mask == True).sum()) / img_and_mask.size
 
         return hamming
 
@@ -966,7 +965,7 @@ def main():
     if len(sys.argv) != 2:
         print("Aufruf: python3 ppscan.py <pfad/zum/bild>")
         return -1
-    
+
     print("ppscan\n------")
     print("Starte Matching für {} ...".format(os.path.basename(file_input)))
 
@@ -998,7 +997,11 @@ def main():
     # hamming_scores.sort(key=lambda m: m.score)
 
     if m_min.score <= THRESH_HAMMING:
-        print("[{0}] Hallo, {1}!".format(mark_check, m_min.user.capitalize()))
+        print(
+            "[{0}] Hallo, {1}! Matching Score: {2}".format(
+                mark_check, m_min.user.capitalize(), m_min.score
+            )
+        )
     else:
         if SHREKD:
             print(
