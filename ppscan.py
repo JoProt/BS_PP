@@ -222,7 +222,8 @@ def create_user(name: str, palmprints: list):
     for pp in palmprints:
         roi = Palmprint.encode(pp[0])
         original = Palmprint.encode(pp[1])
-        palmprint = Palmprint(user_id=user.id, roi=roi, original=original)
+        mask = Palmprint.encode(pp[2])
+        palmprint = Palmprint(user_id=user.id, roi=roi, mask=mask, original=original)
         session.add(palmprint)
 
     # Neue Daten endgültig in die DB schreiben
@@ -305,7 +306,7 @@ def insert_palmprints(user_id: int, palmprints: list):
     session.commit()
 
 
-def update_palmprint(palmprint_id: int, roi=None, original=None):
+def update_palmprint(palmprint_id: int, roi=None, original=None, mask=None):
     """
     Update eines bereits bestehenden Palmprints.
 
@@ -328,6 +329,10 @@ def update_palmprint(palmprint_id: int, roi=None, original=None):
     if original is not None:
         new_original = Palmprint.encode(original)
         palmprint.original = new_original
+
+    if mask is not None:
+        new_mask = Palmprint.encode(mask)
+        palmprint.mask = new_mask
 
     session.commit()
 
@@ -953,8 +958,9 @@ def enrol(name: str, *palmprint_imgs):
 
         for img in palmprint_imgs:
             roi = extract_roi(img)
+            mask = build_mask(roi)
             roi = apply_gabor_filters(roi, filters)
-            palmprints.append((roi, img))
+            palmprints.append((roi, img, mask))
 
     create_user(name, palmprints)
 
