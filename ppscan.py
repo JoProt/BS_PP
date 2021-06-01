@@ -137,6 +137,7 @@ class Palmprint(Base):
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("users.id"))
     roi = Column(String)
+    mask = Column(String)
     original = Column(String)
 
     @staticmethod
@@ -172,6 +173,14 @@ class Palmprint(Base):
         :returns: ROI als Numpy-Matrix
         """
         return self.decode(self.roi)
+
+    def get_mask(self) -> np.ndarray:
+        """
+        ROI Getter.
+
+        :returns: ROI als Numpy-Matrix
+        """
+        return self.decode(self.mask)
 
     def get_original(self):
         """
@@ -213,7 +222,8 @@ def create_user(name: str, palmprints: list):
     for pp in palmprints:
         roi = Palmprint.encode(pp[0])
         original = Palmprint.encode(pp[1])
-        palmprint = Palmprint(user_id=user.id, roi=roi, original=original)
+        mask = Palmprint.encode(pp[2])
+        palmprint = Palmprint(user_id=user.id, roi=roi, mask=mask, original=original)
         session.add(palmprint)
 
     # Neue Daten endgültig in die DB schreiben
@@ -296,7 +306,7 @@ def insert_palmprints(user_id: int, palmprints: list):
     session.commit()
 
 
-def update_palmprint(palmprint_id: int, roi=None, original=None):
+def update_palmprint(palmprint_id: int, roi=None, original=None, mask=None):
     """
     Update eines bereits bestehenden Palmprints.
 
@@ -319,6 +329,10 @@ def update_palmprint(palmprint_id: int, roi=None, original=None):
     if original is not None:
         new_original = Palmprint.encode(original)
         palmprint.original = new_original
+
+    if mask is not None:
+        new_mask = Palmprint.encode(mask)
+        palmprint.mask = new_mask
 
     session.commit()
 
@@ -690,10 +704,10 @@ def build_mask(img: np.ndarray) -> np.ndarray:
     # TODO
     # generiere leeres np array, füllen mit 'weiß' (255)
     mask = np.empty_like(img)
-    mask.fill(0)
+    mask.fill(255)
     # setze jedes Maskenpixel auf 0, wenn im gegebenen Bildpixel der Wert kleiner als
     # der Schwellwert ist
-    mask[img > MASK_THRESHOLD] = 1
+    mask[img < MASK_THRESHOLD] = 0
 
     return mask
 
@@ -726,7 +740,9 @@ def hamming_with_masks(
         # UND-Verknüpfung Bildunterschiede und kombinierte Maske
         img_and_mask = np.logical_and(img_xor, mask_and)
         # hamming distance (number of ones in 'masked' divided by length of 'masked')
+        # hamming = ((img_and_mask == True).sum()) / (mask_and == True).size
         hamming = ((img_and_mask == True).sum()) / img_and_mask.size
+        # print(hamming)
 
         return hamming
 
@@ -813,25 +829,24 @@ def calculate_hamming(img_to_match: np.ndarray, img_template: np.ndarray) -> flo
     :returns: Hamming Distanz zwischen den Bildern
     """
 
-    """
     # Bibliotheksfunktion zur Sicherheit (Fallback)
     hamming_distance = distance.hamming(
         img_to_binary(img_to_match), img_to_binary(img_template)
     )
-    """
 
-    bin_img1 = img_to_binary(img_to_match)
-    bin_img2 = img_to_binary(img_template)
-    bin_mask1 = img_to_binary(build_mask(img_to_match))
-    bin_mask2 = img_to_binary(build_mask(img_template))
-    hamming_distance = hamming_with_masks(bin_img1, bin_mask1, bin_img2, bin_mask2)
+    # bin_img1 = img_to_binary(img_to_match)
+    # bin_img2 = img_to_binary(img_template)
+    # bin_mask1 = img_to_binary(build_mask(img_to_match))
+    # bin_mask2 = img_to_binary(build_mask(img_template))
+    # hamming_distance = hamming_with_masks(bin_img1, bin_mask1, bin_img2, bin_mask2)
 
     return hamming_distance
 
 
 def matching(img_to_match, img_template) -> float:
     """
-    Ausführen des Matching-Algorithmusses. Durch Vorgaben wird zuerst eine pixelbasierte Translation durchgeführt und anschließend die Hamming Distanz berechnet.
+    Ausführen des Matching-Algorithmus. Durch Vorgaben wird zuerst eine pixelbasierte
+    Translation durchgeführt und anschließend die Hamming Distanz berechnet.
 
     :param img_to_match: abzugleichendes Image
     :param img_template: Vorlage, gegen welche gematched wird
@@ -943,8 +958,9 @@ def enrol(name: str, *palmprint_imgs):
 
         for img in palmprint_imgs:
             roi = extract_roi(img)
+            mask = build_mask(roi)
             roi = apply_gabor_filters(roi, filters)
-            palmprints.append((roi, img))
+            palmprints.append((roi, img, mask))
 
     create_user(name, palmprints)
 
@@ -960,11 +976,11 @@ def main():
     zu einem registrierten Nutzer passt.
     Wenn ja, gib den Namen aus.
     """
-    file_input = sys.argv[1]
-
     if len(sys.argv) != 2:
         print("Aufruf: python3 ppscan.py <pfad/zum/bild>")
         return -1
+
+    file_input = sys.argv[1]
 
     print("ppscan\n------")
     print("Starte Matching für {} ...".format(os.path.basename(file_input)))
