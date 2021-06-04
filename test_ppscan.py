@@ -8,7 +8,7 @@ class TestPPscan(unittest.TestCase):
         """
         Interpolationstest für eine Gerade durch die Punkte (0,0) und (0,1)
 
-        :return: True bei Ausgabe von [(0, 0), (0, .25), (0, .5), (0, .75), (0, 1)]
+        :returns: True bei Ausgabe von [(0, 0), (0, .25), (0, .5), (0, .75), (0, 1)]
         """
         points = [(0, 0), (0, 1)]
         steps = 5
@@ -24,7 +24,7 @@ class TestPPscan(unittest.TestCase):
         """
         Interpolationstest für eine Parabel durch die Punkte (-2,4), (0,0) und (2,4)
 
-        :return: True bei Ausgabe von [(-2.0, 4.0), (-1.0, 2.0), (0.0, 0.0), (1.0, 2.0), (2.0, 4.0)]
+        :returns: True bei Ausgabe von [(-2.0, 4.0), (-1.0, 2.0), (0.0, 0.0), (1.0, 2.0), (2.0, 4.0)]
         """
         points = [(-2, 4), (0, 0), (2, 4)]
         steps = 5
@@ -49,7 +49,7 @@ class TestPPscan(unittest.TestCase):
         Testet an der unteren rechten Bild-Ecke (5 Pixel vom Rand entfernt und mit Radius 10 Pixel) ob der erwartete
         Wert von 0.0 ausgegeben wird.
 
-        :return: True wenn neighbourhood_curvature() == 0.0
+        :returns: True wenn neighbourhood_curvature() == 0.0
         """
         img = ppscan.load_img(file)
         dim_x, dim_y = img.shape
@@ -68,7 +68,7 @@ class TestPPscan(unittest.TestCase):
         """
         Testet in der Bildmitte (mit Radius 10 Pixel) ob der ausgegebene Wert >0.0 und <1.0 ist.
 
-        :return: True wenn 0.0 < neighbourhood_curvature() < 1.0
+        :returns: True wenn 0.0 < neighbourhood_curvature() < 1.0
         """
         img = ppscan.load_img(file)
         dim_x, dim_y = img.shape
@@ -89,7 +89,7 @@ class TestPPscan(unittest.TestCase):
         """
         Überprüfung der Listenlänge von valleys (3) und deren Punkte (>=2)
 
-        :return: True, wenn 3 valleys mit je mindestens 2 Punkten gefunden wurden
+        :returns: True, wenn 3 valleys mit je mindestens 2 Punkten gefunden wurden
         """
         img = ppscan.load_img(file)
 
@@ -125,7 +125,7 @@ class TestPPscan(unittest.TestCase):
         Testet ob ROI für linke Hand plausibel ist.
 
         :param file: vollständiges Handbild
-        :return: True, wenn ROI dargestellt werden kann
+        :returns: True, wenn ROI dargestellt werden kann
         """
         img_input = ppscan.load_img(file)
         roi = ppscan.extract_roi(img_input)
@@ -140,7 +140,7 @@ class TestPPscan(unittest.TestCase):
         mit einer Hälfte schwarz, der anderen weiß. Die generierte Maske maskiert alle durch MASK_THRESHOLD
         markierten Bereiche, indem diese in der Maske als schwarze Pixel hinterlegt werden.
 
-        :return: True, wenn Maske und Eingabe Bild übereinstimmen.
+        :returns: True, wenn Maske und Eingabe Bild übereinstimmen.
         """
         img = ppscan.cv.imread("testdaten/mask_dummy.jpg", ppscan.cv.IMREAD_GRAYSCALE)
         mask = ppscan.build_mask(img)
@@ -150,7 +150,7 @@ class TestPPscan(unittest.TestCase):
         """
         Prüft auf richtige Konstantenwerte (aus dem Paper) für Gabor Filter.
 
-        :return: True, wenn Sigma und Labda Wert denen aus dem Paper entsprechen
+        :returns: True, wenn Sigma und Labda Wert denen aus dem Paper entsprechen
         """
         assert ppscan.GABOR_SIGMA == 5.6179
         assert ppscan.GABOR_LAMBDA == 1 / 0.0916
@@ -159,7 +159,7 @@ class TestPPscan(unittest.TestCase):
         """
         Prüft ob Konstante GABOR_GAMMA im richtigen Wertebereich liegt.
 
-        :return: True, wenn Wert von Gamma im Bereich von 0.23 bis 0.92 liegt
+        :returns: True, wenn Wert von Gamma im Bereich von 0.23 bis 0.92 liegt
         """
         assert 0.23 < ppscan.GABOR_GAMMA < 0.92
 
@@ -168,7 +168,7 @@ class TestPPscan(unittest.TestCase):
         Weis eigentlich nicht so recht, was man für die Funktion testen sollte... Außer ob die ausgegebene Liste
         wirklich genau so lang ist wie die Liste von vorgegebenen Thetas.
 
-        :return: True, wenn Filterliste genau so lang wie Liste von Thetas
+        :returns: True, wenn Filterliste genau so lang wie Liste von Thetas
         """
         filters = ppscan.build_gabor_filters()
         assert ppscan.GABOR_THETAS.size == len(filters)
@@ -197,7 +197,7 @@ class TestPPscan(unittest.TestCase):
         """
         Testet die Verbindung zur Datenbank.
 
-        :return: True, wenn peter die Nummer 1 ist
+        :returns: True, wenn peter die Nummer 1 ist
         """
         peter = ppscan.session.query(ppscan.User).first()
         assert peter.id == 1

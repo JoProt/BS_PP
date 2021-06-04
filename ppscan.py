@@ -6,10 +6,9 @@
     =================
     [your ad here]
 
-    TODO: author and version
     :authors: L. Basedow, L. Gillner, J. Prothmann, C. Werner
-    :version:
-    :license: who knows
+    :version: 0.9
+    :license: TODO
     :format: black, reST docstrings
 """
 
@@ -31,6 +30,7 @@ from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm import sessionmaker
 
+# unused, weil Bibliotheksfunktion für HammingDistanz nur als Fallback
 from scipy.spatial import distance
 
 
@@ -43,6 +43,7 @@ Base = declarative_base()
 # Session für Datenbankzugriff erzeugen
 Session = sessionmaker(bind=engine)
 session = Session()
+
 
 # # # # # # #
 # Constants #
@@ -66,8 +67,8 @@ GABOR_GAMMA = 0.7  # 0.23 < gamma < 0.92
 GABOR_PSI = 0
 GABOR_THRESHOLD = 150  # 0 to 255
 
-# XXX das ist etwas hoch ... r_08 z.B. wird maskiert, was nicht sein muss
-MASK_THRESHOLD = 110
+# 110 etwas zu hoch
+MASK_THRESHOLD = 85
 
 ROI_RAD = 75
 
@@ -92,6 +93,13 @@ class User(Base):
     """
     Klasse für registrierte Nutzer in der Datenbank, damit beim
     Matching der Hand eine Identität zugeordnet werden kann.
+
+    :attr __tablename__: Name der Tabelle in der echten Datenbank.
+    :attr id: Primary Key Identifier jedes Palmprints;
+        Auto-Increment, wird von der Datenbank selbst gesetzt.
+    :attr name: Name des Nutzers.
+    :attr palmprints: Liste aus Palmprints, die zu dieser ID gehören;
+        wird von SQLAlchemy gesetzt, BITTE NICHT MANUELL ÄNDERN!
     """
 
     __tablename__ = "users"
@@ -107,11 +115,29 @@ class User(Base):
 
 
 class Palmprint(Base):
+    """
+    Klasse für Palmprints. Palmprints werden separat vom Nutzer
+    gespeichert, da so sowohl eine beliebige Anzahl von Prints
+    pro Nutzer möglich ist. Dank SQLAlchemy bleibt die Beziehung
+    zwischen Nutzern und ihren Prints erhalten, sodass sowohl von
+    Nutzern auf ihre enrollten Prints, als auch von Prints zu den
+    zugehörigen Nutzern referenziert werden kann.
+
+    :attr __tablename__: Name der Tabelle in der echten Datenbank.
+    :attr id: Primary Key Identifier jedes Palmprints;
+        Auto-Increment, wird von der Datenbank selbst gesetzt.
+    :attr user_id: ID eines bereits existierenden Nutzers.
+    :attr roi: Nur der ROI-Ausschnitt des Palmprints; Base64-kodiert.
+    :attr original: Das Originalbild als Fallback, falls an der ROI
+        einmal was geändert werden soll; Base64-kodiert.
+    """
+
     __tablename__ = "palmprints"
 
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("users.id"))
     roi = Column(String)
+    mask = Column(String)
     original = Column(String)
 
     @staticmethod
@@ -147,6 +173,14 @@ class Palmprint(Base):
         :returns: ROI als Numpy-Matrix
         """
         return self.decode(self.roi)
+
+    def get_mask(self) -> np.ndarray:
+        """
+        ROI Getter.
+
+        :returns: ROI als Numpy-Matrix
+        """
+        return self.decode(self.mask)
 
     def get_original(self):
         """
@@ -188,7 +222,8 @@ def create_user(name: str, palmprints: list):
     for pp in palmprints:
         roi = Palmprint.encode(pp[0])
         original = Palmprint.encode(pp[1])
-        palmprint = Palmprint(user_id=user.id, roi=roi, original=original)
+        mask = Palmprint.encode(pp[2])
+        palmprint = Palmprint(user_id=user.id, roi=roi, mask=mask, original=original)
         session.add(palmprint)
 
     # Neue Daten endgültig in die DB schreiben
@@ -271,7 +306,7 @@ def insert_palmprints(user_id: int, palmprints: list):
     session.commit()
 
 
-def update_palmprint(palmprint_id: int, roi=None, original=None):
+def update_palmprint(palmprint_id: int, roi=None, original=None, mask=None):
     """
     Update eines bereits bestehenden Palmprints.
 
@@ -294,6 +329,10 @@ def update_palmprint(palmprint_id: int, roi=None, original=None):
     if original is not None:
         new_original = Palmprint.encode(original)
         palmprint.original = new_original
+
+    if mask is not None:
+        new_mask = Palmprint.encode(mask)
+        palmprint.mask = new_mask
 
     session.commit()
 
@@ -345,6 +384,23 @@ def get_palmprints() -> list:
 # # # # # #
 # Utility #
 # # # # # #
+
+
+def progress(current: int, maximum: int):
+    """
+    Zeige den aktuellen Fortschitt beim Loopen
+    über eine Liste in Prozent.
+
+    :param current: aktuelle Position im Loop
+    :param maximum: höchster Index im Loop
+    """
+    current += 1
+    prog = int(100 * (current / maximum))
+
+    print(f"{prog}%", end="\r")
+
+    if current == maximum:
+        print()
 
 
 def load_img(path: str) -> np.ndarray:
@@ -449,9 +505,9 @@ def left_right_detector(valleys: list) -> str:
 # Preprocessing #
 # # # # # # # # #
 
-# TODO: parameter 'outside' nie genutzt
+
 def neighbourhood_curvature(
-    p: tuple, img: np.ndarray, n: int, r: int, inside: int = 255, outside: int = 0
+    p: tuple, img: np.ndarray, n: int, r: int, inside: int = 255
 ) -> float:
     """
     Überprüfe n Nachbarn im Abstand von r, ob sie innerhalb oder außerhalb
@@ -463,11 +519,8 @@ def neighbourhood_curvature(
     :param n: Anzahl der Nachbarn
     :param r: Abstand der Nachbarn
     :param inside: Farbe, die als "innen" qualifiziert
-    :param outside: Farbe, die als "außerhalb der Fläche" gilt
     :returns: "Kurvigkeit"
     """
-    # TODO retval hier überfllüssig, da er entweder in if oder else eh gesetzt wird
-    # retval = None
     # Randbehandlung; Kurven in Bildrandgebieten sind nicht relevant!
     if (
         p[0] == 0
@@ -478,7 +531,7 @@ def neighbourhood_curvature(
         or p[1] + r >= img.shape[0]
         or p[1] - r < 0
     ):
-        retval = 0.0
+        return 0.0
     else:
         stepsize = int(360 / n)
         neighvals = []
@@ -495,9 +548,7 @@ def neighbourhood_curvature(
                 (img[y_p, x_p], img[y_n, x_p], img[y_n, x_n], img[y_p, x_n])
             )
 
-        retval = (sum(neighvals) / inside) / n
-
-    return retval
+        return (sum(neighvals) / inside) / n
 
 
 def find_valleys(img: np.ndarray, contour: list) -> list:
@@ -648,8 +699,9 @@ def build_mask(img: np.ndarray) -> np.ndarray:
     Generiert eine Maske aus dem gegebenen Bild. Schwarze Flächen (kein Teil der Hand) werden maskiert.
 
     :param img: Bild welches als Grundlage der Maske dienen soll
-    :return: Maske (schwarz/weiß)
+    :returns: Maske (schwarz/weiß)
     """
+    # TODO
     # generiere leeres np array, füllen mit 'weiß' (255)
     mask = np.empty_like(img)
     mask.fill(255)
@@ -664,15 +716,15 @@ def hamming_with_masks(
     img1: np.ndarray, mask1: np.ndarray, img2: np.ndarray, mask2: np.ndarray
 ) -> float:
     """
-    Gegebene Masken auf jeweils zugehöriges Bild anwenden. Und daraus dann die HammingDistance bestimmen
+    Gegebene Masken auf jeweils zugehöriges Bild anwenden.
+    Und daraus dann die Hammingdistanz bestimmen.
 
     :param img1: zu maskierendes Bild (binary 0,1)
     :param mask1: Maske des Bildes (binary 0,1)
     :param img2: zu maskierendes (zweites) Bild (binary 0,1)
     :param mask2: Maske des zweiten Bildes (binary 0,1)
-    :return: HammingDistance
+    :returns: Hammingdistanz
     """
-
     # flatten images and masks
     img1.flatten()
     img2.flatten()
@@ -681,14 +733,16 @@ def hamming_with_masks(
 
     # check if images and masks are binary
     if max(img1) == 1 and max(img2) == 1 and max(mask1) == 1 and max(mask2) == 1:
-        # img1 xor img2
-        img_xor = np.logical_xor(img1, img2)
-        # mask1 and mask2
+        # UND-Verknüpfung Masken
         mask_and = np.logical_and(mask1, mask2)
-        # img_xor and mask_and
-        masked = np.logical_and(img_xor, mask_and)
-        # calc hamming distance (number of ones in 'masked' divided by length of 'masked')
-        hamming = ((masked == 1).sum()) / masked.size
+        # XOR-Verknüpfung Bilder
+        img_xor = np.logical_xor(img1, img2)
+        # UND-Verknüpfung Bildunterschiede und kombinierte Maske
+        img_and_mask = np.logical_and(img_xor, mask_and)
+        # hamming distance (number of ones in 'masked' divided by length of 'masked')
+        # hamming = ((img_and_mask == True).sum()) / (mask_and == True).size
+        hamming = ((img_and_mask == True).sum()) / img_and_mask.size
+        # print(hamming)
 
         return hamming
 
@@ -700,7 +754,7 @@ def build_gabor_filters() -> list:
     """
     Generiert eine Liste von Gabor Filtern aus gegebenen Konstanten.
 
-    :return: Liste von Gabor Filtern
+    :returns: Liste von Gabor Filtern
     """
     # ksize - size of gabor filter (n, n)
     # sigma - standard deviation of the gaussian function
@@ -733,7 +787,7 @@ def apply_gabor_filters(img: np.ndarray, filters: list) -> np.ndarray:
 
     :param img: zu filterndes Bild
     :param filters: Liste von Gabor Filtern
-    :return: gefiltertes Bild
+    :returns: gefiltertes Bild
     """
     # generate empty np array and fill it with 'white' (255)
     merged_img = np.empty_like(img)
@@ -757,7 +811,7 @@ def img_to_binary(img: np.ndarray) -> np.ndarray:
     besteht (siehe apply_gabor_filters()), werden diese in True (1) und False (0) umgewandelt.
 
     :param img: Bild, das binarisiert werden soll
-    :return:
+    :returns:
     """
     flattened = img.flatten()
     flattened[flattened == 0] = True
@@ -766,45 +820,40 @@ def img_to_binary(img: np.ndarray) -> np.ndarray:
     return flattened
 
 
-def match_palm_prints(img_to_match: np.ndarray, img_template: np.ndarray) -> float:
+def calculate_hamming(img_to_match: np.ndarray, img_template: np.ndarray) -> float:
     """
-    Vergleicht ausgewaehltes Image mit Template Image und berechnet die Hamming Distanz zwischen Diesen.
+    Vergleicht ausgewaehltes Image mit Template Image und berechnet die Hamming Distanz dazwischen.
 
     :param img_to_match: abzugleichendes, pixelverschobenes Image
     :param img_template: Vorlage, gegen welche gematched wird
-    :return: Hamming Distanz zwischen den Bildern
+    :returns: Hamming Distanz zwischen den Bildern
     """
 
+    # Bibliotheksfunktion zur Sicherheit (Fallback)
     hamming_distance = distance.hamming(
         img_to_binary(img_to_match), img_to_binary(img_template)
     )
 
-    """
-    TODO: zum Testen
-    
-    bin_img1 = img_to_binary(img_to_match)
-    bin_img2 = img_to_binary(img_template)
-    bin_mask1 = img_to_binary(build_mask(img_to_match))
-    bin_mask2 = img_to_binary(build_mask(img_template))
-    hamming_distance = hamming_with_masks(bin_img1, bin_mask1, bin_img2, bin_mask2)
-    """
+    # bin_img1 = img_to_binary(img_to_match)
+    # bin_img2 = img_to_binary(img_template)
+    # bin_mask1 = img_to_binary(build_mask(img_to_match))
+    # bin_mask2 = img_to_binary(build_mask(img_template))
+    # hamming_distance = hamming_with_masks(bin_img1, bin_mask1, bin_img2, bin_mask2)
 
     return hamming_distance
 
 
-def slide_img(img_to_match, img_template) -> float:
+def matching(img_to_match, img_template) -> float:
     """
-    pixelbasierte Verschiebung des img_to_match um den besten Match zuerhalten. Anschliessend return der kleinsten Hamming Distanz
+    Ausführen des Matching-Algorithmus. Durch Vorgaben wird zuerst eine pixelbasierte
+    Translation durchgeführt und anschließend die Hamming Distanz berechnet.
 
     :param img_to_match: abzugleichendes Image
     :param img_template: Vorlage, gegen welche gematched wird
-    :return: kleinste Hamming Distanz zwischen den Bildern
+    :returns: kleinste Hamming Distanz zwischen den Bildern
     """
     # speichert alle Hamming Distanzen
     hamming_distances = []
-
-    # Translationsmatrix TODO: hier unnötig, da in for-Schleife genau so gesetzt
-    trans_matrice = [[], []]
 
     # Verschiebungsalgorithmus
     trans_x = [
@@ -853,8 +902,8 @@ def slide_img(img_to_match, img_template) -> float:
             translate_image(img_to_match, img_template, trans_matrice)
         )
 
-    # orginal unverschoben
-    hamming_distances.append(match_palm_prints(img_to_match, img_template))
+    # unverschoben
+    hamming_distances.append(calculate_hamming(img_to_match, img_template))
 
     # print(hamming_distances)
 
@@ -865,22 +914,27 @@ def slide_img(img_to_match, img_template) -> float:
         return min(hamming_distances)
 
 
-def translate_image(img_to_match, img_template, trans_matrice) -> float:
+def translate_image(img_to_match, img_template, trans_matrix) -> float:
     """
-    berechnet Hamming Distanz fuer verschobenes Image ueber dem Template Image um Translationsmatrix trans_matrice
-    """
-    # set 1 bei Default fuer non-Match
+    Verschiebt zumatchendes Image um die Translationsmatrix.
 
-    hamming_distance = 1.0
+    :param img_to_match: abzugleichendes Image
+    :param img_template: Vorlage, gegen welche gematched wird
+    :param trans_matrix: zu nutzende Tranformationsmatrix
+    :returns: kleinste Hamming Distanz zwischen den Bildern
+    """
 
     img_slided = cv.warpAffine(
-        img_to_match, trans_matrice, (img_to_match.shape[0], img_to_match.shape[1])
+        img_to_match, trans_matrix, (img_to_match.shape[0], img_to_match.shape[1])
     )
 
-    # TODO: Hier wird die 1.0 einfach von Müll überschrieben, falls match_palm_prints() keine exception wirft
-    hamming_distance = match_palm_prints(
-        img_slided[2:-2, 2:-2], img_template[2:-2, 2:-2]
-    )
+    try:
+        hamming_distance = calculate_hamming(
+            img_slided[2:-2, 2:-2], img_template[2:-2, 2:-2]
+        )
+    except Exception:
+        # set 1.0 bei Default fuer non-Match
+        hamming_distance = 1.0
 
     return hamming_distance
 
@@ -904,8 +958,9 @@ def enrol(name: str, *palmprint_imgs):
 
         for img in palmprint_imgs:
             roi = extract_roi(img)
+            mask = build_mask(roi)
             roi = apply_gabor_filters(roi, filters)
-            palmprints.append((roi, img))
+            palmprints.append((roi, img, mask))
 
     create_user(name, palmprints)
 
@@ -916,9 +971,23 @@ def enrol(name: str, *palmprint_imgs):
 
 
 def main():
+    """
+    Das eigentliche Programm; Bild einlesen und prüfen, ob Print
+    zu einem registrierten Nutzer passt.
+    Wenn ja, gib den Namen aus.
+    """
+    if len(sys.argv) != 2:
+        print("Aufruf: python3 ppscan.py <pfad/zum/bild>")
+        return -1
+
+    file_input = sys.argv[1]
+
+    print("ppscan\n------")
+    print("Starte Matching für {} ...".format(os.path.basename(file_input)))
+
     filters = build_gabor_filters()
 
-    img_input = load_img(sys.argv[1])
+    img_input = load_img(file_input)
     roi = extract_roi(img_input)
     filtered_roi = apply_gabor_filters(roi, filters)
 
@@ -927,25 +996,33 @@ def main():
 
     Match = namedtuple("Match", ["score", "user"])
 
-    for palmprint in palmprints_list:
+    for i, palmprint in enumerate(palmprints_list):
         hamming_scores.append(
             Match(
-                score=slide_img(filtered_roi, palmprint.get_roi()),
+                score=matching(filtered_roi, palmprint.get_roi()),
                 user=palmprint.user.name,
             )
         )
+        progress(i, len(palmprints_list))
 
-    theMIN = min(hamming_scores, key=lambda m: m.score)
-    # theMAX = max(hamming_scores, key=lambda s: s[0])
-    # hamming_scores.sort(key=lambda s: s[0])
+    # minimaler Matching Score
+    m_min = min(hamming_scores, key=lambda m: m.score)
+    # maximaler Matching Score
+    # m_max = max(hamming_scores, key=lambda m: m.score)
+    # alle Matching Scores, aufsteigend sortiert
+    # hamming_scores.sort(key=lambda m: m.score)
 
-    if theMIN.score <= THRESH_HAMMING:
-        print(f"[{mark_check}] Hello, {theMIN.user.capitalize()} ;)")
+    if m_min.score <= THRESH_HAMMING:
+        print(
+            "[{0}] Hallo, {1}! Matching Score: {2}".format(
+                mark_check, m_min.user.capitalize(), m_min.score
+            )
+        )
     else:
         if SHREKD:
             print(
                 """
-                  GET OUT OF MY SWAMP\033[92;1m
+                GET OUT OF MY SWAMP\033[92;1m
 
             ⢀⡴⠑⡄⠀⠀⠀⠀⠀⠀⠀⣀⣀⣤⣤⣤⣀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀ 
             ⠸⡇⠀⠿⡀⠀⠀⠀⣀⡴⢿⣿⣿⣿⣿⣿⣿⣿⣷⣦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀ 
@@ -966,7 +1043,9 @@ def main():
             )
         else:
             print(
-                f"[{mark_fail}] Sorry, try again! Matching score {theMIN.score:.5f} is too high!"
+                "[{0}] Ungültig! Matching Score {1:.5f} ist zu hoch!".format(
+                    mark_fail, m_min.score
+                )
             )
 
 
