@@ -30,7 +30,6 @@ from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm import sessionmaker
 
-# unused, weil Bibliotheksfunktion für HammingDistanz nur als Fallback
 from scipy.spatial import distance
 
 
@@ -311,8 +310,9 @@ def update_palmprint(palmprint_id: int, roi=None, original=None, mask=None):
     Update eines bereits bestehenden Palmprints.
 
     :param palmprint_id: ID des Palmprints
-    :param roi:
-    :param original:
+    :param roi: extrahierte ROI
+    :param original: Originalbild
+    :param mask: Maske zur ROI
     :returns: None
     """
     palmprint = session.query(Palmprint).filter_by(id=palmprint_id).first()
@@ -712,44 +712,6 @@ def build_mask(img: np.ndarray) -> np.ndarray:
     return mask
 
 
-def hamming_with_masks(
-    img1: np.ndarray, mask1: np.ndarray, img2: np.ndarray, mask2: np.ndarray
-) -> float:
-    """
-    Gegebene Masken auf jeweils zugehöriges Bild anwenden.
-    Und daraus dann die Hammingdistanz bestimmen.
-
-    :param img1: zu maskierendes Bild (binary 0,1)
-    :param mask1: Maske des Bildes (binary 0,1)
-    :param img2: zu maskierendes (zweites) Bild (binary 0,1)
-    :param mask2: Maske des zweiten Bildes (binary 0,1)
-    :returns: Hammingdistanz
-    """
-    # flatten images and masks
-    img1.flatten()
-    img2.flatten()
-    mask1.flatten()
-    mask2.flatten()
-
-    # check if images and masks are binary
-    if max(img1) == 1 and max(img2) == 1 and max(mask1) == 1 and max(mask2) == 1:
-        # UND-Verknüpfung Masken
-        mask_and = np.logical_and(mask1, mask2)
-        # XOR-Verknüpfung Bilder
-        img_xor = np.logical_xor(img1, img2)
-        # UND-Verknüpfung Bildunterschiede und kombinierte Maske
-        img_and_mask = np.logical_and(img_xor, mask_and)
-        # hamming distance (number of ones in 'masked' divided by length of 'masked')
-        # hamming = ((img_and_mask == True).sum()) / (mask_and == True).size
-        hamming = ((img_and_mask == True).sum()) / img_and_mask.size
-        # print(hamming)
-
-        return hamming
-
-    else:
-        raise Exception("values in image and/or mask not binary")
-
-
 def build_gabor_filters() -> list:
     """
     Generiert eine Liste von Gabor Filtern aus gegebenen Konstanten.
@@ -820,6 +782,44 @@ def img_to_binary(img: np.ndarray) -> np.ndarray:
     return flattened
 
 
+def hamming_with_masks(
+    img1: np.ndarray, mask1: np.ndarray, img2: np.ndarray, mask2: np.ndarray
+) -> float:
+    """
+    Gegebene Masken auf jeweils zugehöriges Bild anwenden.
+    Und daraus dann die Hammingdistanz bestimmen.
+
+    :param img1: zu maskierendes Bild (binary 0,1)
+    :param mask1: Maske des Bildes (binary 0,1)
+    :param img2: zu maskierendes (zweites) Bild (binary 0,1)
+    :param mask2: Maske des zweiten Bildes (binary 0,1)
+    :returns: Hammingdistanz
+    """
+    # flatten images and masks
+    img1.flatten()
+    img2.flatten()
+    mask1.flatten()
+    mask2.flatten()
+
+    # check if images and masks are binary
+    if max(img1) == 1 and max(img2) == 1 and max(mask1) == 1 and max(mask2) == 1:
+        # UND-Verknüpfung Masken
+        mask_and = np.logical_and(mask1, mask2)
+        # XOR-Verknüpfung Bilder
+        img_xor = np.logical_xor(img1, img2)
+        # UND-Verknüpfung Bildunterschiede und kombinierte Maske
+        img_and_mask = np.logical_and(img_xor, mask_and)
+        # hamming distance (number of ones in 'masked' divided by length of 'masked')
+        # hamming = ((img_and_mask == True).sum()) / (mask_and == True).size
+        hamming = ((img_and_mask == True).sum()) / img_and_mask.size
+        # print(hamming)
+
+        return hamming
+
+    else:
+        raise Exception("values in image and/or mask not binary")
+
+
 def calculate_hamming(img_to_match: np.ndarray, img_template: np.ndarray) -> float:
     """
     Vergleicht ausgewaehltes Image mit Template Image und berechnet die Hamming Distanz dazwischen.
@@ -834,6 +834,7 @@ def calculate_hamming(img_to_match: np.ndarray, img_template: np.ndarray) -> flo
         img_to_binary(img_to_match), img_to_binary(img_template)
     )
 
+    # Berechnung der Hammingdistanz mit AND und XOR von ROIs und Masken
     # bin_img1 = img_to_binary(img_to_match)
     # bin_img2 = img_to_binary(img_template)
     # bin_mask1 = img_to_binary(build_mask(img_to_match))
