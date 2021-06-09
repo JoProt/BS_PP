@@ -1,0 +1,951 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="de" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>ppscan module &mdash; Python  Dokumentation</title>
+  
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/translations.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Stichwortverzeichnis" href="genindex.html" />
+    <link rel="search" title="Suche" href="search.html" />
+    <link rel="next" title="test_ppscan module" href="test_ppscan.html" />
+    <link rel="prev" title="Welcome to Projektaufgabe’s documentation!" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: white" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> Python
+          
+
+          
+            
+            <img src="_static/icons8-palm-scan.png" class="logo" alt="Logo"/>
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Dokumentation durchsuchen" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">ppscan module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#palmprint-scanner">Palmprint Scanner</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="test_ppscan.html">test_ppscan module</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Python</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>ppscan module</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/ppscan.rst.txt" rel="nofollow"> Quelltext anzeigen</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-ppscan">
+<span id="ppscan-module"></span><h1>ppscan module<a class="headerlink" href="#module-ppscan" title="Link zu dieser Überschrift">¶</a></h1>
+<div class="section" id="palmprint-scanner">
+<h2>Palmprint Scanner<a class="headerlink" href="#palmprint-scanner" title="Link zu dieser Überschrift">¶</a></h2>
+<dl class="field-list simple">
+<dt class="field-odd">authors</dt>
+<dd class="field-odd"><ol class="upperalpha simple" start="12">
+<li><p>Basedow, L. Gillner, J. Prothmann, C. Werner</p></li>
+</ol>
+</dd>
+<dt class="field-even">version</dt>
+<dd class="field-even"><p>1.0</p>
+</dd>
+<dt class="field-odd">license</dt>
+<dd class="field-odd"><p>GPLv3</p>
+</dd>
+<dt class="field-even">format</dt>
+<dd class="field-even"><p>black, reST docstrings</p>
+</dd>
+</dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="ppscan.Palmprint">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">ppscan.</span></span><span class="sig-name descname"><span class="pre">Palmprint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ppscan.html#Palmprint"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#ppscan.Palmprint" title="Link zu dieser Definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">sqlalchemy.orm.decl_api.Base</span></code></p>
+<p>Klasse für Palmprints. Palmprints werden separat vom Nutzer
+gespeichert, da so sowohl eine beliebige Anzahl von Prints
+pro Nutzer möglich ist. Dank SQLAlchemy bleibt die Beziehung
+zwischen Nutzern und ihren Prints erhalten, sodass sowohl von
+Nutzern auf ihre enrollten Prints, als auch von Prints zu den
+zugehörigen Nutzern referenziert werden kann.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Attr __tablename__</dt>
+<dd class="field-odd"><p>Name der Tabelle in der echten Datenbank.</p>
+</dd>
+<dt class="field-even">Attr id</dt>
+<dd class="field-even"><p>Primary Key Identifier jedes Palmprints;
+Auto-Increment, wird von der Datenbank selbst gesetzt.</p>
+</dd>
+<dt class="field-odd">Attr user_id</dt>
+<dd class="field-odd"><p>ID eines bereits existierenden Nutzers.</p>
+</dd>
+<dt class="field-even">Attr roi</dt>
+<dd class="field-even"><p>Nur der ROI-Ausschnitt des Palmprints; Base64-kodiert.</p>
+</dd>
+<dt class="field-odd">Attr original</dt>
+<dd class="field-odd"><p>Das Originalbild als Fallback, falls an der ROI
+einmal was geändert werden soll; Base64-kodiert.</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="ppscan.Palmprint.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ppscan.Palmprint.__init__" title="Link zu dieser Definition">¶</a></dt>
+<dd><p>A simple constructor that allows initialization from kwargs.</p>
+<p>Sets attributes on the constructed instance using the names and
+values in <code class="docutils literal notranslate"><span class="pre">kwargs</span></code>.</p>
+<p>Only keys that are present as
+attributes of the instance’s class are allowed. These could be,
+for example, any mapped columns or relationships.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ppscan.Palmprint.decode">
+<em class="property"><span class="pre">static</span> </em><span class="sig-name descname"><span class="pre">decode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">b64_img</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ppscan.html#Palmprint.decode"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#ppscan.Palmprint.decode" title="Link zu dieser Definition">¶</a></dt>
+<dd><p>Base64-String zu Numpy-Array konvertieren.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameter</dt>
+<dd class="field-odd"><p><strong>b64_img</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – das kodierte Bild</p>
+</dd>
+<dt class="field-even">Rückgabetyp</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code></p>
+</dd>
+<dt class="field-odd">Rückgabe</dt>
+<dd class="field-odd"><p>Array, mit dem dem OpenCV arbeiten kann</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ppscan.Palmprint.encode">
+<em class="property"><span class="pre">static</span> </em><span class="sig-name descname"><span class="pre">encode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">img</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ppscan.html#Palmprint.encode"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#ppscan.Palmprint.encode" title="Link zu dieser Definition">¶</a></dt>
+<dd><p>Numpy 2D-Array als Base64-String kodieren.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameter</dt>
+<dd class="field-odd"><p><strong>img</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>) – Eingangsbild</p>
+</dd>
+<dt class="field-even">Rückgabetyp</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">bytes</span></code></p>
+</dd>
+<dt class="field-odd">Rückgabe</dt>
+<dd class="field-odd"><p>Bild als Base64 PNG-Bild</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ppscan.Palmprint.get_mask">
+<span class="sig-name descname"><span class="pre">get_mask</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ppscan.html#Palmprint.get_mask"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#ppscan.Palmprint.get_mask" title="Link zu dieser Definition">¶</a></dt>
+<dd><p>ROI Getter.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Rückgabetyp</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code></p>
+</dd>
+<dt class="field-even">Rückgabe</dt>
+<dd class="field-even"><p>ROI als Numpy-Matrix</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ppscan.Palmprint.get_original">
+<span class="sig-name descname"><span class="pre">get_original</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ppscan.html#Palmprint.get_original"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#ppscan.Palmprint.get_original" title="Link zu dieser Definition">¶</a></dt>
+<dd><p>Getter für Originalbild, aus dem die ROI extrahiert wurde.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Rückgabe</dt>
+<dd class="field-odd"><p>Bild als Numpy-Matrix</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ppscan.Palmprint.get_roi">
+<span class="sig-name descname"><span class="pre">get_roi</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ppscan.html#Palmprint.get_roi"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#ppscan.Palmprint.get_roi" title="Link zu dieser Definition">¶</a></dt>
+<dd><p>ROI Getter.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Rückgabetyp</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code></p>
+</dd>
+<dt class="field-even">Rückgabe</dt>
+<dd class="field-even"><p>ROI als Numpy-Matrix</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ppscan.Palmprint.id">
+<span class="sig-name descname"><span class="pre">id</span></span><a class="headerlink" href="#ppscan.Palmprint.id" title="Link zu dieser Definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ppscan.Palmprint.mask">
+<span class="sig-name descname"><span class="pre">mask</span></span><a class="headerlink" href="#ppscan.Palmprint.mask" title="Link zu dieser Definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ppscan.Palmprint.original">
+<span class="sig-name descname"><span class="pre">original</span></span><a class="headerlink" href="#ppscan.Palmprint.original" title="Link zu dieser Definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ppscan.Palmprint.roi">
+<span class="sig-name descname"><span class="pre">roi</span></span><a class="headerlink" href="#ppscan.Palmprint.roi" title="Link zu dieser Definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ppscan.Palmprint.user_id">
+<span class="sig-name descname"><span class="pre">user_id</span></span><a class="headerlink" href="#ppscan.Palmprint.user_id" title="Link zu dieser Definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ppscan.User">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">ppscan.</span></span><span class="sig-name descname"><span class="pre">User</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ppscan.html#User"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#ppscan.User" title="Link zu dieser Definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">sqlalchemy.orm.decl_api.Base</span></code></p>
+<p>Klasse für registrierte Nutzer in der Datenbank, damit beim
+Matching der Hand eine Identität zugeordnet werden kann.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Attr __tablename__</dt>
+<dd class="field-odd"><p>Name der Tabelle in der echten Datenbank.</p>
+</dd>
+<dt class="field-even">Attr id</dt>
+<dd class="field-even"><p>Primary Key Identifier jedes Palmprints;
+Auto-Increment, wird von der Datenbank selbst gesetzt.</p>
+</dd>
+<dt class="field-odd">Attr name</dt>
+<dd class="field-odd"><p>Name des Nutzers.</p>
+</dd>
+<dt class="field-even">Attr palmprints</dt>
+<dd class="field-even"><p>Liste aus Palmprints, die zu dieser ID gehören;
+wird von SQLAlchemy gesetzt, BITTE NICHT MANUELL ÄNDERN!</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="ppscan.User.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ppscan.User.__init__" title="Link zu dieser Definition">¶</a></dt>
+<dd><p>A simple constructor that allows initialization from kwargs.</p>
+<p>Sets attributes on the constructed instance using the names and
+values in <code class="docutils literal notranslate"><span class="pre">kwargs</span></code>.</p>
+<p>Only keys that are present as
+attributes of the instance’s class are allowed. These could be,
+for example, any mapped columns or relationships.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ppscan.User.id">
+<span class="sig-name descname"><span class="pre">id</span></span><a class="headerlink" href="#ppscan.User.id" title="Link zu dieser Definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ppscan.User.name">
+<span class="sig-name descname"><span class="pre">name</span></span><a class="headerlink" href="#ppscan.User.name" title="Link zu dieser Definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ppscan.User.palmprints">
+<span class="sig-name descname"><span class="pre">palmprints</span></span><a class="headerlink" href="#ppscan.User.palmprints" title="Link zu dieser Definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ppscan.apply_gabor_filters">
+<span class="sig-prename descclassname"><span class="pre">ppscan.</span></span><span class="sig-name descname"><span class="pre">apply_gabor_filters</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">img</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filters</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ppscan.html#apply_gabor_filters"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#ppscan.apply_gabor_filters" title="Link zu dieser Definition">¶</a></dt>
+<dd><p>Wendet Filter-Liste auf Bildkopien an, fügt gefilterte Bilder zu einem zusammen
+und entfernt alle Elemente unter einem festgelegten Schwellwert.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameter</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>img</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>) – zu filterndes Bild</p></li>
+<li><p><strong>filters</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>) – Liste von Gabor Filtern</p></li>
+</ul>
+</dd>
+<dt class="field-even">Rückgabetyp</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code></p>
+</dd>
+<dt class="field-odd">Rückgabe</dt>
+<dd class="field-odd"><p>gefiltertes Bild</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ppscan.build_gabor_filters">
+<span class="sig-prename descclassname"><span class="pre">ppscan.</span></span><span class="sig-name descname"><span class="pre">build_gabor_filters</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ppscan.html#build_gabor_filters"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#ppscan.build_gabor_filters" title="Link zu dieser Definition">¶</a></dt>
+<dd><p>Generiert eine Liste von Gabor Filtern aus gegebenen Konstanten.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Rückgabetyp</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></p>
+</dd>
+<dt class="field-even">Rückgabe</dt>
+<dd class="field-even"><p>Liste von Gabor Filtern</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ppscan.build_mask">
+<span class="sig-prename descclassname"><span class="pre">ppscan.</span></span><span class="sig-name descname"><span class="pre">build_mask</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">img</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ppscan.html#build_mask"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#ppscan.build_mask" title="Link zu dieser Definition">¶</a></dt>
+<dd><p>Generiert eine Maske aus dem gegebenen Bild. Schwarze Flächen (kein Teil der Hand) werden maskiert.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameter</dt>
+<dd class="field-odd"><p><strong>img</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>) – Bild welches als Grundlage der Maske dienen soll</p>
+</dd>
+<dt class="field-even">Rückgabetyp</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code></p>
+</dd>
+<dt class="field-odd">Rückgabe</dt>
+<dd class="field-odd"><p>Maske (schwarz/weiß)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ppscan.calculate_hamming">
+<span class="sig-prename descclassname"><span class="pre">ppscan.</span></span><span class="sig-name descname"><span class="pre">calculate_hamming</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">img_to_match</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">img_template</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ppscan.html#calculate_hamming"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#ppscan.calculate_hamming" title="Link zu dieser Definition">¶</a></dt>
+<dd><p>Vergleicht ausgewaehltes Image mit Template Image und berechnet die Hamming Distanz dazwischen.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameter</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>img_to_match</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>) – abzugleichendes, pixelverschobenes Image</p></li>
+<li><p><strong>img_template</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>) – Vorlage, gegen welche gematched wird</p></li>
+</ul>
+</dd>
+<dt class="field-even">Rückgabetyp</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+<dt class="field-odd">Rückgabe</dt>
+<dd class="field-odd"><p>Hamming Distanz zwischen den Bildern</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ppscan.create_user">
+<span class="sig-prename descclassname"><span class="pre">ppscan.</span></span><span class="sig-name descname"><span class="pre">create_user</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">palmprints</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ppscan.html#create_user"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#ppscan.create_user" title="Link zu dieser Definition">¶</a></dt>
+<dd><p>Anlegen eines neuen Nutzers mit beliebig vielen Palmprints.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameter</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Name des neuen Nutzers</p></li>
+<li><p><strong>palmprints</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>) – Liste aus anzulegenden Palmprints als Tupel (roi, original)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Rückgabe</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ppscan.delete_palmprint">
+<span class="sig-prename descclassname"><span class="pre">ppscan.</span></span><span class="sig-name descname"><span class="pre">delete_palmprint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">palmprint_id</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ppscan.html#delete_palmprint"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#ppscan.delete_palmprint" title="Link zu dieser Definition">¶</a></dt>
+<dd><p>Löschen eines bestehenden Palmprints.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameter</dt>
+<dd class="field-odd"><p><strong>palmprint_id</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Palmprint ID</p>
+</dd>
+<dt class="field-even">Rückgabe</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ppscan.delete_user">
+<span class="sig-prename descclassname"><span class="pre">ppscan.</span></span><span class="sig-name descname"><span class="pre">delete_user</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">user_id</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ppscan.html#delete_user"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#ppscan.delete_user" title="Link zu dieser Definition">¶</a></dt>
+<dd><p>Löschen eines bestehenden Nutzers samt zugeordneter Palmprints.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameter</dt>
+<dd class="field-odd"><p><strong>user_id</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – ID des zu löschenden Nutzers</p>
+</dd>
+<dt class="field-even">Rückgabe</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ppscan.enrol">
+<span class="sig-prename descclassname"><span class="pre">ppscan.</span></span><span class="sig-name descname"><span class="pre">enrol</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">palmprint_imgs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ppscan.html#enrol"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#ppscan.enrol" title="Link zu dieser Definition">¶</a></dt>
+<dd><p>Enrolment-Prozess. Bekommt nur unverarbeitete Bilder.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameter</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Name des neuen Nutzers</p></li>
+<li><p><strong>palmprint_imgs</strong> – variable Anzahl von OpenCV-Bildobjekten</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ppscan.extract_roi">
+<span class="sig-prename descclassname"><span class="pre">ppscan.</span></span><span class="sig-name descname"><span class="pre">extract_roi</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">img</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ppscan.html#extract_roi"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#ppscan.extract_roi" title="Link zu dieser Definition">¶</a></dt>
+<dd><p>Wrapper für den ROI-Findungsprozess.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameter</dt>
+<dd class="field-odd"><p><strong>img</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>) – Bild, aus dem die ROI extrahiert werden soll</p>
+</dd>
+<dt class="field-even">Rückgabetyp</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code></p>
+</dd>
+<dt class="field-odd">Rückgabe</dt>
+<dd class="field-odd"><p>ROI</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ppscan.find_keypoints">
+<span class="sig-prename descclassname"><span class="pre">ppscan.</span></span><span class="sig-name descname"><span class="pre">find_keypoints</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">valleys</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ppscan.html#find_keypoints"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#ppscan.find_keypoints" title="Link zu dieser Definition">¶</a></dt>
+<dd><p>Finde die Keypoints des Bildes, in unserem Fall die beiden Lücken
+zwischen Zeige und Mittelfinger bzw. Ring- und kleinem Finger.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameter</dt>
+<dd class="field-odd"><p><strong>valleys</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>) – Liste von gefundenen Valleys</p>
+</dd>
+<dt class="field-even">Rückgabetyp</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></p>
+</dd>
+<dt class="field-odd">Rückgabe</dt>
+<dd class="field-odd"><p>Koordinaten der Keypoints</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ppscan.find_tangent_points">
+<span class="sig-prename descclassname"><span class="pre">ppscan.</span></span><span class="sig-name descname"><span class="pre">find_tangent_points</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">v_1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v_2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ppscan.html#find_tangent_points"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#ppscan.find_tangent_points" title="Link zu dieser Definition">¶</a></dt>
+<dd><p>Prüfe für jeden Punkt P in einem Tal (Kurve K), ob eine Gerade zwischen P
+und einem Punkt auf der anderen Kurve eine Tangente beider Kurven ist.
+Wenn ja, gib jeweils die Punkte beider Kurven zurück, die auf der Tangente liegen.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameter</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>v_1</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>) – erste zu betrachtende Kurve (Listen aus Koordinatentupeln)</p></li>
+<li><p><strong>v_2</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>) – zweite zu betrachtende Kurve (Listen aus Koordinatentupeln)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Rückgabetyp</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></p>
+</dd>
+<dt class="field-odd">Rückgabe</dt>
+<dd class="field-odd"><p>Punkte der Tangente bei Existenz, None andernfalls</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ppscan.find_valleys">
+<span class="sig-prename descclassname"><span class="pre">ppscan.</span></span><span class="sig-name descname"><span class="pre">find_valleys</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">img</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">contour</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ppscan.html#find_valleys"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#ppscan.find_valleys" title="Link zu dieser Definition">¶</a></dt>
+<dd><p>Kombiniert den CHVD-Algorithmus (Ong et al.) mit einfachem Mask-Matching
+und findet so die „Täler“ in einer Kontur.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameter</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>img</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>) – Bild, in dem die Täler gesucht werden</p></li>
+<li><p><strong>contour</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>) – Kontur des Bildes als Punkteliste</p></li>
+</ul>
+</dd>
+<dt class="field-even">Rückgabetyp</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></p>
+</dd>
+<dt class="field-odd">Rückgabe</dt>
+<dd class="field-odd"><p>Täler als Liste aus Listen von Punkten (nach Zusammenhängen gruppiert)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ppscan.get_palmprints">
+<span class="sig-prename descclassname"><span class="pre">ppscan.</span></span><span class="sig-name descname"><span class="pre">get_palmprints</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ppscan.html#get_palmprints"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#ppscan.get_palmprints" title="Link zu dieser Definition">¶</a></dt>
+<dd><p>Suche alle Palmprints in der Datenbank.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Rückgabetyp</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></p>
+</dd>
+<dt class="field-even">Rückgabe</dt>
+<dd class="field-even"><p>alle Palmprints in einer Liste</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ppscan.get_user">
+<span class="sig-prename descclassname"><span class="pre">ppscan.</span></span><span class="sig-name descname"><span class="pre">get_user</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">user_id</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ppscan.html#get_user"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#ppscan.get_user" title="Link zu dieser Definition">¶</a></dt>
+<dd><p>Abfrage eines einzelnen Nutzers.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameter</dt>
+<dd class="field-odd"><p><strong>user_id</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – ID des Nutzers</p>
+</dd>
+<dt class="field-even">Rückgabetyp</dt>
+<dd class="field-even"><p><a class="reference internal" href="#ppscan.User" title="ppscan.User"><code class="xref py py-class docutils literal notranslate"><span class="pre">User</span></code></a></p>
+</dd>
+<dt class="field-odd">Rückgabe</dt>
+<dd class="field-odd"><p>Nutzer-Objekt</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ppscan.get_user_palmprints">
+<span class="sig-prename descclassname"><span class="pre">ppscan.</span></span><span class="sig-name descname"><span class="pre">get_user_palmprints</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">username</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ppscan.html#get_user_palmprints"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#ppscan.get_user_palmprints" title="Link zu dieser Definition">¶</a></dt>
+<dd><p>Suche alle Palmprints die dem Usernamen zugeordnet sind.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameter</dt>
+<dd class="field-odd"><p><strong>username</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – String</p>
+</dd>
+<dt class="field-even">Rückgabetyp</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></p>
+</dd>
+<dt class="field-odd">Rückgabe</dt>
+<dd class="field-odd"><p>alle Palmprints des Users in einer Liste</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ppscan.get_users">
+<span class="sig-prename descclassname"><span class="pre">ppscan.</span></span><span class="sig-name descname"><span class="pre">get_users</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ppscan.html#get_users"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#ppscan.get_users" title="Link zu dieser Definition">¶</a></dt>
+<dd><p>Abfrage aller Nutzer.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Rückgabetyp</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></p>
+</dd>
+<dt class="field-even">Rückgabe</dt>
+<dd class="field-even"><p>Nutzer-Objekt</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ppscan.hamming_with_masks">
+<span class="sig-prename descclassname"><span class="pre">ppscan.</span></span><span class="sig-name descname"><span class="pre">hamming_with_masks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">img1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">img2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ppscan.html#hamming_with_masks"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#ppscan.hamming_with_masks" title="Link zu dieser Definition">¶</a></dt>
+<dd><p>Gegebene Masken auf jeweils zugehöriges Bild anwenden.
+Und daraus dann die Hammingdistanz bestimmen.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameter</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>img1</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>) – zu maskierendes Bild (binary 0,1)</p></li>
+<li><p><strong>mask1</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>) – Maske des Bildes (binary 0,1)</p></li>
+<li><p><strong>img2</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>) – zu maskierendes (zweites) Bild (binary 0,1)</p></li>
+<li><p><strong>mask2</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>) – Maske des zweiten Bildes (binary 0,1)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Rückgabetyp</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+<dt class="field-odd">Rückgabe</dt>
+<dd class="field-odd"><p>Hammingdistanz</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ppscan.img_to_binary">
+<span class="sig-prename descclassname"><span class="pre">ppscan.</span></span><span class="sig-name descname"><span class="pre">img_to_binary</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">img</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ppscan.html#img_to_binary"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#ppscan.img_to_binary" title="Link zu dieser Definition">¶</a></dt>
+<dd><p>Formt gegebenes Bild in eindimensionales Array um (flatten). Da das gegebene Bild nur aus 0 oder 255
+besteht (siehe apply_gabor_filters()), werden diese in True (1) und False (0) umgewandelt.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameter</dt>
+<dd class="field-odd"><p><strong>img</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>) – Bild, das binarisiert werden soll</p>
+</dd>
+<dt class="field-even">Rückgabetyp</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code></p>
+</dd>
+<dt class="field-odd">Rückgabe</dt>
+<dd class="field-odd"><p></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ppscan.insert_palmprints">
+<span class="sig-prename descclassname"><span class="pre">ppscan.</span></span><span class="sig-name descname"><span class="pre">insert_palmprints</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">user_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">palmprints</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ppscan.html#insert_palmprints"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#ppscan.insert_palmprints" title="Link zu dieser Definition">¶</a></dt>
+<dd><p>Einfügen neuer Palmprints (1 bis N) zu bestehendem Nutzer.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameter</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>user_id</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – ID des Nutzers</p></li>
+<li><p><strong>palmprints</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>) – Liste aus Tupeln der Form (roi, original), beides np.ndarrays</p></li>
+</ul>
+</dd>
+<dt class="field-even">Rückgabe</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ppscan.interpol2d">
+<span class="sig-prename descclassname"><span class="pre">ppscan.</span></span><span class="sig-name descname"><span class="pre">interpol2d</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">points</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">steps</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ppscan.html#interpol2d"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#ppscan.interpol2d" title="Link zu dieser Definition">¶</a></dt>
+<dd><p>Interpoliere steps Punkte auf Basis von points.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameter</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>points</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>) – Liste aus Punkten (Tupel)</p></li>
+<li><p><strong>steps</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Anzahl der Schritte</p></li>
+</ul>
+</dd>
+<dt class="field-even">Rückgabetyp</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></p>
+</dd>
+<dt class="field-odd">Rückgabe</dt>
+<dd class="field-odd"><p>interpolierte Punkte in einer Liste</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ppscan.left_right_detector">
+<span class="sig-prename descclassname"><span class="pre">ppscan.</span></span><span class="sig-name descname"><span class="pre">left_right_detector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">valleys</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ppscan.html#left_right_detector"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#ppscan.left_right_detector" title="Link zu dieser Definition">¶</a></dt>
+<dd><p>Finde heraus, ob es sich bei den Valleys um Koordinaten einer linken
+oder rechten Hand handelt.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameter</dt>
+<dd class="field-odd"><p><strong>valleys</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>) – Liste aus Koordinatentupeln</p>
+</dd>
+<dt class="field-even">Rückgabetyp</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+</dd>
+<dt class="field-odd">Rückgabe</dt>
+<dd class="field-odd"><p>„l“, „r“ oder None, wenn etwas nicht stimmt</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ppscan.list_users">
+<span class="sig-prename descclassname"><span class="pre">ppscan.</span></span><span class="sig-name descname"><span class="pre">list_users</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ppscan.html#list_users"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#ppscan.list_users" title="Link zu dieser Definition">¶</a></dt>
+<dd><p>Ausgabe aller Nutzer.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ppscan.load_img">
+<span class="sig-prename descclassname"><span class="pre">ppscan.</span></span><span class="sig-name descname"><span class="pre">load_img</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ppscan.html#load_img"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#ppscan.load_img" title="Link zu dieser Definition">¶</a></dt>
+<dd><p>Wrapper um cv.imread(), damit auch wirklich immer
+Graustufenbilder eingelesen werden.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameter</dt>
+<dd class="field-odd"><p><strong>path</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Dateipfad</p>
+</dd>
+<dt class="field-even">Rückgabetyp</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code></p>
+</dd>
+<dt class="field-odd">Rückgabe</dt>
+<dd class="field-odd"><p>Bild als 2D Numpy Array</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ppscan.main">
+<span class="sig-prename descclassname"><span class="pre">ppscan.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ppscan.html#main"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#ppscan.main" title="Link zu dieser Definition">¶</a></dt>
+<dd><p>Das eigentliche Programm; Bild einlesen und prüfen, ob Print
+zu einem registrierten Nutzer passt.
+Wenn ja, gib den Namen aus.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ppscan.matching">
+<span class="sig-prename descclassname"><span class="pre">ppscan.</span></span><span class="sig-name descname"><span class="pre">matching</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">img_to_match</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">img_template</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ppscan.html#matching"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#ppscan.matching" title="Link zu dieser Definition">¶</a></dt>
+<dd><p>Ausführen des Matching-Algorithmus. Durch Vorgaben wird zuerst eine pixelbasierte
+Translation durchgeführt und anschließend die Hamming Distanz berechnet.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameter</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>img_to_match</strong> – abzugleichendes Image</p></li>
+<li><p><strong>img_template</strong> – Vorlage, gegen welche gematched wird</p></li>
+</ul>
+</dd>
+<dt class="field-even">Rückgabetyp</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+<dt class="field-odd">Rückgabe</dt>
+<dd class="field-odd"><p>kleinste Hamming Distanz zwischen den Bildern</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ppscan.neighbourhood_curvature">
+<span class="sig-prename descclassname"><span class="pre">ppscan.</span></span><span class="sig-name descname"><span class="pre">neighbourhood_curvature</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">img</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">r</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inside</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">255</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ppscan.html#neighbourhood_curvature"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#ppscan.neighbourhood_curvature" title="Link zu dieser Definition">¶</a></dt>
+<dd><p>Überprüfe n Nachbarn im Abstand von r, ob sie innerhalb oder außerhalb
+der Fläche im Bild img liegen, ausgehend von Punkt p.
+Anhand dessen kann festgestellt werden, ob es sich um eine Kurve handelt.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameter</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>p</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>) – Koordinatenpunkt</p></li>
+<li><p><strong>img</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>) – Binärbild</p></li>
+<li><p><strong>n</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Anzahl der Nachbarn</p></li>
+<li><p><strong>r</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Abstand der Nachbarn</p></li>
+<li><p><strong>inside</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – Farbe, die als „innen“ qualifiziert</p></li>
+</ul>
+</dd>
+<dt class="field-even">Rückgabetyp</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+<dt class="field-odd">Rückgabe</dt>
+<dd class="field-odd"><p>„Kurvigkeit“</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ppscan.progress">
+<span class="sig-prename descclassname"><span class="pre">ppscan.</span></span><span class="sig-name descname"><span class="pre">progress</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">current</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maximum</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ppscan.html#progress"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#ppscan.progress" title="Link zu dieser Definition">¶</a></dt>
+<dd><p>Zeige den aktuellen Fortschitt beim Loopen
+über eine Liste in Prozent.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameter</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>current</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – aktuelle Position im Loop</p></li>
+<li><p><strong>maximum</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – höchster Index im Loop</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ppscan.transform_to_roi">
+<span class="sig-prename descclassname"><span class="pre">ppscan.</span></span><span class="sig-name descname"><span class="pre">transform_to_roi</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">img</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p_min</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p_max</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ppscan.html#transform_to_roi"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#ppscan.transform_to_roi" title="Link zu dieser Definition">¶</a></dt>
+<dd><p>Transformiere Bild so, dass Punkte p_min und p_max
+die y-Achse an der linken Bildkante bilden.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameter</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>img</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>) – Eingangsbild</p></li>
+<li><p><strong>p_min</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>) – Minimum des Koordinatensystems</p></li>
+<li><p><strong>p_max</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>) – Maximum des Koordinatensystems</p></li>
+</ul>
+</dd>
+<dt class="field-even">Rückgabetyp</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code></p>
+</dd>
+<dt class="field-odd">Rückgabe</dt>
+<dd class="field-odd"><p>gedrehtes und auf „y-Achse“ beschnittenes Bild</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ppscan.translate_image">
+<span class="sig-prename descclassname"><span class="pre">ppscan.</span></span><span class="sig-name descname"><span class="pre">translate_image</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">img_to_match</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">img_template</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trans_matrix</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ppscan.html#translate_image"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#ppscan.translate_image" title="Link zu dieser Definition">¶</a></dt>
+<dd><p>Verschiebt zumatchendes Image um die Translationsmatrix.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameter</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>img_to_match</strong> – abzugleichendes Image</p></li>
+<li><p><strong>img_template</strong> – Vorlage, gegen welche gematched wird</p></li>
+<li><p><strong>trans_matrix</strong> – zu nutzende Tranformationsmatrix</p></li>
+</ul>
+</dd>
+<dt class="field-even">Rückgabetyp</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd>
+<dt class="field-odd">Rückgabe</dt>
+<dd class="field-odd"><p>kleinste Hamming Distanz zwischen den Bildern</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ppscan.update_palmprint">
+<span class="sig-prename descclassname"><span class="pre">ppscan.</span></span><span class="sig-name descname"><span class="pre">update_palmprint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">palmprint_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">roi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">original</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ppscan.html#update_palmprint"><span class="viewcode-link"><span class="pre">[Quellcode]</span></span></a><a class="headerlink" href="#ppscan.update_palmprint" title="Link zu dieser Definition">¶</a></dt>
+<dd><p>Update eines bereits bestehenden Palmprints.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameter</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>palmprint_id</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – ID des Palmprints</p></li>
+<li><p><strong>roi</strong> – extrahierte ROI</p></li>
+<li><p><strong>original</strong> – Originalbild</p></li>
+<li><p><strong>mask</strong> – Maske zur ROI</p></li>
+</ul>
+</dd>
+<dt class="field-even">Rückgabe</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="test_ppscan.html" class="btn btn-neutral float-right" title="test_ppscan module" accesskey="n" rel="next">Weiter <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="index.html" class="btn btn-neutral float-left" title="Welcome to Projektaufgabe’s documentation!" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Zurück</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright .
+
+    </p>
+  </div>
+    
+    
+    
+    Erstellt mit <a href="https://www.sphinx-doc.org/">Sphinx</a> mit einem
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    bereitgestellt von <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
