@@ -4,11 +4,11 @@
 """
     Palmprint Scanner
     =================
-    [your ad here]
+
 
     :authors: L. Basedow, L. Gillner, J. Prothmann, C. Werner
-    :version: 0.9
-    :license: TODO
+    :version: 1.0
+    :license: GPLv3
     :format: black, reST docstrings
 """
 
@@ -185,7 +185,7 @@ class Palmprint(Base):
         """
         Getter für Originalbild, aus dem die ROI extrahiert wurde.
 
-        returns: Bild als Numpy-Matrix
+        :returns: Bild als Numpy-Matrix
         """
         return self.decode(self.original)
 
