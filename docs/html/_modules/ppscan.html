@@ -1,0 +1,1264 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="de" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>ppscan &mdash; Palmprint Scanner Dokumentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/translations.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Stichwortverzeichnis" href="../genindex.html" />
+    <link rel="search" title="Suche" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: white" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> Palmprint Scanner
+          
+
+          
+            
+            <img src="../_static/icons8-palm-scan.png" class="logo" alt="Logo"/>
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Dokumentation durchsuchen" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../ppscan.html">ppscan module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../ppscan.html#palmprint-scanner">Palmprint Scanner</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../test_ppscan.html">test_ppscan module</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Palmprint Scanner</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="index.html">Modul-Quellcode</a> &raquo;</li>
+        
+      <li>ppscan</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Quellcode für ppscan</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python3</span>
+<span class="c1"># -*- coding: utf-8 -*-</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Palmprint Scanner</span>
+<span class="sd">    =================</span>
+
+
+<span class="sd">    :authors: L. Basedow, L. Gillner, J. Prothmann, C. Werner</span>
+<span class="sd">    :version: 1.0</span>
+<span class="sd">    :license: GPLv3</span>
+<span class="sd">    :format: black, reST docstrings</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">base64</span>
+<span class="kn">import</span> <span class="nn">os</span>
+
+
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">namedtuple</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">cv2</span> <span class="k">as</span> <span class="nn">cv</span>
+
+<span class="kn">from</span> <span class="nn">sqlalchemy</span> <span class="kn">import</span> <span class="n">create_engine</span>
+<span class="kn">from</span> <span class="nn">sqlalchemy</span> <span class="kn">import</span> <span class="n">Column</span><span class="p">,</span> <span class="n">Integer</span><span class="p">,</span> <span class="n">String</span><span class="p">,</span> <span class="n">ForeignKey</span>
+
+<span class="kn">from</span> <span class="nn">sqlalchemy.orm</span> <span class="kn">import</span> <span class="n">declarative_base</span>
+<span class="kn">from</span> <span class="nn">sqlalchemy.orm</span> <span class="kn">import</span> <span class="n">relationship</span>
+<span class="kn">from</span> <span class="nn">sqlalchemy.orm</span> <span class="kn">import</span> <span class="n">sessionmaker</span>
+
+<span class="kn">from</span> <span class="nn">scipy.spatial</span> <span class="kn">import</span> <span class="n">distance</span>
+
+
+<span class="c1"># Verbindung zur Datenbank</span>
+<span class="n">engine</span> <span class="o">=</span> <span class="n">create_engine</span><span class="p">(</span><span class="s2">&quot;sqlite:///palmprint.db&quot;</span><span class="p">)</span>
+
+<span class="c1"># Datenmodell laden</span>
+<span class="n">Base</span> <span class="o">=</span> <span class="n">declarative_base</span><span class="p">()</span>
+
+<span class="c1"># Session für Datenbankzugriff erzeugen</span>
+<span class="n">Session</span> <span class="o">=</span> <span class="n">sessionmaker</span><span class="p">(</span><span class="n">bind</span><span class="o">=</span><span class="n">engine</span><span class="p">)</span>
+<span class="n">session</span> <span class="o">=</span> <span class="n">Session</span><span class="p">()</span>
+
+
+<span class="c1"># # # # # # #</span>
+<span class="c1"># Constants #</span>
+<span class="c1"># # # # # # #</span>
+
+
+<span class="n">THRESH_FACTOR</span> <span class="o">=</span> <span class="mf">0.5</span>
+<span class="n">THRESH_SUBIMG</span> <span class="o">=</span> <span class="mf">150.0</span>
+<span class="n">THRESH_CON</span> <span class="o">=</span> <span class="mi">15</span>
+<span class="n">THRESH_HAMMING</span> <span class="o">=</span> <span class="mf">0.43</span>
+
+<span class="n">GAMMA</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="n">G_L</span> <span class="o">=</span> <span class="mi">23</span> <span class="o">/</span> <span class="mi">32</span>
+<span class="n">G_U</span> <span class="o">=</span> <span class="mi">31</span> <span class="o">/</span> <span class="mi">32</span>
+
+<span class="n">GABOR_KSIZE</span> <span class="o">=</span> <span class="p">(</span><span class="mi">35</span><span class="p">,</span> <span class="mi">35</span><span class="p">)</span>
+<span class="n">GABOR_SIGMA</span> <span class="o">=</span> <span class="mf">5.6179</span>
+<span class="n">GABOR_THETAS</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">32</span><span class="p">)</span>
+<span class="n">GABOR_LAMBDA</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="mf">0.0916</span>
+<span class="n">GABOR_GAMMA</span> <span class="o">=</span> <span class="mf">0.7</span>  <span class="c1"># 0.23 &lt; gamma &lt; 0.92</span>
+<span class="n">GABOR_PSI</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">GABOR_THRESHOLD</span> <span class="o">=</span> <span class="mi">150</span>  <span class="c1"># 0 to 255</span>
+
+<span class="c1"># 110 etwas zu hoch</span>
+<span class="n">MASK_THRESHOLD</span> <span class="o">=</span> <span class="mi">85</span>
+
+<span class="n">ROI_RAD</span> <span class="o">=</span> <span class="mi">75</span>
+
+<span class="n">SHREKD</span> <span class="o">=</span> <span class="kc">False</span>
+
+<span class="c1"># Farben</span>
+<span class="n">C_NORM</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\033</span><span class="s2">[0m&quot;</span>
+<span class="n">C_RED</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\033</span><span class="s2">[91m&quot;</span>
+<span class="n">C_GREEN</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\033</span><span class="s2">[92m&quot;</span>
+
+<span class="c1"># Sonderzeichen</span>
+<span class="n">mark_check</span> <span class="o">=</span> <span class="n">C_GREEN</span> <span class="o">+</span> <span class="s2">&quot;✔️&quot;</span> <span class="o">+</span> <span class="n">C_NORM</span>
+<span class="n">mark_fail</span> <span class="o">=</span> <span class="n">C_RED</span> <span class="o">+</span> <span class="s2">&quot;✗&quot;</span> <span class="o">+</span> <span class="n">C_NORM</span>
+
+
+<span class="c1"># # # # # #</span>
+<span class="c1"># Models  #</span>
+<span class="c1"># # # # # #</span>
+
+
+<div class="viewcode-block" id="User"><a class="viewcode-back" href="../ppscan.html#ppscan.User">[Doku]</a><span class="k">class</span> <span class="nc">User</span><span class="p">(</span><span class="n">Base</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Klasse für registrierte Nutzer in der Datenbank, damit beim</span>
+<span class="sd">    Matching der Hand eine Identität zugeordnet werden kann.</span>
+
+<span class="sd">    :attr __tablename__: Name der Tabelle in der echten Datenbank.</span>
+<span class="sd">    :attr id: Primary Key Identifier jedes Palmprints;</span>
+<span class="sd">        Auto-Increment, wird von der Datenbank selbst gesetzt.</span>
+<span class="sd">    :attr name: Name des Nutzers.</span>
+<span class="sd">    :attr palmprints: Liste aus Palmprints, die zu dieser ID gehören;</span>
+<span class="sd">        wird von SQLAlchemy gesetzt, BITTE NICHT MANUELL ÄNDERN!</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">__tablename__</span> <span class="o">=</span> <span class="s2">&quot;users&quot;</span>
+
+    <span class="nb">id</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Integer</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">)</span>
+    <span class="n">palmprints</span> <span class="o">=</span> <span class="n">relationship</span><span class="p">(</span><span class="s2">&quot;Palmprint&quot;</span><span class="p">,</span> <span class="n">backref</span><span class="o">=</span><span class="s2">&quot;user&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;&lt;</span><span class="si">{}</span><span class="s2"> </span><span class="si">{}</span><span class="s2"> &#39;</span><span class="si">{}</span><span class="s2">&#39;, </span><span class="si">{}</span><span class="s2"> prints registered&gt;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">palmprints</span><span class="p">)</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Palmprint"><a class="viewcode-back" href="../ppscan.html#ppscan.Palmprint">[Doku]</a><span class="k">class</span> <span class="nc">Palmprint</span><span class="p">(</span><span class="n">Base</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Klasse für Palmprints. Palmprints werden separat vom Nutzer</span>
+<span class="sd">    gespeichert, da so sowohl eine beliebige Anzahl von Prints</span>
+<span class="sd">    pro Nutzer möglich ist. Dank SQLAlchemy bleibt die Beziehung</span>
+<span class="sd">    zwischen Nutzern und ihren Prints erhalten, sodass sowohl von</span>
+<span class="sd">    Nutzern auf ihre enrollten Prints, als auch von Prints zu den</span>
+<span class="sd">    zugehörigen Nutzern referenziert werden kann.</span>
+
+<span class="sd">    :attr __tablename__: Name der Tabelle in der echten Datenbank.</span>
+<span class="sd">    :attr id: Primary Key Identifier jedes Palmprints;</span>
+<span class="sd">        Auto-Increment, wird von der Datenbank selbst gesetzt.</span>
+<span class="sd">    :attr user_id: ID eines bereits existierenden Nutzers.</span>
+<span class="sd">    :attr roi: Nur der ROI-Ausschnitt des Palmprints; Base64-kodiert.</span>
+<span class="sd">    :attr original: Das Originalbild als Fallback, falls an der ROI</span>
+<span class="sd">        einmal was geändert werden soll; Base64-kodiert.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">__tablename__</span> <span class="o">=</span> <span class="s2">&quot;palmprints&quot;</span>
+
+    <span class="nb">id</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Integer</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">user_id</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Integer</span><span class="p">,</span> <span class="n">ForeignKey</span><span class="p">(</span><span class="s2">&quot;users.id&quot;</span><span class="p">))</span>
+    <span class="n">roi</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">)</span>
+    <span class="n">mask</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">)</span>
+    <span class="n">original</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Palmprint.encode"><a class="viewcode-back" href="../ppscan.html#ppscan.Palmprint.encode">[Doku]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">encode</span><span class="p">(</span><span class="n">img</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Numpy 2D-Array als Base64-String kodieren.</span>
+
+<span class="sd">        :param img: Eingangsbild</span>
+<span class="sd">        :returns: Bild als Base64 PNG-Bild</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">png_img</span> <span class="o">=</span> <span class="n">cv</span><span class="o">.</span><span class="n">imencode</span><span class="p">(</span><span class="s2">&quot;.png&quot;</span><span class="p">,</span> <span class="n">img</span><span class="p">)</span>
+        <span class="n">b64_img</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64encode</span><span class="p">(</span><span class="n">png_img</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">b64_img</span></div>
+
+<div class="viewcode-block" id="Palmprint.decode"><a class="viewcode-back" href="../ppscan.html#ppscan.Palmprint.decode">[Doku]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">decode</span><span class="p">(</span><span class="n">b64_img</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Base64-String zu Numpy-Array konvertieren.</span>
+
+<span class="sd">        :param b64_img: das kodierte Bild</span>
+<span class="sd">        :returns: Array, mit dem dem OpenCV arbeiten kann</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">imgarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">frombuffer</span><span class="p">(</span><span class="n">base64</span><span class="o">.</span><span class="n">b64decode</span><span class="p">(</span><span class="n">b64_img</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
+        <span class="n">img</span> <span class="o">=</span> <span class="n">cv</span><span class="o">.</span><span class="n">imdecode</span><span class="p">(</span><span class="n">imgarray</span><span class="p">,</span> <span class="n">cv</span><span class="o">.</span><span class="n">IMREAD_GRAYSCALE</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">img</span></div>
+
+<div class="viewcode-block" id="Palmprint.get_roi"><a class="viewcode-back" href="../ppscan.html#ppscan.Palmprint.get_roi">[Doku]</a>    <span class="k">def</span> <span class="nf">get_roi</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        ROI Getter.</span>
+
+<span class="sd">        :returns: ROI als Numpy-Matrix</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">roi</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Palmprint.get_mask"><a class="viewcode-back" href="../ppscan.html#ppscan.Palmprint.get_mask">[Doku]</a>    <span class="k">def</span> <span class="nf">get_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        ROI Getter.</span>
+
+<span class="sd">        :returns: ROI als Numpy-Matrix</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Palmprint.get_original"><a class="viewcode-back" href="../ppscan.html#ppscan.Palmprint.get_original">[Doku]</a>    <span class="k">def</span> <span class="nf">get_original</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Getter für Originalbild, aus dem die ROI extrahiert wurde.</span>
+
+<span class="sd">        :returns: Bild als Numpy-Matrix</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">original</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;&lt;</span><span class="si">{}</span><span class="s2"> </span><span class="si">{}</span><span class="s2"> (user </span><span class="si">{}</span><span class="s2">)&gt;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">user_id</span>
+        <span class="p">)</span></div>
+
+
+<span class="c1"># wenn db nicht vorhanden, lege eine an</span>
+<span class="n">Base</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">create_all</span><span class="p">(</span><span class="n">engine</span><span class="p">)</span>
+
+
+<span class="c1"># # # # # # #</span>
+<span class="c1"># DB Access #</span>
+<span class="c1"># # # # # # #</span>
+
+
+<div class="viewcode-block" id="create_user"><a class="viewcode-back" href="../ppscan.html#ppscan.create_user">[Doku]</a><span class="k">def</span> <span class="nf">create_user</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">palmprints</span><span class="p">:</span> <span class="nb">list</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Anlegen eines neuen Nutzers mit beliebig vielen Palmprints.</span>
+
+<span class="sd">    :param name: Name des neuen Nutzers</span>
+<span class="sd">    :param palmprints: Liste aus anzulegenden Palmprints als Tupel (roi, original)</span>
+<span class="sd">    :returns: None</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># neue Nutzerinstanz anlegen</span>
+    <span class="n">user</span> <span class="o">=</span> <span class="n">User</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
+    <span class="n">session</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">user</span><span class="p">)</span>
+    <span class="c1"># Nutzer vorläufig in die DB schreiben, um eine ID zu bekommen</span>
+    <span class="n">session</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+
+    <span class="k">for</span> <span class="n">pp</span> <span class="ow">in</span> <span class="n">palmprints</span><span class="p">:</span>
+        <span class="n">roi</span> <span class="o">=</span> <span class="n">Palmprint</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">pp</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">original</span> <span class="o">=</span> <span class="n">Palmprint</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">pp</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">Palmprint</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">pp</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+        <span class="n">palmprint</span> <span class="o">=</span> <span class="n">Palmprint</span><span class="p">(</span><span class="n">user_id</span><span class="o">=</span><span class="n">user</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">roi</span><span class="o">=</span><span class="n">roi</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="n">mask</span><span class="p">,</span> <span class="n">original</span><span class="o">=</span><span class="n">original</span><span class="p">)</span>
+        <span class="n">session</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">palmprint</span><span class="p">)</span>
+
+    <span class="c1"># Neue Daten endgültig in die DB schreiben</span>
+    <span class="n">session</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="list_users"><a class="viewcode-back" href="../ppscan.html#ppscan.list_users">[Doku]</a><span class="k">def</span> <span class="nf">list_users</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Ausgabe aller Nutzer.&quot;&quot;&quot;</span>
+    <span class="n">users</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">User</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">u</span> <span class="ow">in</span> <span class="n">users</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">u</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="get_users"><a class="viewcode-back" href="../ppscan.html#ppscan.get_users">[Doku]</a><span class="k">def</span> <span class="nf">get_users</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Abfrage aller Nutzer.</span>
+
+<span class="sd">    :returns: Nutzer-Objekt</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">users</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">User</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">users</span></div>
+
+
+<div class="viewcode-block" id="get_user"><a class="viewcode-back" href="../ppscan.html#ppscan.get_user">[Doku]</a><span class="k">def</span> <span class="nf">get_user</span><span class="p">(</span><span class="n">user_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">User</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Abfrage eines einzelnen Nutzers.</span>
+
+<span class="sd">    :param user_id: ID des Nutzers</span>
+<span class="sd">    :returns: Nutzer-Objekt</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">user</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">User</span><span class="p">)</span><span class="o">.</span><span class="n">filter_by</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="n">user_id</span><span class="p">)</span><span class="o">.</span><span class="n">one_or_none</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">user</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Cannot query user </span><span class="si">{}</span><span class="s2">: no such user!&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">user_id</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">user</span></div>
+
+
+<div class="viewcode-block" id="delete_user"><a class="viewcode-back" href="../ppscan.html#ppscan.delete_user">[Doku]</a><span class="k">def</span> <span class="nf">delete_user</span><span class="p">(</span><span class="n">user_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Löschen eines bestehenden Nutzers samt zugeordneter Palmprints.</span>
+
+<span class="sd">    :param user_id: ID des zu löschenden Nutzers</span>
+<span class="sd">    :returns: None</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">user</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">User</span><span class="p">)</span><span class="o">.</span><span class="n">filter_by</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="n">user_id</span><span class="p">)</span><span class="o">.</span><span class="n">one_or_none</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">user</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Cannot delete user </span><span class="si">{}</span><span class="s2">: no such user!&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">user_id</span><span class="p">))</span>
+
+    <span class="n">palmprints</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">Palmprint</span><span class="p">)</span><span class="o">.</span><span class="n">filter_by</span><span class="p">(</span><span class="n">user_id</span><span class="o">=</span><span class="n">user_id</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+
+    <span class="k">for</span> <span class="n">pp</span> <span class="ow">in</span> <span class="n">palmprints</span><span class="p">:</span>
+        <span class="n">session</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">pp</span><span class="p">)</span>
+
+    <span class="n">session</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">user</span><span class="p">)</span>
+    <span class="n">session</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="insert_palmprints"><a class="viewcode-back" href="../ppscan.html#ppscan.insert_palmprints">[Doku]</a><span class="k">def</span> <span class="nf">insert_palmprints</span><span class="p">(</span><span class="n">user_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">palmprints</span><span class="p">:</span> <span class="nb">list</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Einfügen neuer Palmprints (1 bis N) zu bestehendem Nutzer.</span>
+
+<span class="sd">    :param user_id: ID des Nutzers</span>
+<span class="sd">    :param palmprints: Liste aus Tupeln der Form (roi, original), beides np.ndarrays</span>
+<span class="sd">    :returns: None</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">user</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">User</span><span class="p">)</span><span class="o">.</span><span class="n">filter_by</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="n">user_id</span><span class="p">)</span><span class="o">.</span><span class="n">one_or_none</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">user</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Cannot insert palmprint for </span><span class="si">{}</span><span class="s2">: no such user!&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">user_id</span><span class="p">))</span>
+
+    <span class="k">for</span> <span class="n">pp</span> <span class="ow">in</span> <span class="n">palmprints</span><span class="p">:</span>
+        <span class="n">roi</span> <span class="o">=</span> <span class="n">Palmprint</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">pp</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">original</span> <span class="o">=</span> <span class="n">Palmprint</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">pp</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">palmprint</span> <span class="o">=</span> <span class="n">Palmprint</span><span class="p">(</span><span class="n">user_id</span><span class="o">=</span><span class="n">user</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">roi</span><span class="o">=</span><span class="n">roi</span><span class="p">,</span> <span class="n">original</span><span class="o">=</span><span class="n">original</span><span class="p">)</span>
+        <span class="n">session</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">palmprint</span><span class="p">)</span>
+
+    <span class="n">session</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="update_palmprint"><a class="viewcode-back" href="../ppscan.html#ppscan.update_palmprint">[Doku]</a><span class="k">def</span> <span class="nf">update_palmprint</span><span class="p">(</span><span class="n">palmprint_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">roi</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">original</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Update eines bereits bestehenden Palmprints.</span>
+
+<span class="sd">    :param palmprint_id: ID des Palmprints</span>
+<span class="sd">    :param roi: extrahierte ROI</span>
+<span class="sd">    :param original: Originalbild</span>
+<span class="sd">    :param mask: Maske zur ROI</span>
+<span class="sd">    :returns: None</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">palmprint</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">Palmprint</span><span class="p">)</span><span class="o">.</span><span class="n">filter_by</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="n">palmprint_id</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">palmprint</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
+            <span class="s2">&quot;Cannot update palmprint </span><span class="si">{}</span><span class="s2">: no such palmprint!&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">palmprint_id</span><span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">roi</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">new_roi</span> <span class="o">=</span> <span class="n">Palmprint</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">roi</span><span class="p">)</span>
+        <span class="n">palmprint</span><span class="o">.</span><span class="n">roi</span> <span class="o">=</span> <span class="n">new_roi</span>
+
+    <span class="k">if</span> <span class="n">original</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">new_original</span> <span class="o">=</span> <span class="n">Palmprint</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">original</span><span class="p">)</span>
+        <span class="n">palmprint</span><span class="o">.</span><span class="n">original</span> <span class="o">=</span> <span class="n">new_original</span>
+
+    <span class="k">if</span> <span class="n">mask</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">new_mask</span> <span class="o">=</span> <span class="n">Palmprint</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">mask</span><span class="p">)</span>
+        <span class="n">palmprint</span><span class="o">.</span><span class="n">mask</span> <span class="o">=</span> <span class="n">new_mask</span>
+
+    <span class="n">session</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="delete_palmprint"><a class="viewcode-back" href="../ppscan.html#ppscan.delete_palmprint">[Doku]</a><span class="k">def</span> <span class="nf">delete_palmprint</span><span class="p">(</span><span class="n">palmprint_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Löschen eines bestehenden Palmprints.</span>
+
+<span class="sd">    :param palmprint_id: Palmprint ID</span>
+<span class="sd">    :returns: None</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">palmprint</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">Palmprint</span><span class="p">)</span><span class="o">.</span><span class="n">filter_by</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="n">palmprint_id</span><span class="p">)</span><span class="o">.</span><span class="n">one_or_none</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">palmprint</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
+            <span class="s2">&quot;Cannot delete palmprint </span><span class="si">{}</span><span class="s2">: no such palmprint!&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">palmprint_id</span><span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="n">session</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">palmprint</span><span class="p">)</span>
+    <span class="n">session</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="get_user_palmprints"><a class="viewcode-back" href="../ppscan.html#ppscan.get_user_palmprints">[Doku]</a><span class="k">def</span> <span class="nf">get_user_palmprints</span><span class="p">(</span><span class="n">username</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Suche alle Palmprints die dem Usernamen zugeordnet sind.</span>
+
+<span class="sd">    :param username: String</span>
+<span class="sd">    :returns: alle Palmprints des Users in einer Liste</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">user</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">User</span><span class="p">)</span><span class="o">.</span><span class="n">filter_by</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">username</span><span class="p">)</span><span class="o">.</span><span class="n">one_or_none</span><span class="p">()</span>
+    <span class="n">palmprints</span> <span class="o">=</span> <span class="n">user</span><span class="o">.</span><span class="n">palmprints</span>
+
+    <span class="k">return</span> <span class="n">palmprints</span></div>
+
+
+<div class="viewcode-block" id="get_palmprints"><a class="viewcode-back" href="../ppscan.html#ppscan.get_palmprints">[Doku]</a><span class="k">def</span> <span class="nf">get_palmprints</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Suche alle Palmprints in der Datenbank.</span>
+
+<span class="sd">    :returns: alle Palmprints in einer Liste</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">palmprints</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">Palmprint</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+
+    <span class="n">palmprints</span> <span class="o">=</span> <span class="p">[</span><span class="n">pp</span><span class="o">.</span><span class="n">get_roi</span><span class="p">()</span> <span class="k">for</span> <span class="n">pp</span> <span class="ow">in</span> <span class="n">palmprints</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">palmprints</span></div>
+
+
+<span class="c1"># # # # # #</span>
+<span class="c1"># Utility #</span>
+<span class="c1"># # # # # #</span>
+
+
+<div class="viewcode-block" id="progress"><a class="viewcode-back" href="../ppscan.html#ppscan.progress">[Doku]</a><span class="k">def</span> <span class="nf">progress</span><span class="p">(</span><span class="n">current</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">maximum</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Zeige den aktuellen Fortschitt beim Loopen</span>
+<span class="sd">    über eine Liste in Prozent.</span>
+
+<span class="sd">    :param current: aktuelle Position im Loop</span>
+<span class="sd">    :param maximum: höchster Index im Loop</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">current</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="n">prog</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="mi">100</span> <span class="o">*</span> <span class="p">(</span><span class="n">current</span> <span class="o">/</span> <span class="n">maximum</span><span class="p">))</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prog</span><span class="si">}</span><span class="s2">%&quot;</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\r</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">current</span> <span class="o">==</span> <span class="n">maximum</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="load_img"><a class="viewcode-back" href="../ppscan.html#ppscan.load_img">[Doku]</a><span class="k">def</span> <span class="nf">load_img</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Wrapper um cv.imread(), damit auch wirklich immer</span>
+<span class="sd">    Graustufenbilder eingelesen werden.</span>
+
+<span class="sd">    :param path: Dateipfad</span>
+<span class="sd">    :returns: Bild als 2D Numpy Array</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+        <span class="n">img</span> <span class="o">=</span> <span class="n">cv</span><span class="o">.</span><span class="n">imread</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">cv</span><span class="o">.</span><span class="n">IMREAD_GRAYSCALE</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">img</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Angegebener Pfad nicht vorhanden!&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="interpol2d"><a class="viewcode-back" href="../ppscan.html#ppscan.interpol2d">[Doku]</a><span class="k">def</span> <span class="nf">interpol2d</span><span class="p">(</span><span class="n">points</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">steps</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Interpoliere steps Punkte auf Basis von points.</span>
+
+<span class="sd">    :param points: Liste aus Punkten (Tupel)</span>
+<span class="sd">    :param steps: Anzahl der Schritte</span>
+<span class="sd">    :returns: interpolierte Punkte in einer Liste</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">points</span><span class="p">])</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">points</span><span class="p">])</span>
+    <span class="n">i</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">points</span><span class="p">))</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">i</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">i</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">steps</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">x</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">y</span><span class="p">)))</span></div>
+
+
+<div class="viewcode-block" id="find_tangent_points"><a class="viewcode-back" href="../ppscan.html#ppscan.find_tangent_points">[Doku]</a><span class="k">def</span> <span class="nf">find_tangent_points</span><span class="p">(</span><span class="n">v_1</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">v_2</span><span class="p">:</span> <span class="nb">list</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">tuple</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Prüfe für jeden Punkt P in einem Tal (Kurve K), ob eine Gerade zwischen P</span>
+<span class="sd">    und einem Punkt auf der anderen Kurve eine Tangente beider Kurven ist.</span>
+<span class="sd">    Wenn ja, gib jeweils die Punkte beider Kurven zurück, die auf der Tangente liegen.</span>
+
+<span class="sd">    :param v_1: erste zu betrachtende Kurve (Listen aus Koordinatentupeln)</span>
+<span class="sd">    :param v_2: zweite zu betrachtende Kurve (Listen aus Koordinatentupeln)</span>
+<span class="sd">    :returns: Punkte der Tangente bei Existenz, None andernfalls</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">vs</span> <span class="o">=</span> <span class="n">v_1</span> <span class="o">+</span> <span class="n">v_2</span>
+
+    <span class="c1"># wenn die Gerade zwischen p_1 und p_2 keine weiteren Punkte in v_1 und v_2 schneidet,</span>
+    <span class="c1"># dann ist die Gerade als Tangente beider Kurven anzusehen</span>
+    <span class="k">for</span> <span class="n">p_1</span> <span class="ow">in</span> <span class="n">v_1</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">p_2</span> <span class="ow">in</span> <span class="n">v_2</span><span class="p">:</span>
+            <span class="c1"># Wahrheitskriterium soll auf alle p aus v_1 und v_2 zutreffen</span>
+            <span class="k">if</span> <span class="nb">all</span><span class="p">(</span>
+                <span class="p">[</span>
+                    <span class="c1"># ist f(p.y) größer als p.x, d.h. existiert kein Schnittpunkt?</span>
+                    <span class="c1"># f sei die Geradengleichung der Geraden zw. p_1 und p_2</span>
+                    <span class="p">(</span>
+                        <span class="n">p_1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="p">((</span><span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">p_2</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">/</span> <span class="p">(</span><span class="n">p_1</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">p_2</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+                        <span class="o">+</span> <span class="n">p_2</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="p">((</span><span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">p_1</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">/</span> <span class="p">(</span><span class="n">p_2</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">p_1</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+                    <span class="p">)</span>
+                    <span class="o">&gt;=</span> <span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">vs</span>
+                <span class="p">]</span>
+            <span class="p">):</span>
+                <span class="c1"># runde Koordinaten zu nächsten ganzzahligen Pixelwerten</span>
+                <span class="n">p_1</span> <span class="o">=</span> <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">p_1</span><span class="p">[</span><span class="mi">0</span><span class="p">])),</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">p_1</span><span class="p">[</span><span class="mi">1</span><span class="p">])))</span>
+                <span class="n">p_2</span> <span class="o">=</span> <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">p_2</span><span class="p">[</span><span class="mi">0</span><span class="p">])),</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">p_2</span><span class="p">[</span><span class="mi">1</span><span class="p">])))</span>
+                <span class="k">return</span> <span class="n">p_1</span><span class="p">,</span> <span class="n">p_2</span>
+
+    <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="left_right_detector"><a class="viewcode-back" href="../ppscan.html#ppscan.left_right_detector">[Doku]</a><span class="k">def</span> <span class="nf">left_right_detector</span><span class="p">(</span><span class="n">valleys</span><span class="p">:</span> <span class="nb">list</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Finde heraus, ob es sich bei den Valleys um Koordinaten einer linken</span>
+<span class="sd">    oder rechten Hand handelt.</span>
+
+<span class="sd">    :param valleys: Liste aus Koordinatentupeln</span>
+<span class="sd">    :returns: &quot;l&quot;, &quot;r&quot; oder None, wenn etwas nicht stimmt</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">retval</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="n">midpoints</span> <span class="o">=</span> <span class="p">[(</span><span class="n">v</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)][</span><span class="mi">0</span><span class="p">],</span> <span class="n">v</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)][</span><span class="mi">1</span><span class="p">])</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">valleys</span><span class="p">]</span>
+
+    <span class="n">dists</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">midpoints</span><span class="p">),</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="n">dists</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">midpoints</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">midpoints</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]))</span>
+        <span class="p">)</span>
+
+    <span class="n">idx_max</span> <span class="o">=</span> <span class="n">dists</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">dists</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">idx_max</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">retval</span> <span class="o">=</span> <span class="s2">&quot;r&quot;</span>
+    <span class="k">elif</span> <span class="n">idx_max</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">valleys</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">retval</span> <span class="o">=</span> <span class="s2">&quot;l&quot;</span>
+
+    <span class="k">return</span> <span class="n">retval</span></div>
+
+
+<span class="c1"># # # # # # # # #</span>
+<span class="c1"># Preprocessing #</span>
+<span class="c1"># # # # # # # # #</span>
+
+
+<div class="viewcode-block" id="neighbourhood_curvature"><a class="viewcode-back" href="../ppscan.html#ppscan.neighbourhood_curvature">[Doku]</a><span class="k">def</span> <span class="nf">neighbourhood_curvature</span><span class="p">(</span>
+    <span class="n">p</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">,</span> <span class="n">img</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">r</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">inside</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">255</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Überprüfe n Nachbarn im Abstand von r, ob sie innerhalb oder außerhalb</span>
+<span class="sd">    der Fläche im Bild img liegen, ausgehend von Punkt p.</span>
+<span class="sd">    Anhand dessen kann festgestellt werden, ob es sich um eine Kurve handelt.</span>
+
+<span class="sd">    :param p: Koordinatenpunkt</span>
+<span class="sd">    :param img: Binärbild</span>
+<span class="sd">    :param n: Anzahl der Nachbarn</span>
+<span class="sd">    :param r: Abstand der Nachbarn</span>
+<span class="sd">    :param inside: Farbe, die als &quot;innen&quot; qualifiziert</span>
+<span class="sd">    :returns: &quot;Kurvigkeit&quot;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Randbehandlung; Kurven in Bildrandgebieten sind nicht relevant!</span>
+    <span class="k">if</span> <span class="p">(</span>
+        <span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span>
+        <span class="ow">or</span> <span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span>
+        <span class="c1"># p[]+r nicht innerhalb von img-Dimensionen</span>
+        <span class="ow">or</span> <span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">r</span> <span class="o">&gt;=</span> <span class="n">img</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="ow">or</span> <span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">r</span> <span class="o">&lt;</span> <span class="mi">0</span>
+        <span class="ow">or</span> <span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">r</span> <span class="o">&gt;=</span> <span class="n">img</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="ow">or</span> <span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">r</span> <span class="o">&lt;</span> <span class="mi">0</span>
+    <span class="p">):</span>
+        <span class="k">return</span> <span class="mf">0.0</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">stepsize</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="mi">360</span> <span class="o">/</span> <span class="n">n</span><span class="p">)</span>
+        <span class="n">neighvals</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">90</span><span class="p">,</span> <span class="n">stepsize</span><span class="p">):</span>
+            <span class="n">d_y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="n">a</span><span class="p">)),</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="n">d_x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="n">a</span><span class="p">)),</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="n">y_p</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="p">(</span><span class="n">r</span> <span class="o">*</span> <span class="n">d_y</span><span class="p">)))</span>
+            <span class="n">y_n</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">r</span> <span class="o">*</span> <span class="n">d_y</span><span class="p">)))</span>
+            <span class="n">x_p</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">r</span> <span class="o">*</span> <span class="n">d_x</span><span class="p">)))</span>
+            <span class="n">x_n</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="p">(</span><span class="n">r</span> <span class="o">*</span> <span class="n">d_x</span><span class="p">)))</span>
+
+            <span class="n">neighvals</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+                <span class="p">(</span><span class="n">img</span><span class="p">[</span><span class="n">y_p</span><span class="p">,</span> <span class="n">x_p</span><span class="p">],</span> <span class="n">img</span><span class="p">[</span><span class="n">y_n</span><span class="p">,</span> <span class="n">x_p</span><span class="p">],</span> <span class="n">img</span><span class="p">[</span><span class="n">y_n</span><span class="p">,</span> <span class="n">x_n</span><span class="p">],</span> <span class="n">img</span><span class="p">[</span><span class="n">y_p</span><span class="p">,</span> <span class="n">x_n</span><span class="p">])</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">neighvals</span><span class="p">)</span> <span class="o">/</span> <span class="n">inside</span><span class="p">)</span> <span class="o">/</span> <span class="n">n</span></div>
+
+
+<div class="viewcode-block" id="find_valleys"><a class="viewcode-back" href="../ppscan.html#ppscan.find_valleys">[Doku]</a><span class="k">def</span> <span class="nf">find_valleys</span><span class="p">(</span><span class="n">img</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">contour</span><span class="p">:</span> <span class="nb">list</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Kombiniert den CHVD-Algorithmus (Ong et al.) mit einfachem Mask-Matching</span>
+<span class="sd">    und findet so die &quot;Täler&quot; in einer Kontur.</span>
+
+<span class="sd">    :param img: Bild, in dem die Täler gesucht werden</span>
+<span class="sd">    :param contour: Kontur des Bildes als Punkteliste</span>
+<span class="sd">    :returns: Täler als Liste aus Listen von Punkten (nach Zusammenhängen gruppiert)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">valleys</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">last</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">idx</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+
+    <span class="c1"># durchlaufe die Punkte auf der Kontur</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">contour</span><span class="p">):</span>
+        <span class="c1"># quadratischer Bildausschnitt der Seitenlänge GAMMA mit c als Mittelpunkt</span>
+        <span class="n">subimg</span> <span class="o">=</span> <span class="n">img</span><span class="p">[</span><span class="n">c</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">GAMMA</span> <span class="p">:</span> <span class="n">c</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">GAMMA</span><span class="p">,</span> <span class="n">c</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">GAMMA</span> <span class="p">:</span> <span class="n">c</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">GAMMA</span><span class="p">]</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">subimg</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
+            <span class="ow">and</span> <span class="p">(</span><span class="n">G_L</span> <span class="o">&lt;=</span> <span class="n">neighbourhood_curvature</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">img</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="n">GAMMA</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">G_U</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="n">subimg</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span> <span class="o">&gt;=</span> <span class="n">THRESH_SUBIMG</span>
+        <span class="p">):</span>
+            <span class="c1"># prüfe auf mögl. Zusammenhang mit vorheriger Gruppe; starte neue Gruppe,</span>
+            <span class="c1"># wenn der Abstand zu groß ist</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">-</span> <span class="n">last</span> <span class="o">&gt;</span> <span class="n">THRESH_CON</span><span class="p">:</span>
+                <span class="n">idx</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">valleys</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">c</span><span class="p">])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">valleys</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+            <span class="n">last</span> <span class="o">=</span> <span class="n">i</span>
+
+    <span class="k">return</span> <span class="n">valleys</span></div>
+
+
+<div class="viewcode-block" id="find_keypoints"><a class="viewcode-back" href="../ppscan.html#ppscan.find_keypoints">[Doku]</a><span class="k">def</span> <span class="nf">find_keypoints</span><span class="p">(</span><span class="n">valleys</span><span class="p">:</span> <span class="nb">list</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">tuple</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Finde die Keypoints des Bildes, in unserem Fall die beiden Lücken</span>
+<span class="sd">    zwischen Zeige und Mittelfinger bzw. Ring- und kleinem Finger.</span>
+
+<span class="sd">    :param valleys: Liste von gefundenen Valleys</span>
+<span class="sd">    :returns: Koordinaten der Keypoints</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">valleys</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Expected at least 2 valleys!&quot;</span><span class="p">)</span>
+
+    <span class="c1"># schmeiße 1er-Längen raus, sind meistens Fehler</span>
+    <span class="n">valleys</span> <span class="o">=</span> <span class="p">[</span><span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">valleys</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="c1"># test ob überhaupt noch valleys vorhanden sind</span>
+    <span class="k">if</span> <span class="n">valleys</span><span class="o">.</span><span class="fm">__len__</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;No valleys found!&quot;</span><span class="p">)</span>
+
+    <span class="c1"># sortiere die Täler nach ihrer y-Koordinate</span>
+    <span class="n">valleys</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="n">v</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span>
+
+    <span class="c1"># Werte interpolieren, um eine etwas sauberere Kurve zu bekommen</span>
+    <span class="n">valleys_interp</span> <span class="o">=</span> <span class="p">[</span><span class="n">interpol2d</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">valleys</span><span class="p">]</span>
+
+    <span class="c1"># im Optimalfall sollten erster und letzter Punkt die Keypoints sein</span>
+    <span class="n">v_1</span> <span class="o">=</span> <span class="n">valleys_interp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">v_2</span> <span class="o">=</span> <span class="n">valleys_interp</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="c1"># Punkte auf Tangente beider Täler finden; das sind die Keypoints</span>
+    <span class="n">kp_1</span><span class="p">,</span> <span class="n">kp_2</span> <span class="o">=</span> <span class="n">find_tangent_points</span><span class="p">(</span><span class="n">v_1</span><span class="p">,</span> <span class="n">v_2</span><span class="p">)</span>
+
+    <span class="c1"># TODO: Test this exception</span>
+    <span class="k">if</span> <span class="n">kp_1</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">kp_2</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Couldn&#39;t find a tangent for </span><span class="si">{}</span><span class="s2"> and </span><span class="si">{}</span><span class="s2">!&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">kp_1</span><span class="p">,</span> <span class="n">kp_2</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">kp_1</span><span class="p">,</span> <span class="n">kp_2</span></div>
+
+
+<div class="viewcode-block" id="transform_to_roi"><a class="viewcode-back" href="../ppscan.html#ppscan.transform_to_roi">[Doku]</a><span class="k">def</span> <span class="nf">transform_to_roi</span><span class="p">(</span><span class="n">img</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">p_min</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">,</span> <span class="n">p_max</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Transformiere Bild so, dass Punkte p_min und p_max</span>
+<span class="sd">    die y-Achse an der linken Bildkante bilden.</span>
+
+<span class="sd">    :param img: Eingangsbild</span>
+<span class="sd">    :param p_min: Minimum des Koordinatensystems</span>
+<span class="sd">    :param p_max: Maximum des Koordinatensystems</span>
+<span class="sd">    :returns: gedrehtes und auf &quot;y-Achse&quot; beschnittenes Bild</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># berechne notwendige Abstände</span>
+    <span class="n">a</span> <span class="o">=</span> <span class="n">p_max</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">p_min</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">b</span> <span class="o">=</span> <span class="n">p_min</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">p_max</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">angle</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">rad2deg</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arctan</span><span class="p">(</span><span class="n">a</span> <span class="o">/</span> <span class="n">b</span><span class="p">))</span>
+
+    <span class="c1"># rotiere Bild um p_min</span>
+    <span class="n">rot_mat</span> <span class="o">=</span> <span class="n">cv</span><span class="o">.</span><span class="n">getRotationMatrix2D</span><span class="p">(</span><span class="n">p_min</span><span class="p">,</span> <span class="n">angle</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+    <span class="n">rotated</span> <span class="o">=</span> <span class="n">cv</span><span class="o">.</span><span class="n">warpAffine</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">rot_mat</span><span class="p">,</span> <span class="n">img</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">::</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+
+    <span class="c1"># beschneide das Bild auf ROI; y_mid ist die halbe Strecke zw. p_min und p_max</span>
+    <span class="n">y_mid</span> <span class="o">=</span> <span class="n">p_min</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="nb">round</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">p_max</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">p_min</span><span class="p">))</span> <span class="o">*</span> <span class="mf">0.5</span><span class="p">)</span>
+    <span class="n">y_start</span> <span class="o">=</span> <span class="n">y_mid</span> <span class="o">-</span> <span class="n">ROI_RAD</span>
+    <span class="n">y_end</span> <span class="o">=</span> <span class="n">y_mid</span> <span class="o">+</span> <span class="n">ROI_RAD</span>
+    <span class="n">x_start</span> <span class="o">=</span> <span class="n">p_min</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">10</span>
+    <span class="n">x_end</span> <span class="o">=</span> <span class="n">x_start</span> <span class="o">+</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">ROI_RAD</span><span class="p">)</span>
+    <span class="n">cropped</span> <span class="o">=</span> <span class="n">rotated</span><span class="p">[</span><span class="n">y_start</span><span class="p">:</span><span class="n">y_end</span><span class="p">,</span> <span class="n">x_start</span><span class="p">:</span><span class="n">x_end</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">cropped</span></div>
+
+
+<div class="viewcode-block" id="extract_roi"><a class="viewcode-back" href="../ppscan.html#ppscan.extract_roi">[Doku]</a><span class="k">def</span> <span class="nf">extract_roi</span><span class="p">(</span><span class="n">img</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Wrapper für den ROI-Findungsprozess.</span>
+
+<span class="sd">    :param img: Bild, aus dem die ROI extrahiert werden soll</span>
+<span class="sd">    :returns: ROI</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># weichzeichnen und binarisieren</span>
+    <span class="n">blurred</span> <span class="o">=</span> <span class="n">cv</span><span class="o">.</span><span class="n">GaussianBlur</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="mi">7</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">thresh</span> <span class="o">=</span> <span class="n">cv</span><span class="o">.</span><span class="n">threshold</span><span class="p">(</span>
+        <span class="n">blurred</span><span class="p">,</span> <span class="p">(</span><span class="n">THRESH_FACTOR</span> <span class="o">*</span> <span class="n">img</span><span class="o">.</span><span class="n">mean</span><span class="p">()),</span> <span class="mi">255</span><span class="p">,</span> <span class="n">cv</span><span class="o">.</span><span class="n">THRESH_BINARY</span>
+    <span class="p">)</span>
+
+    <span class="c1"># finde die Kontur der Hand; betrachte nur linke Hälfte des Bildes,</span>
+    <span class="c1"># weil wir dort die wichtigen Kurven erwarten können</span>
+    <span class="n">contours</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">cv</span><span class="o">.</span><span class="n">findContours</span><span class="p">(</span>
+        <span class="n">thresh</span><span class="p">[:,</span> <span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">img</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)],</span> <span class="n">cv</span><span class="o">.</span><span class="n">RETR_LIST</span><span class="p">,</span> <span class="n">cv</span><span class="o">.</span><span class="n">CHAIN_APPROX_SIMPLE</span>
+    <span class="p">)</span>
+
+    <span class="c1"># filtere nur die längste Kontur, um mögl. Störungen zu entfernen</span>
+    <span class="n">contour</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">contours</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">c</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">c</span><span class="p">))</span>
+
+    <span class="c1"># mach eine Liste aus Tupeln zur besseren Weiterverarbeitung draus</span>
+    <span class="n">contour</span> <span class="o">=</span> <span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">c</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">contour</span><span class="p">]</span>
+
+    <span class="c1"># &quot;Täler&quot; in der Handkontur finden; dort werden sich Keypoints befinden</span>
+    <span class="n">valleys</span> <span class="o">=</span> <span class="n">find_valleys</span><span class="p">(</span><span class="n">thresh</span><span class="p">,</span> <span class="n">contour</span><span class="p">)</span>
+
+    <span class="c1"># beide Keypoints finden</span>
+    <span class="n">kp_1</span><span class="p">,</span> <span class="n">kp_2</span> <span class="o">=</span> <span class="n">find_keypoints</span><span class="p">(</span><span class="n">valleys</span><span class="p">)</span>
+
+    <span class="c1"># Bild um Keypoints rotieren und zuschneiden</span>
+    <span class="n">roi</span> <span class="o">=</span> <span class="n">transform_to_roi</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">kp_2</span><span class="p">,</span> <span class="n">kp_1</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">roi</span></div>
+
+
+<span class="c1"># # # # # # #</span>
+<span class="c1"># Filtering #</span>
+<span class="c1"># # # # # # #</span>
+
+
+<div class="viewcode-block" id="build_mask"><a class="viewcode-back" href="../ppscan.html#ppscan.build_mask">[Doku]</a><span class="k">def</span> <span class="nf">build_mask</span><span class="p">(</span><span class="n">img</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generiert eine Maske aus dem gegebenen Bild. Schwarze Flächen (kein Teil der Hand) werden maskiert.</span>
+
+<span class="sd">    :param img: Bild welches als Grundlage der Maske dienen soll</span>
+<span class="sd">    :returns: Maske (schwarz/weiß)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># TODO</span>
+    <span class="c1"># generiere leeres np array, füllen mit &#39;weiß&#39; (255)</span>
+    <span class="n">mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty_like</span><span class="p">(</span><span class="n">img</span><span class="p">)</span>
+    <span class="n">mask</span><span class="o">.</span><span class="n">fill</span><span class="p">(</span><span class="mi">255</span><span class="p">)</span>
+    <span class="c1"># setze jedes Maskenpixel auf 0, wenn im gegebenen Bildpixel der Wert kleiner als</span>
+    <span class="c1"># der Schwellwert ist</span>
+    <span class="n">mask</span><span class="p">[</span><span class="n">img</span> <span class="o">&lt;</span> <span class="n">MASK_THRESHOLD</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">return</span> <span class="n">mask</span></div>
+
+
+<div class="viewcode-block" id="build_gabor_filters"><a class="viewcode-back" href="../ppscan.html#ppscan.build_gabor_filters">[Doku]</a><span class="k">def</span> <span class="nf">build_gabor_filters</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generiert eine Liste von Gabor Filtern aus gegebenen Konstanten.</span>
+
+<span class="sd">    :returns: Liste von Gabor Filtern</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># ksize - size of gabor filter (n, n)</span>
+    <span class="c1"># sigma - standard deviation of the gaussian function</span>
+    <span class="c1"># theta - orientation of the normal to the parallel stripes</span>
+    <span class="c1"># lambda - wavelength of the sunusoidal factor</span>
+    <span class="c1"># gamma - spatial aspect ratio</span>
+    <span class="c1"># psi - phase offset</span>
+    <span class="n">filters</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">theta</span> <span class="ow">in</span> <span class="n">GABOR_THETAS</span><span class="p">:</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;ksize&quot;</span><span class="p">:</span> <span class="n">GABOR_KSIZE</span><span class="p">,</span>
+            <span class="s2">&quot;sigma&quot;</span><span class="p">:</span> <span class="n">GABOR_SIGMA</span><span class="p">,</span>
+            <span class="s2">&quot;theta&quot;</span><span class="p">:</span> <span class="n">theta</span><span class="p">,</span>
+            <span class="s2">&quot;lambd&quot;</span><span class="p">:</span> <span class="n">GABOR_LAMBDA</span><span class="p">,</span>
+            <span class="s2">&quot;gamma&quot;</span><span class="p">:</span> <span class="n">GABOR_GAMMA</span><span class="p">,</span>
+            <span class="s2">&quot;psi&quot;</span><span class="p">:</span> <span class="n">GABOR_PSI</span><span class="p">,</span>
+            <span class="s2">&quot;ktype&quot;</span><span class="p">:</span> <span class="n">cv</span><span class="o">.</span><span class="n">CV_32F</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="n">kern</span> <span class="o">=</span> <span class="n">cv</span><span class="o">.</span><span class="n">getGaborKernel</span><span class="p">(</span><span class="o">**</span><span class="n">params</span><span class="p">)</span>
+        <span class="n">filters</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">kern</span><span class="p">,</span> <span class="n">params</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">filters</span></div>
+
+
+<div class="viewcode-block" id="apply_gabor_filters"><a class="viewcode-back" href="../ppscan.html#ppscan.apply_gabor_filters">[Doku]</a><span class="k">def</span> <span class="nf">apply_gabor_filters</span><span class="p">(</span><span class="n">img</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">filters</span><span class="p">:</span> <span class="nb">list</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Wendet Filter-Liste auf Bildkopien an, fügt gefilterte Bilder zu einem zusammen</span>
+<span class="sd">    und entfernt alle Elemente unter einem festgelegten Schwellwert.</span>
+
+<span class="sd">    :param img: zu filterndes Bild</span>
+<span class="sd">    :param filters: Liste von Gabor Filtern</span>
+<span class="sd">    :returns: gefiltertes Bild</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># generate empty np array and fill it with &#39;white&#39; (255)</span>
+    <span class="n">merged_img</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty_like</span><span class="p">(</span><span class="n">img</span><span class="p">)</span>
+    <span class="n">merged_img</span><span class="o">.</span><span class="n">fill</span><span class="p">(</span><span class="mi">255</span><span class="p">)</span>
+
+    <span class="c1"># for all filters: filter image and merge with already filtered images</span>
+    <span class="k">for</span> <span class="n">kern</span><span class="p">,</span> <span class="n">params</span> <span class="ow">in</span> <span class="n">filters</span><span class="p">:</span>
+        <span class="n">filtered_img</span> <span class="o">=</span> <span class="n">cv</span><span class="o">.</span><span class="n">filter2D</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">cv</span><span class="o">.</span><span class="n">CV_8UC3</span><span class="p">,</span> <span class="n">kern</span><span class="p">)</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span><span class="n">merged_img</span><span class="p">,</span> <span class="n">filtered_img</span><span class="p">,</span> <span class="n">merged_img</span><span class="p">)</span>
+
+    <span class="c1"># use threshold to remove lines and make it (kind of) binary</span>
+    <span class="n">merged_img</span><span class="p">[</span><span class="n">merged_img</span> <span class="o">&gt;</span> <span class="n">GABOR_THRESHOLD</span><span class="p">]</span> <span class="o">=</span> <span class="mi">255</span>
+    <span class="n">merged_img</span><span class="p">[</span><span class="n">merged_img</span> <span class="o">&lt;</span> <span class="n">GABOR_THRESHOLD</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">return</span> <span class="n">merged_img</span></div>
+
+
+<div class="viewcode-block" id="img_to_binary"><a class="viewcode-back" href="../ppscan.html#ppscan.img_to_binary">[Doku]</a><span class="k">def</span> <span class="nf">img_to_binary</span><span class="p">(</span><span class="n">img</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Formt gegebenes Bild in eindimensionales Array um (flatten). Da das gegebene Bild nur aus 0 oder 255</span>
+<span class="sd">    besteht (siehe apply_gabor_filters()), werden diese in True (1) und False (0) umgewandelt.</span>
+
+<span class="sd">    :param img: Bild, das binarisiert werden soll</span>
+<span class="sd">    :returns:</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">flattened</span> <span class="o">=</span> <span class="n">img</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+    <span class="n">flattened</span><span class="p">[</span><span class="n">flattened</span> <span class="o">==</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">flattened</span><span class="p">[</span><span class="n">flattened</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="k">return</span> <span class="n">flattened</span></div>
+
+
+<div class="viewcode-block" id="hamming_with_masks"><a class="viewcode-back" href="../ppscan.html#ppscan.hamming_with_masks">[Doku]</a><span class="k">def</span> <span class="nf">hamming_with_masks</span><span class="p">(</span>
+    <span class="n">img1</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">mask1</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">img2</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">mask2</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Gegebene Masken auf jeweils zugehöriges Bild anwenden.</span>
+<span class="sd">    Und daraus dann die Hammingdistanz bestimmen.</span>
+
+<span class="sd">    :param img1: zu maskierendes Bild (binary 0,1)</span>
+<span class="sd">    :param mask1: Maske des Bildes (binary 0,1)</span>
+<span class="sd">    :param img2: zu maskierendes (zweites) Bild (binary 0,1)</span>
+<span class="sd">    :param mask2: Maske des zweiten Bildes (binary 0,1)</span>
+<span class="sd">    :returns: Hammingdistanz</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># flatten images and masks</span>
+    <span class="n">img1</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+    <span class="n">img2</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+    <span class="n">mask1</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+    <span class="n">mask2</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+
+    <span class="c1"># check if images and masks are binary</span>
+    <span class="k">if</span> <span class="nb">max</span><span class="p">(</span><span class="n">img1</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="nb">max</span><span class="p">(</span><span class="n">img2</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="nb">max</span><span class="p">(</span><span class="n">mask1</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="nb">max</span><span class="p">(</span><span class="n">mask2</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="c1"># UND-Verknüpfung Masken</span>
+        <span class="n">mask_and</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">mask1</span><span class="p">,</span> <span class="n">mask2</span><span class="p">)</span>
+        <span class="c1"># XOR-Verknüpfung Bilder</span>
+        <span class="n">img_xor</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_xor</span><span class="p">(</span><span class="n">img1</span><span class="p">,</span> <span class="n">img2</span><span class="p">)</span>
+        <span class="c1"># UND-Verknüpfung Bildunterschiede und kombinierte Maske</span>
+        <span class="n">img_and_mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">img_xor</span><span class="p">,</span> <span class="n">mask_and</span><span class="p">)</span>
+        <span class="c1"># hamming distance (number of ones in &#39;masked&#39; divided by length of &#39;masked&#39;)</span>
+        <span class="c1"># hamming = ((img_and_mask == True).sum()) / (mask_and == True).size</span>
+        <span class="n">hamming</span> <span class="o">=</span> <span class="p">((</span><span class="n">img_and_mask</span> <span class="o">==</span> <span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span> <span class="o">/</span> <span class="n">img_and_mask</span><span class="o">.</span><span class="n">size</span>
+        <span class="c1"># print(hamming)</span>
+
+        <span class="k">return</span> <span class="n">hamming</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;values in image and/or mask not binary&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="calculate_hamming"><a class="viewcode-back" href="../ppscan.html#ppscan.calculate_hamming">[Doku]</a><span class="k">def</span> <span class="nf">calculate_hamming</span><span class="p">(</span><span class="n">img_to_match</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">img_template</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Vergleicht ausgewaehltes Image mit Template Image und berechnet die Hamming Distanz dazwischen.</span>
+
+<span class="sd">    :param img_to_match: abzugleichendes, pixelverschobenes Image</span>
+<span class="sd">    :param img_template: Vorlage, gegen welche gematched wird</span>
+<span class="sd">    :returns: Hamming Distanz zwischen den Bildern</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Bibliotheksfunktion zur Sicherheit (Fallback)</span>
+    <span class="n">hamming_distance</span> <span class="o">=</span> <span class="n">distance</span><span class="o">.</span><span class="n">hamming</span><span class="p">(</span>
+        <span class="n">img_to_binary</span><span class="p">(</span><span class="n">img_to_match</span><span class="p">),</span> <span class="n">img_to_binary</span><span class="p">(</span><span class="n">img_template</span><span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Berechnung der Hammingdistanz mit AND und XOR von ROIs und Masken</span>
+    <span class="c1"># bin_img1 = img_to_binary(img_to_match)</span>
+    <span class="c1"># bin_img2 = img_to_binary(img_template)</span>
+    <span class="c1"># bin_mask1 = img_to_binary(build_mask(img_to_match))</span>
+    <span class="c1"># bin_mask2 = img_to_binary(build_mask(img_template))</span>
+    <span class="c1"># hamming_distance = hamming_with_masks(bin_img1, bin_mask1, bin_img2, bin_mask2)</span>
+
+    <span class="k">return</span> <span class="n">hamming_distance</span></div>
+
+
+<div class="viewcode-block" id="matching"><a class="viewcode-back" href="../ppscan.html#ppscan.matching">[Doku]</a><span class="k">def</span> <span class="nf">matching</span><span class="p">(</span><span class="n">img_to_match</span><span class="p">,</span> <span class="n">img_template</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Ausführen des Matching-Algorithmus. Durch Vorgaben wird zuerst eine pixelbasierte</span>
+<span class="sd">    Translation durchgeführt und anschließend die Hamming Distanz berechnet.</span>
+
+<span class="sd">    :param img_to_match: abzugleichendes Image</span>
+<span class="sd">    :param img_template: Vorlage, gegen welche gematched wird</span>
+<span class="sd">    :returns: kleinste Hamming Distanz zwischen den Bildern</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># speichert alle Hamming Distanzen</span>
+    <span class="n">hamming_distances</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="c1"># Verschiebungsalgorithmus</span>
+    <span class="n">trans_x</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+        <span class="mi">0</span><span class="p">,</span>
+        <span class="mi">1</span><span class="p">,</span>
+        <span class="mi">1</span><span class="p">,</span>
+        <span class="mi">1</span><span class="p">,</span>
+        <span class="mi">0</span><span class="p">,</span>
+        <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+        <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+        <span class="o">-</span><span class="mi">2</span><span class="p">,</span>
+        <span class="mi">0</span><span class="p">,</span>
+        <span class="mi">2</span><span class="p">,</span>
+        <span class="mi">2</span><span class="p">,</span>
+        <span class="mi">2</span><span class="p">,</span>
+        <span class="mi">0</span><span class="p">,</span>
+        <span class="o">-</span><span class="mi">2</span><span class="p">,</span>
+        <span class="o">-</span><span class="mi">2</span><span class="p">,</span>
+    <span class="p">]</span>  <span class="c1"># pos -&gt; rechts &amp; neg -&gt; links</span>
+    <span class="n">trans_y</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+        <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+        <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+        <span class="mi">0</span><span class="p">,</span>
+        <span class="mi">1</span><span class="p">,</span>
+        <span class="mi">1</span><span class="p">,</span>
+        <span class="mi">1</span><span class="p">,</span>
+        <span class="mi">0</span><span class="p">,</span>
+        <span class="o">-</span><span class="mi">2</span><span class="p">,</span>
+        <span class="o">-</span><span class="mi">2</span><span class="p">,</span>
+        <span class="o">-</span><span class="mi">2</span><span class="p">,</span>
+        <span class="mi">0</span><span class="p">,</span>
+        <span class="mi">2</span><span class="p">,</span>
+        <span class="mi">2</span><span class="p">,</span>
+        <span class="mi">2</span><span class="p">,</span>
+        <span class="mi">0</span><span class="p">,</span>
+    <span class="p">]</span>  <span class="c1"># pos -&gt; runter &amp; neg -&gt; hoch</span>
+
+    <span class="c1"># anwenden der Translation</span>
+
+    <span class="k">for</span> <span class="n">trans</span> <span class="ow">in</span> <span class="n">trans_x</span><span class="p">:</span>
+        <span class="n">trans_matrice</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">trans_x</span><span class="p">[</span><span class="n">trans</span><span class="p">]],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">trans_y</span><span class="p">[</span><span class="n">trans</span><span class="p">]]]</span>
+        <span class="n">trans_matrice</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">(</span><span class="n">trans_matrice</span><span class="p">)</span>
+        <span class="n">hamming_distances</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">translate_image</span><span class="p">(</span><span class="n">img_to_match</span><span class="p">,</span> <span class="n">img_template</span><span class="p">,</span> <span class="n">trans_matrice</span><span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="c1"># unverschoben</span>
+    <span class="n">hamming_distances</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">calculate_hamming</span><span class="p">(</span><span class="n">img_to_match</span><span class="p">,</span> <span class="n">img_template</span><span class="p">))</span>
+
+    <span class="c1"># print(hamming_distances)</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">hamming_distances</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="c1"># return Max Distanz, da keine Distanz berechnet wurde</span>
+        <span class="k">return</span> <span class="mf">1.0</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">min</span><span class="p">(</span><span class="n">hamming_distances</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="translate_image"><a class="viewcode-back" href="../ppscan.html#ppscan.translate_image">[Doku]</a><span class="k">def</span> <span class="nf">translate_image</span><span class="p">(</span><span class="n">img_to_match</span><span class="p">,</span> <span class="n">img_template</span><span class="p">,</span> <span class="n">trans_matrix</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Verschiebt zumatchendes Image um die Translationsmatrix.</span>
+
+<span class="sd">    :param img_to_match: abzugleichendes Image</span>
+<span class="sd">    :param img_template: Vorlage, gegen welche gematched wird</span>
+<span class="sd">    :param trans_matrix: zu nutzende Tranformationsmatrix</span>
+<span class="sd">    :returns: kleinste Hamming Distanz zwischen den Bildern</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">img_slided</span> <span class="o">=</span> <span class="n">cv</span><span class="o">.</span><span class="n">warpAffine</span><span class="p">(</span>
+        <span class="n">img_to_match</span><span class="p">,</span> <span class="n">trans_matrix</span><span class="p">,</span> <span class="p">(</span><span class="n">img_to_match</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">img_to_match</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="p">)</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">hamming_distance</span> <span class="o">=</span> <span class="n">calculate_hamming</span><span class="p">(</span>
+            <span class="n">img_slided</span><span class="p">[</span><span class="mi">2</span><span class="p">:</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span><span class="o">-</span><span class="mi">2</span><span class="p">],</span> <span class="n">img_template</span><span class="p">[</span><span class="mi">2</span><span class="p">:</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+        <span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="c1"># set 1.0 bei Default fuer non-Match</span>
+        <span class="n">hamming_distance</span> <span class="o">=</span> <span class="mf">1.0</span>
+
+    <span class="k">return</span> <span class="n">hamming_distance</span></div>
+
+
+<span class="c1"># # # # # # # # # #</span>
+<span class="c1"># User Management #</span>
+<span class="c1"># # # # # # # # # #</span>
+
+
+<div class="viewcode-block" id="enrol"><a class="viewcode-back" href="../ppscan.html#ppscan.enrol">[Doku]</a><span class="k">def</span> <span class="nf">enrol</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="n">palmprint_imgs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Enrolment-Prozess. Bekommt nur unverarbeitete Bilder.</span>
+
+<span class="sd">    :param name: Name des neuen Nutzers</span>
+<span class="sd">    :param palmprint_imgs: variable Anzahl von OpenCV-Bildobjekten</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">palmprints</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">palmprints</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">filters</span> <span class="o">=</span> <span class="n">build_gabor_filters</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">img</span> <span class="ow">in</span> <span class="n">palmprint_imgs</span><span class="p">:</span>
+            <span class="n">roi</span> <span class="o">=</span> <span class="n">extract_roi</span><span class="p">(</span><span class="n">img</span><span class="p">)</span>
+            <span class="n">mask</span> <span class="o">=</span> <span class="n">build_mask</span><span class="p">(</span><span class="n">roi</span><span class="p">)</span>
+            <span class="n">roi</span> <span class="o">=</span> <span class="n">apply_gabor_filters</span><span class="p">(</span><span class="n">roi</span><span class="p">,</span> <span class="n">filters</span><span class="p">)</span>
+            <span class="n">palmprints</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">roi</span><span class="p">,</span> <span class="n">img</span><span class="p">,</span> <span class="n">mask</span><span class="p">))</span>
+
+    <span class="n">create_user</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">palmprints</span><span class="p">)</span></div>
+
+
+<span class="c1"># # # # #</span>
+<span class="c1"># Main  #</span>
+<span class="c1"># # # # #</span>
+
+
+<div class="viewcode-block" id="main"><a class="viewcode-back" href="../ppscan.html#ppscan.main">[Doku]</a><span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Das eigentliche Programm; Bild einlesen und prüfen, ob Print</span>
+<span class="sd">    zu einem registrierten Nutzer passt.</span>
+<span class="sd">    Wenn ja, gib den Namen aus.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Aufruf: python3 ppscan.py &lt;pfad/zum/bild&gt;&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span>
+
+    <span class="n">file_input</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;ppscan</span><span class="se">\n</span><span class="s2">------&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Starte Matching für </span><span class="si">{}</span><span class="s2"> ...&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">file_input</span><span class="p">)))</span>
+
+    <span class="n">filters</span> <span class="o">=</span> <span class="n">build_gabor_filters</span><span class="p">()</span>
+
+    <span class="n">img_input</span> <span class="o">=</span> <span class="n">load_img</span><span class="p">(</span><span class="n">file_input</span><span class="p">)</span>
+    <span class="n">roi</span> <span class="o">=</span> <span class="n">extract_roi</span><span class="p">(</span><span class="n">img_input</span><span class="p">)</span>
+    <span class="n">filtered_roi</span> <span class="o">=</span> <span class="n">apply_gabor_filters</span><span class="p">(</span><span class="n">roi</span><span class="p">,</span> <span class="n">filters</span><span class="p">)</span>
+
+    <span class="n">palmprints_list</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">Palmprint</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+    <span class="n">hamming_scores</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="n">Match</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s2">&quot;Match&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;score&quot;</span><span class="p">,</span> <span class="s2">&quot;user&quot;</span><span class="p">])</span>
+
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">palmprint</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">palmprints_list</span><span class="p">):</span>
+        <span class="n">hamming_scores</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">Match</span><span class="p">(</span>
+                <span class="n">score</span><span class="o">=</span><span class="n">matching</span><span class="p">(</span><span class="n">filtered_roi</span><span class="p">,</span> <span class="n">palmprint</span><span class="o">.</span><span class="n">get_roi</span><span class="p">()),</span>
+                <span class="n">user</span><span class="o">=</span><span class="n">palmprint</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">progress</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">palmprints_list</span><span class="p">))</span>
+
+    <span class="c1"># minimaler Matching Score</span>
+    <span class="n">m_min</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">hamming_scores</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">m</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">score</span><span class="p">)</span>
+    <span class="c1"># maximaler Matching Score</span>
+    <span class="c1"># m_max = max(hamming_scores, key=lambda m: m.score)</span>
+    <span class="c1"># alle Matching Scores, aufsteigend sortiert</span>
+    <span class="c1"># hamming_scores.sort(key=lambda m: m.score)</span>
+
+    <span class="k">if</span> <span class="n">m_min</span><span class="o">.</span><span class="n">score</span> <span class="o">&lt;=</span> <span class="n">THRESH_HAMMING</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="s2">&quot;[</span><span class="si">{0}</span><span class="s2">] Hallo, </span><span class="si">{1}</span><span class="s2">! Matching Score: </span><span class="si">{2}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="n">mark_check</span><span class="p">,</span> <span class="n">m_min</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">capitalize</span><span class="p">(),</span> <span class="n">m_min</span><span class="o">.</span><span class="n">score</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">SHREKD</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span>
+                <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">                GET OUT OF MY SWAMP\033[92;1m</span>
+
+<span class="sd">            ⢀⡴⠑⡄⠀⠀⠀⠀⠀⠀⠀⣀⣀⣤⣤⣤⣀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀ </span>
+<span class="sd">            ⠸⡇⠀⠿⡀⠀⠀⠀⣀⡴⢿⣿⣿⣿⣿⣿⣿⣿⣷⣦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀ </span>
+<span class="sd">            ⠀⠀⠀⠀⠑⢄⣠⠾⠁⣀⣄⡈⠙⣿⣿⣿⣿⣿⣿⣿⣿⣆⠀⠀⠀⠀⠀⠀⠀⠀ </span>
+<span class="sd">            ⠀⠀⠀⠀⢀⡀⠁⠀⠀⠈⠙⠛⠂⠈⣿⣿⣿⣿⣿⠿⡿⢿⣆⠀⠀⠀⠀⠀⠀⠀ </span>
+<span class="sd">            ⠀⠀⠀⢀⡾⣁⣀⠀⠴⠂⠙⣗⡀⠀⢻⣿⣿⠭⢤⣴⣦⣤⣹⠀⠀⠀⢀⢴⣶⣆ </span>
+<span class="sd">            ⠀⠀⢀⣾⣿⣿⣿⣷⣮⣽⣾⣿⣥⣴⣿⣿⡿⢂⠔⢚⡿⢿⣿⣦⣴⣾⠁⠸⣼⡿ </span>
+<span class="sd">            ⠀⢀⡞⠁⠙⠻⠿⠟⠉⠀⠛⢹⣿⣿⣿⣿⣿⣌⢤⣼⣿⣾⣿⡟⠉⠀⠀⠀⠀⠀ </span>
+<span class="sd">            ⠀⣾⣷⣶⠇⠀⠀⣤⣄⣀⡀⠈⠻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡇⠀⠀⠀⠀⠀⠀ </span>
+<span class="sd">            ⠀⠉⠈⠉⠀⠀⢦⡈⢻⣿⣿⣿⣶⣶⣶⣶⣤⣽⡹⣿⣿⣿⣿⡇⠀⠀⠀⠀⠀⠀ </span>
+<span class="sd">            ⠀⠀⠀⠀⠀⠀⠀⠉⠲⣽⡻⢿⣿⣿⣿⣿⣿⣿⣷⣜⣿⣿⣿⡇⠀⠀⠀⠀⠀⠀ </span>
+<span class="sd">            ⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⣷⣶⣮⣭⣽⣿⣿⣿⣿⣿⣿⣿⠀⠀⠀⠀⠀⠀⠀ </span>
+<span class="sd">            ⠀⠀⠀⠀⠀⠀⣀⣀⣈⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠇⠀⠀⠀⠀⠀⠀⠀ </span>
+<span class="sd">            ⠀⠀⠀⠀⠀⠀⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠃⠀⠀⠀⠀⠀⠀⠀⠀ </span>
+<span class="sd">            ⠀⠀⠀⠀⠀⠀⠀⠹⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠟⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀ </span>
+<span class="sd">            ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠛⠻⠿⠿⠿⠿⠛⠉\033[0m</span>
+<span class="sd">                &quot;&quot;&quot;</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span>
+                <span class="s2">&quot;[</span><span class="si">{0}</span><span class="s2">] Ungültig! Matching Score </span><span class="si">{1:.5f}</span><span class="s2"> ist zu hoch!&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="n">mark_fail</span><span class="p">,</span> <span class="n">m_min</span><span class="o">.</span><span class="n">score</span>
+                <span class="p">)</span>
+            <span class="p">)</span></div>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="n">main</span><span class="p">())</span>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, Basedow, Gillner, Prothmann, Werner.
+
+    </p>
+  </div>
+    
+    
+    
+    Erstellt mit <a href="https://www.sphinx-doc.org/">Sphinx</a> mit einem
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    bereitgestellt von <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
