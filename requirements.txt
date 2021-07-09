@@ -1,1 +1,11 @@
-opencv-python
+# '~=': use compatible version to given version number
+opencv-python~=4.5.1.48
+numpy~=1.20.2
+pytest~=6.2.3
+pytest-cov~=2.11.1
+parameterized~=0.8.1
+sqlalchemy~=1.4.9
+scipy~=1.6.3
+Sphinx~=4.0.1
+sphinx-markdown-builder~=0.5.4
+sphinx_autodoc_typehints~=1.12.0

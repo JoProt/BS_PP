@@ -1,0 +1,415 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="de" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>test_ppscan &mdash; Palmprint Scanner Dokumentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/translations.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Stichwortverzeichnis" href="../genindex.html" />
+    <link rel="search" title="Suche" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: white" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> Palmprint Scanner
+          
+
+          
+            
+            <img src="../_static/icons8-palm-scan.png" class="logo" alt="Logo"/>
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Dokumentation durchsuchen" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../ppscan.html">ppscan module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../ppscan.html#palmprint-scanner">Palmprint Scanner</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../test_ppscan.html">test_ppscan module</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Palmprint Scanner</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="index.html">Modul-Quellcode</a> &raquo;</li>
+        
+      <li>test_ppscan</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Quellcode für test_ppscan</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">unittest</span>
+<span class="kn">import</span> <span class="nn">ppscan</span>
+<span class="kn">from</span> <span class="nn">parameterized</span> <span class="kn">import</span> <span class="n">parameterized</span>
+
+
+<div class="viewcode-block" id="TestPPscan"><a class="viewcode-back" href="../test_ppscan.html#test_ppscan.TestPPscan">[Doku]</a><span class="k">class</span> <span class="nc">TestPPscan</span><span class="p">(</span><span class="n">unittest</span><span class="o">.</span><span class="n">TestCase</span><span class="p">):</span>
+<div class="viewcode-block" id="TestPPscan.test_interpol2d_gerade"><a class="viewcode-back" href="../test_ppscan.html#test_ppscan.TestPPscan.test_interpol2d_gerade">[Doku]</a>    <span class="k">def</span> <span class="nf">test_interpol2d_gerade</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Interpolationstest für eine Gerade durch die Punkte (0,0) und (0,1)</span>
+
+<span class="sd">        :returns: True bei Ausgabe von [(0, 0), (0, .25), (0, .5), (0, .75), (0, 1)]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">points</span> <span class="o">=</span> <span class="p">[(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)]</span>
+        <span class="n">steps</span> <span class="o">=</span> <span class="mi">5</span>
+        <span class="k">assert</span> <span class="n">ppscan</span><span class="o">.</span><span class="n">interpol2d</span><span class="p">(</span><span class="n">points</span><span class="p">,</span> <span class="n">steps</span><span class="p">)</span> <span class="o">==</span> <span class="p">[</span>
+            <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+            <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">),</span>
+            <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">),</span>
+            <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.75</span><span class="p">),</span>
+            <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+        <span class="p">]</span></div>
+
+<div class="viewcode-block" id="TestPPscan.test_interpol2d_parabel"><a class="viewcode-back" href="../test_ppscan.html#test_ppscan.TestPPscan.test_interpol2d_parabel">[Doku]</a>    <span class="k">def</span> <span class="nf">test_interpol2d_parabel</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Interpolationstest für eine Parabel durch die Punkte (-2,4), (0,0) und (2,4)</span>
+
+<span class="sd">        :returns: True bei Ausgabe von [(-2.0, 4.0), (-1.0, 2.0), (0.0, 0.0), (1.0, 2.0), (2.0, 4.0)]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">points</span> <span class="o">=</span> <span class="p">[(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">)]</span>
+        <span class="n">steps</span> <span class="o">=</span> <span class="mi">5</span>
+        <span class="k">assert</span> <span class="n">ppscan</span><span class="o">.</span><span class="n">interpol2d</span><span class="p">(</span><span class="n">points</span><span class="p">,</span> <span class="n">steps</span><span class="p">)</span> <span class="o">==</span> <span class="p">[</span>
+            <span class="p">(</span><span class="o">-</span><span class="mf">2.0</span><span class="p">,</span> <span class="mf">4.0</span><span class="p">),</span>
+            <span class="p">(</span><span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">),</span>
+            <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span>
+            <span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">),</span>
+            <span class="p">(</span><span class="mf">2.0</span><span class="p">,</span> <span class="mf">4.0</span><span class="p">),</span>
+        <span class="p">]</span></div>
+
+    <span class="nd">@parameterized</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span>
+        <span class="p">[</span>
+            <span class="p">(</span><span class="s2">&quot;testdaten/klaus_testing/l_01.jpg&quot;</span><span class="p">,),</span>
+            <span class="p">(</span><span class="s2">&quot;testdaten/klaus_testing/r_01.jpg&quot;</span><span class="p">,),</span>
+            <span class="p">(</span><span class="s2">&quot;testdaten/peter_testing/l_01.jpg&quot;</span><span class="p">,),</span>
+            <span class="p">(</span><span class="s2">&quot;testdaten/peter_testing/r_01.jpg&quot;</span><span class="p">,),</span>
+        <span class="p">]</span>
+    <span class="p">)</span>
+    <span class="k">def</span> <span class="nf">test_neighbourhood_curvature_edge</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Testet an der unteren rechten Bild-Ecke (5 Pixel vom Rand entfernt und mit Radius 10 Pixel) ob der erwartete</span>
+<span class="sd">        Wert von 0.0 ausgegeben wird.</span>
+
+<span class="sd">        :returns: True wenn neighbourhood_curvature() == 0.0</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">img</span> <span class="o">=</span> <span class="n">ppscan</span><span class="o">.</span><span class="n">load_img</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+        <span class="n">dim_x</span><span class="p">,</span> <span class="n">dim_y</span> <span class="o">=</span> <span class="n">img</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">val</span> <span class="o">=</span> <span class="n">ppscan</span><span class="o">.</span><span class="n">neighbourhood_curvature</span><span class="p">((</span><span class="n">dim_x</span> <span class="o">-</span> <span class="mi">5</span><span class="p">,</span> <span class="n">dim_y</span> <span class="o">-</span> <span class="mi">5</span><span class="p">),</span> <span class="n">img</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">val</span> <span class="o">==</span> <span class="mf">0.0</span>
+
+    <span class="nd">@parameterized</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span>
+        <span class="p">[</span>
+            <span class="p">(</span><span class="s2">&quot;testdaten/klaus_testing/l_01.jpg&quot;</span><span class="p">,),</span>
+            <span class="p">(</span><span class="s2">&quot;testdaten/klaus_testing/r_01.jpg&quot;</span><span class="p">,),</span>
+            <span class="p">(</span><span class="s2">&quot;testdaten/peter_testing/l_01.jpg&quot;</span><span class="p">,),</span>
+            <span class="p">(</span><span class="s2">&quot;testdaten/peter_testing/r_01.jpg&quot;</span><span class="p">,),</span>
+        <span class="p">]</span>
+    <span class="p">)</span>
+    <span class="k">def</span> <span class="nf">test_neighbourhood_curvature_middle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Testet in der Bildmitte (mit Radius 10 Pixel) ob der ausgegebene Wert &gt;0.0 und &lt;1.0 ist.</span>
+
+<span class="sd">        :returns: True wenn 0.0 &lt; neighbourhood_curvature() &lt; 1.0</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">img</span> <span class="o">=</span> <span class="n">ppscan</span><span class="o">.</span><span class="n">load_img</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+        <span class="n">dim_x</span><span class="p">,</span> <span class="n">dim_y</span> <span class="o">=</span> <span class="n">img</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">val</span> <span class="o">=</span> <span class="n">ppscan</span><span class="o">.</span><span class="n">neighbourhood_curvature</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">dim_x</span> <span class="o">-</span> <span class="p">(</span><span class="n">dim_x</span> <span class="o">/</span> <span class="mi">2</span><span class="p">),</span> <span class="n">dim_y</span> <span class="o">-</span> <span class="p">(</span><span class="n">dim_y</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)),</span> <span class="n">img</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">10</span>
+        <span class="p">)</span>
+        <span class="k">assert</span> <span class="mf">0.0</span> <span class="o">&lt;</span> <span class="n">val</span> <span class="o">&lt;</span> <span class="mf">1.0</span>
+
+    <span class="nd">@parameterized</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span>
+        <span class="p">[</span>
+            <span class="p">(</span><span class="s2">&quot;testdaten/klaus_testing/l_01.jpg&quot;</span><span class="p">,),</span>
+            <span class="p">(</span><span class="s2">&quot;testdaten/klaus_testing/r_01.jpg&quot;</span><span class="p">,),</span>
+            <span class="p">(</span><span class="s2">&quot;testdaten/peter_testing/l_01.jpg&quot;</span><span class="p">,),</span>
+            <span class="p">(</span><span class="s2">&quot;testdaten/peter_testing/r_01.jpg&quot;</span><span class="p">,),</span>
+        <span class="p">]</span>
+    <span class="p">)</span>
+    <span class="k">def</span> <span class="nf">test_find_valleys_count</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Überprüfung der Listenlänge von valleys (3) und deren Punkte (&gt;=2)</span>
+
+<span class="sd">        :returns: True, wenn 3 valleys mit je mindestens 2 Punkten gefunden wurden</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">img</span> <span class="o">=</span> <span class="n">ppscan</span><span class="o">.</span><span class="n">load_img</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+
+        <span class="n">blurred</span> <span class="o">=</span> <span class="n">ppscan</span><span class="o">.</span><span class="n">cv</span><span class="o">.</span><span class="n">GaussianBlur</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="mi">7</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">thresh</span> <span class="o">=</span> <span class="n">ppscan</span><span class="o">.</span><span class="n">cv</span><span class="o">.</span><span class="n">threshold</span><span class="p">(</span>
+            <span class="n">blurred</span><span class="p">,</span> <span class="p">(</span><span class="n">ppscan</span><span class="o">.</span><span class="n">THRESH_FACTOR</span> <span class="o">*</span> <span class="n">img</span><span class="o">.</span><span class="n">mean</span><span class="p">()),</span> <span class="mi">255</span><span class="p">,</span> <span class="n">ppscan</span><span class="o">.</span><span class="n">cv</span><span class="o">.</span><span class="n">THRESH_BINARY</span>
+        <span class="p">)</span>
+        <span class="n">contours</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">ppscan</span><span class="o">.</span><span class="n">cv</span><span class="o">.</span><span class="n">findContours</span><span class="p">(</span>
+            <span class="n">thresh</span><span class="p">[:,</span> <span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">img</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)],</span>
+            <span class="n">ppscan</span><span class="o">.</span><span class="n">cv</span><span class="o">.</span><span class="n">RETR_LIST</span><span class="p">,</span>
+            <span class="n">ppscan</span><span class="o">.</span><span class="n">cv</span><span class="o">.</span><span class="n">CHAIN_APPROX_SIMPLE</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">contour</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">contours</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">c</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">c</span><span class="p">))</span>
+        <span class="n">contour</span> <span class="o">=</span> <span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">c</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">contour</span><span class="p">]</span>
+        <span class="n">valleys</span> <span class="o">=</span> <span class="n">ppscan</span><span class="o">.</span><span class="n">find_valleys</span><span class="p">(</span><span class="n">thresh</span><span class="p">,</span> <span class="n">contour</span><span class="p">)</span>
+
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">valleys</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span>
+        <span class="k">for</span> <span class="n">valley</span> <span class="ow">in</span> <span class="n">valleys</span><span class="p">:</span>
+            <span class="c1"># &gt;= 2, weil interpolation zwischen mindestens zwei Punkten statt finden muss ODER kann es sein,</span>
+            <span class="c1"># dass nur ein Punkt gefunden werden muss und der dann automatisch als valley gilt?</span>
+            <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">valley</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span>
+
+    <span class="nd">@parameterized</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span>
+        <span class="p">[</span>
+            <span class="p">(</span><span class="s2">&quot;testdaten/klaus_testing/l_01.jpg&quot;</span><span class="p">,),</span>
+            <span class="p">(</span><span class="s2">&quot;testdaten/klaus_testing/r_01.jpg&quot;</span><span class="p">,),</span>
+            <span class="p">(</span><span class="s2">&quot;testdaten/peter_testing/l_01.jpg&quot;</span><span class="p">,),</span>
+            <span class="p">(</span><span class="s2">&quot;testdaten/peter_testing/r_01.jpg&quot;</span><span class="p">,),</span>
+        <span class="p">]</span>
+    <span class="p">)</span>
+    <span class="k">def</span> <span class="nf">test_extract_roi</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Testet ob ROI für linke Hand plausibel ist.</span>
+
+<span class="sd">        :param file: vollständiges Handbild</span>
+<span class="sd">        :returns: True, wenn ROI dargestellt werden kann</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">img_input</span> <span class="o">=</span> <span class="n">ppscan</span><span class="o">.</span><span class="n">load_img</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+        <span class="n">roi</span> <span class="o">=</span> <span class="n">ppscan</span><span class="o">.</span><span class="n">extract_roi</span><span class="p">(</span><span class="n">img_input</span><span class="p">)</span>
+
+        <span class="k">assert</span> <span class="n">roi</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span>
+        <span class="k">assert</span> <span class="n">roi</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span>
+        <span class="k">assert</span> <span class="n">roi</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">roi</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+<div class="viewcode-block" id="TestPPscan.test_build_mask"><a class="viewcode-back" href="../test_ppscan.html#test_ppscan.TestPPscan.test_build_mask">[Doku]</a>    <span class="k">def</span> <span class="nf">test_build_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Rudimentärer Test der Maskenbildung. Eingabebild zur Generierung der Maske ist vertikal geteilt,</span>
+<span class="sd">        mit einer Hälfte schwarz, der anderen weiß. Die generierte Maske maskiert alle durch MASK_THRESHOLD</span>
+<span class="sd">        markierten Bereiche, indem diese in der Maske als schwarze Pixel hinterlegt werden.</span>
+
+<span class="sd">        :returns: True, wenn Maske und Eingabe Bild übereinstimmen.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">img</span> <span class="o">=</span> <span class="n">ppscan</span><span class="o">.</span><span class="n">cv</span><span class="o">.</span><span class="n">imread</span><span class="p">(</span><span class="s2">&quot;testdaten/mask_dummy.jpg&quot;</span><span class="p">,</span> <span class="n">ppscan</span><span class="o">.</span><span class="n">cv</span><span class="o">.</span><span class="n">IMREAD_GRAYSCALE</span><span class="p">)</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">ppscan</span><span class="o">.</span><span class="n">build_mask</span><span class="p">(</span><span class="n">img</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">mask</span><span class="o">.</span><span class="n">all</span><span class="p">()</span> <span class="o">==</span> <span class="n">img</span><span class="o">.</span><span class="n">all</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="TestPPscan.test_papers_GABOR_CONST"><a class="viewcode-back" href="../test_ppscan.html#test_ppscan.TestPPscan.test_papers_GABOR_CONST">[Doku]</a>    <span class="k">def</span> <span class="nf">test_papers_GABOR_CONST</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Prüft auf richtige Konstantenwerte (aus dem Paper) für Gabor Filter.</span>
+
+<span class="sd">        :returns: True, wenn Sigma und Labda Wert denen aus dem Paper entsprechen</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="n">ppscan</span><span class="o">.</span><span class="n">GABOR_SIGMA</span> <span class="o">==</span> <span class="mf">5.6179</span>
+        <span class="k">assert</span> <span class="n">ppscan</span><span class="o">.</span><span class="n">GABOR_LAMBDA</span> <span class="o">==</span> <span class="mi">1</span> <span class="o">/</span> <span class="mf">0.0916</span></div>
+
+<div class="viewcode-block" id="TestPPscan.test_GABOR_GAMMA_inrange"><a class="viewcode-back" href="../test_ppscan.html#test_ppscan.TestPPscan.test_GABOR_GAMMA_inrange">[Doku]</a>    <span class="k">def</span> <span class="nf">test_GABOR_GAMMA_inrange</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Prüft ob Konstante GABOR_GAMMA im richtigen Wertebereich liegt.</span>
+
+<span class="sd">        :returns: True, wenn Wert von Gamma im Bereich von 0.23 bis 0.92 liegt</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="mf">0.23</span> <span class="o">&lt;</span> <span class="n">ppscan</span><span class="o">.</span><span class="n">GABOR_GAMMA</span> <span class="o">&lt;</span> <span class="mf">0.92</span></div>
+
+<div class="viewcode-block" id="TestPPscan.test_build_gabor_filters_length"><a class="viewcode-back" href="../test_ppscan.html#test_ppscan.TestPPscan.test_build_gabor_filters_length">[Doku]</a>    <span class="k">def</span> <span class="nf">test_build_gabor_filters_length</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Weis eigentlich nicht so recht, was man für die Funktion testen sollte... Außer ob die ausgegebene Liste</span>
+<span class="sd">        wirklich genau so lang ist wie die Liste von vorgegebenen Thetas.</span>
+
+<span class="sd">        :returns: True, wenn Filterliste genau so lang wie Liste von Thetas</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">filters</span> <span class="o">=</span> <span class="n">ppscan</span><span class="o">.</span><span class="n">build_gabor_filters</span><span class="p">()</span>
+        <span class="k">assert</span> <span class="n">ppscan</span><span class="o">.</span><span class="n">GABOR_THETAS</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">filters</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TestPPscan.test_find_tangent_points_NONE"><a class="viewcode-back" href="../test_ppscan.html#test_ppscan.TestPPscan.test_find_tangent_points_NONE">[Doku]</a>    <span class="k">def</span> <span class="nf">test_find_tangent_points_NONE</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">v_1</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">v_2</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">test1</span><span class="p">,</span> <span class="n">test2</span> <span class="o">=</span> <span class="n">ppscan</span><span class="o">.</span><span class="n">find_tangent_points</span><span class="p">(</span><span class="n">v_1</span><span class="p">,</span> <span class="n">v_2</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">test1</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="kc">True</span>
+        <span class="k">if</span> <span class="n">test2</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="kc">True</span></div>
+
+<div class="viewcode-block" id="TestPPscan.test_find_keypoints_exceptions"><a class="viewcode-back" href="../test_ppscan.html#test_ppscan.TestPPscan.test_find_keypoints_exceptions">[Doku]</a>    <span class="k">def</span> <span class="nf">test_find_keypoints_exceptions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">valleys</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">assertRaises</span><span class="p">(</span><span class="ne">Exception</span><span class="p">)</span> <span class="k">as</span> <span class="n">context</span><span class="p">:</span>
+            <span class="n">ppscan</span><span class="o">.</span><span class="n">find_keypoints</span><span class="p">(</span><span class="n">valleys</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="s2">&quot;Expected at least 2 valleys!&quot;</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">exception</span><span class="p">))</span>
+
+        <span class="n">valleys</span> <span class="o">=</span> <span class="p">[[[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]],</span> <span class="p">[[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]]]</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">assertRaises</span><span class="p">(</span><span class="ne">Exception</span><span class="p">)</span> <span class="k">as</span> <span class="n">context</span><span class="p">:</span>
+            <span class="n">ppscan</span><span class="o">.</span><span class="n">find_keypoints</span><span class="p">(</span><span class="n">valleys</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="s2">&quot;No valleys found!&quot;</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">exception</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="TestPPscan.test_db_access"><a class="viewcode-back" href="../test_ppscan.html#test_ppscan.TestPPscan.test_db_access">[Doku]</a>    <span class="k">def</span> <span class="nf">test_db_access</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Testet die Verbindung zur Datenbank.</span>
+
+<span class="sd">        :returns: True, wenn peter die Nummer 1 ist</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">peter</span> <span class="o">=</span> <span class="n">ppscan</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">ppscan</span><span class="o">.</span><span class="n">User</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+        <span class="k">assert</span> <span class="n">peter</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="mi">1</span></div></div>
+
+    <span class="c1"># TODO: Tests für Datenbankverbindung</span>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, Basedow, Gillner, Prothmann, Werner.
+
+    </p>
+  </div>
+    
+    
+    
+    Erstellt mit <a href="https://www.sphinx-doc.org/">Sphinx</a> mit einem
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    bereitgestellt von <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

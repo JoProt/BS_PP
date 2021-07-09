@@ -1,13 +1,41 @@
-name: Lint
+name: Lint Code Base
 
 on: [push, pull_request]
 
+# Set the Job
 jobs:
   lint:
+    # Name the Job
+    name: Lint Code Base
+    # Set environment
     runs-on: ubuntu-latest
+
+    # Load all steps
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
-      - uses: psf/black@stable
+      # Checkout Code
+      - name: Checkout Code
+        uses: actions/checkout@v2
+      # Python 3.8 Setup
+      - name: Setup python
+        uses: actions/setup-python@v2
         with:
-          args: ". -l 100"
+          python-version: '3.8'
+      # Install dependencies
+      - run: pip install -r requirements.txt
+      # Use black Linter
+      - name: Run black Linter
+        uses: psf/black@stable
+        with:
+          args: ". --check --diff --color"
+      # Use python-lint Linter
+      #- name: Run python-lint Linter
+      #  uses: ricardochaves/python-lint@v1.3.0
+      #  with:
+      #    python-root-list: "."
+      #    use-pylint: false
+      #    use-pycodestyle: false
+      #    use-flake8: false
+      #    use-black: true
+      #    use-mypy: false
+      #    use-isort: false
+      #    extra-black-options: ". --check --diff --color"
